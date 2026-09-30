@@ -11,6 +11,7 @@ function safeTrimmedString(value, maxLen = 1000) {
 
 async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
   const jsonResult = options.jsonResult === true;
+  const timeout = options.timeout || 30000;
   const baseUrl = process.env.VISTA_API_BASE_URL;
   const siteId = process.env.VISTA_SITE_ID;
   const apiKey = process.env.VISTA_API_KEY;
@@ -28,7 +29,12 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
   const userDuz = await getDuzForSite(siteId);
 
   const normalizedParameters = (params || []).map((value) => {
-    if (value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'string')) {
+    // Pass through already-wrapped RPC parameter objects (string, namedArray, list) untouched.
+    if (value && typeof value === 'object' && (
+      Object.prototype.hasOwnProperty.call(value, 'string')
+      || Object.prototype.hasOwnProperty.call(value, 'namedArray')
+      || Object.prototype.hasOwnProperty.call(value, 'list')
+    )) {
       return value;
     }
     return { string: String(value ?? '') };
@@ -50,7 +56,7 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
           authorization: `Bearer ${token}`,
           'X-OCTO-VistA-API': apiKey
         },
-        timeout: 30000
+        timeout
       }
     );
   } catch (err) {
@@ -68,6 +74,10 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
       upstreamBody: safeTrimmedString(upstreamBody)
     };
     throw wrapped;
+  }
+
+  if (options.raw === true) {
+    return response.data;
   }
 
   if (response.data && typeof response.data === 'object' && response.data.payload !== undefined) {

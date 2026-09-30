@@ -301,8 +301,9 @@ function validateNote(note) {
   const longLines = lines.filter((l) => l.length > MAX_LINE);
   if (longLines.length > 0) problems.push(`${longLines.length} line(s) exceed ${MAX_LINE} chars`);
 
-  // Check for markdown
-  const markdown = /(^|\n)\s*#{1,6}\s|\*\*[^*\n]+\*\*|```/.test(note);
+  // Check for markdown (skip the marker line - its "***" would false-positive as bold)
+  const bodyForMarkdownCheck = lines[0] === MARKER ? lines.slice(1).join('\n') : note;
+  const markdown = /(^|\n)\s*#{1,6}\s|\*\*[^*\n]+\*\*|```/.test(bodyForMarkdownCheck);
   if (markdown) problems.push('contains markdown formatting');
 
   // Check for identifiers (SSN, ICN, name pattern)
@@ -434,4 +435,21 @@ async function main() {
   process.exitCode = summary.some((s) => s.result === 'PASS') ? 0 : 1;
 }
 
-main().catch((err) => fail(`Unexpected error: ${err.message}`));
+if (require.main === module) {
+  main().catch((err) => fail(`Unexpected error: ${err.message}`));
+}
+
+module.exports = {
+  loadPatient,
+  getEncounter,
+  buildContext,
+  buildInstructions,
+  buildBody,
+  callCandidate,
+  stripMarkerLine,
+  validateNote,
+  checkFormat,
+  MARKER,
+  HEADINGS,
+  MAX_LINE,
+};

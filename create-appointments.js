@@ -84,6 +84,7 @@ async function main() {
       created.push({
         dfn: args.dfn,
         date,
+        time: slotTime,
         requestIen: result.requestIen,
         appointmentIen: result.appointmentIen,
         clinicIen,

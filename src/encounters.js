@@ -63,6 +63,8 @@ function problemsFor(problems, date8, rules) {
   for (const p of problems) {
     const onset = day(p.onset);
     if (!onset || onset > date8) continue;
+    // Exclude resolved/inactive problems - they shouldn't inform an active assessment.
+    if (String(p.statusName || '').toUpperCase() === 'INACTIVE') continue;
     const prev = latest.get(p.problemText);
     if (!prev || onset > day(prev.onset)) latest.set(p.problemText, p);
   }
@@ -110,7 +112,7 @@ function filterProblemsForEncounter(encounter, rules) {
     ...p,
     score: orderAndMedNames.includes(p.text.toLowerCase()) ? 2 : 1,
   }));
-  scored.sort((a, b) => b.score - a.score || a.onset.localeCompare(b.onset));
+  scored.sort((a, b) => b.score - a.score || b.onset.localeCompare(a.onset)); // ties: most recent onset first
   filtered.push(...scored.slice(0, 3 - acuteProblems.length)); // fill to 3 total after acute
   
   return filtered;

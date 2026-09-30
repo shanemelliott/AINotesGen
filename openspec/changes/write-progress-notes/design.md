@@ -14,6 +14,7 @@
 3. Support idempotent re-runs via `src/notes.json`.
 4. Support dry-run mode to preview note text and RPC params before writing.
 5. Leave notes unsigned by default; support optional signing via `--sign`.
+6. Fully separate note *generation* from VistA *writing*, with a review gate in between: generate all notes to disk first, flag questionable ones automatically, let a human review/edit/approve at their own pace, then batch-write and sign everything approved in one command.
 
 ## Non-Goals
 
@@ -51,6 +52,28 @@
 
 **Rationale**: Consistent with Task 4's `appointments.json` pattern; easy to reason about and audit.
 
+### Decision 6: Generate-review-sign pipeline, file-based (not a web UI)
+**Choice**: Three-stage, file-based pipeline instead of a custom review UI:
+1. `generate-notes.js` generates note text for every encounter and writes one JSON file per note, keyed by a short id `<dfn>-<date>` (e.g. `100965-2025-10-04.json`), to `output/review/` (if flagged) or `output/ready/` (if clean).
+2. `approve-note.js` moves a reviewed/edited file from `output/review/` to `output/ready/`. Supports `--all` (approve everything currently in `output/review/`), a specific id (`approve-note.js 100965-2025-10-04`), or a real file path (shell-tab-completable).
+3. `sign-notes.js --dir output/ready [--sign]` batch-processes every file in `output/ready/`: calls `TIU CREATE RECORD` (+ `TIU SIGN RECORD` if `--sign`), logs to `src/notes.json`, and moves the file to `output/signed/`.
+
+**Rationale**: Matches the project's existing CLI/JSON-file conventions (no new server/frontend to build or maintain). VS Code is already a perfectly good JSON editor for the human review step. The user's workflow is "review everything, then sign everything" - the two-directory (`review/` vs `ready/`) split plus `--all` flags on both `approve-note.js` and `sign-notes.js` support that directly with minimal typing.
+
+**Alternatives Considered**:
+- Small web UI for review + bulk sign. Rejected: meaningfully more code (server + frontend) for a single-operator workflow that VS Code's file explorer/editor already serves well.
+- Second full LLM pass to re-validate every note before signing. Rejected as the primary mechanism: doubles LLM cost/latency for ~150 notes and doesn't reliably catch what deterministic checks already catch cheaper (see flag-check design below). Kept as an optional cheap fallback classification, not a full regeneration.
+
+### Decision 7: Flag check combines deterministic rules first, cheap LLM classification as fallback
+**Choice**: `flagNote(note, ctx)` in `src/noteFlags.js` runs fast, free, deterministic checks first (e.g. obstetric/pregnancy terms appearing alongside contraceptive-only active meds; ASSESSMENT items not present in `ctx.relevantProblems`). Only if no deterministic rule fires but the note is borderline (e.g. long PLAN section, or explicit uncertainty language) does it optionally make one small LLM call asking for `{flagged: bool, reason: string}` - not a note regeneration.
+
+**Rationale**: Catches the concrete Task 5 pregnancy/eclampsia bug class for free. LLM fallback is opt-in per note only when deterministic checks are inconclusive, keeping average cost close to zero across a full batch.
+
+### Decision 8: Note id scheme `<dfn>-<date>`
+**Choice**: Every generated note file is named `<dfn>-<date>.json` (e.g. `100965-2025-10-04.json`) in whichever stage directory it currently lives in (`review/`, `ready/`, `signed/`).
+
+**Rationale**: Short, unique per patient+encounter, naturally shell-tab-completable as a real filename, and directly greppable/sortable. `approve-note.js` accepts either the bare id or the full path.
+
 ## Risks / Trade-offs
 
 **Risk**: TIU CREATE RECORD param order/format may differ slightly from the `vista-notes/index.js` reference (older RPC broker context vs vista-api-x).
@@ -71,11 +94,13 @@ No migration needed: notes are new records.
 
 **Deployment steps**:
 1. Export needed functions from `test-ai.js` (buildContext, buildInstructions/generate, stripMarkerLine, validateNote).
-2. Write `src/notesClient.js` (FileMan conversion, visit string builder, TIU CREATE RECORD/SIGN RECORD wrappers).
-3. Write `test-write-note.js` smoke test for one encounter (unsigned).
-4. Write `write-notes.js` batch processor with dry-run and --sign support.
-5. Run smoke test, verify note appears in VistA (CPRS or TIU DOCUMENT inquiry).
-6. Run batch for all 38 encounters (or a subset first), verify `src/notes.json`.
+2. Write `src/notesClient.js` (FileMan conversion, visit string builder, TIU CREATE RECORD/SIGN RECORD wrappers). ✓ Done.
+3. Write `test-write-note.js` smoke test for one encounter (unsigned). ✓ Done, verified end-to-end including signing.
+4. Write `src/noteFlags.js` (deterministic + fallback LLM flag check).
+5. Write `generate-notes.js`: loop all encounters, generate + flag, write to `output/review/` or `output/ready/`.
+6. Write `approve-note.js`: move file(s) from `output/review/` to `output/ready/` (by id, path, or `--all`).
+7. Write `sign-notes.js --dir output/ready [--sign]`: batch create (+ sign) everything in `output/ready/`, log to `src/notes.json`, archive to `output/signed/`.
+8. Run `generate-notes.js` for DFN 100965, review flagged notes, approve, then `sign-notes.js --all --sign`.
 
 ## Open Questions
 

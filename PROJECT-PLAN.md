@@ -135,22 +135,49 @@ Enhanced prompts to use `visitDiagnoses`, `carePlanActivities`, and filtered pro
 - **Time rounding**: encounter times are rounded backward to the nearest half-hour (`roundDownToHalfHour()`, e.g. `12:24` -> `12:00`) to land on a plausible clinic slot.
 - All 7 missing appointments created for DFN 100965 (1980-06-20, 1986-06-06, 1987-03-12, 2016-10-28, 2025-10-04, 2025-10-21, 2026-04-19); IENs logged in `src/appointments.json`.
 - See `openspec/changes/create-past-appointments/` for full spec/design/tasks.
+- **Follow-up**: re-fetch the full VPR JSON (`{dfn}.json`) from vista-api-x after appointment creation so `output/encounters-{dfn}.json` reflects VistA's authoritative appointment date/time/location, instead of relying solely on our own `src/appointments.json` log (see Task 5 lesson learned below). Same `rpc/invoke` call that produced the original `100965.json`.
 
-### Task 5: Note writing to VistA
+### Task 5: Note writing to VistA — SMOKE TESTED
 - `TIU CREATE RECORD` with DFN, title IEN, and location IEN; `TEXT` lines from the AI output; visit string `<locIEN>;<FMdate>;<type>`.
 - Past encounters: use visit type `E` (historical) if no appointment/visit is linked, or `A` tied to the created/existing appointment time. Check both on one date first.
-- Unsigned by default; optional `TIU SIGN RECORD` behind a flag.
-- Log DFN, date, appointment IEN, and TIU IEN to `results-<dfn>.json` so reruns are idempotent.
+- Unsigned by default; optional `TIU SIGN RECORD` behind `--sign` flag (`test-write-note.js`).
+- Log DFN, date, appointment IEN, and TIU IEN to `src/notes.json` so reruns are idempotent (batch script still to be built, see tasks.md Group 3).
+- **Correct RPC param format (vista-api-x)**: `TIU CREATE RECORD` params must be wrapped `{string: ...}` / `{namedArray: {...}}` — a bare JS object is silently corrupted to `"[object Object]"` by `vistaApiClient.js`'s normalizer unless pre-wrapped. Context is `OR CPRS GUI CHART` (not `SDECRPC`). Params: DFN, note title IEN, VDT (blank), VLOC (blank), blank, `namedArray` (`1202`=DUZ, `1301`=note FM datetime, `1205`=location IEN, `1701`=blank, `\r"TEXT",N,0`=body lines), visit string, SUPPRESS (`1` to suppress the "missing encounter info" prompt that blocks signing), NOASF (`1`).
+- **Lesson learned (visit linking)**: the visit string's FM datetime must exactly match the appointment's actual date/time, or VistA creates a *new* encounter instead of linking to the existing appointment. `src/notesClient.js`'s `resolveAppointment()` reads the authoritative appointment `dateTime` straight from the encounter's `existing.appointments[0]` (fresh VPR data) rather than trusting a locally-tracked/rounded guess.
+- **Lesson learned (FileMan time format)**: VistA drops trailing zeros from the time portion of FM datetimes (e.g. `.1000` -> `.1`, `.1130` -> `.113`, `.0230` -> `.023`). `filemanDateTime()`/`filemanFromVprDateTime()` strip them via `stripTrailingZeros()`.
+- **Lesson learned (signing requires encrypted e-sig)**: `TIU SIGN RECORD` rejects a plaintext e-sig code ("incorrect Electronic Signature Code") — the code must be obfuscated with the XWB RPC broker's substitution cipher first. Ported `buildEncryptedSigString()` (20-entry `CIPHER_PAD`, random assoc/id pad indices) from `vista-notes/VistaJSLibrary.js` into `src/notesClient.js`.
+- **Lesson learned (sign result codes)**: `TIU SIGN RECORD` returns `"0"` (or empty) on success, not `"1"`; any other text is the error message (e.g. `89250005^You have entered an incorrect Electronic Signature Code...`).
+- Verified end-to-end: unsigned note created and signed successfully for DFN 100965 / 2025-10-04 (TIU IEN 5272).
 
 ### Task 6: Orchestration and scale-out
 - CLI: `node index.js --dfn 100965 --dry-run`, then live.
 - Fetch VPR JSON for the other 3 patients (100961, 100962, 100964) through vista-api-x, using the same call that produced `100965.json`.
 - Throttle LLM calls (handle 429) and back off/retry for RPC connection resets.
 
+**Status: IN PROGRESS.** See [README.md](README.md#pipeline) for the full step-by-step pipeline (this replaced the planned single `index.js` orchestrator with discrete, idempotent CLI scripts — easier to monitor/debug/resume than one monolithic run).
+
+- **`fetch-vpr.js`** (new): fetches `<dfn>.json` via vista-api-x `VPR GET PATIENT DATA JSON` (context `CDSP RPC CONTEXT`, `namedArray: {patientId}`), replacing the manual export step. Added `raw` and `timeout` options to `src/vistaApiClient.js` to support it (VPR payloads are large and the caller needs the full `{path, payload}` response shape, not just the extracted `.payload`).
+- **`resign-notes.js`** (new): re-signs notes that were created but failed to sign (by `tiuIen`), for the ~5% intermittent "incorrect Electronic Signature Code" failures. `src/notesClient.js`'s `signNote()` also now retries internally (2 extra attempts with fresh random cipher indices) before giving up.
+- **DFN 100965**: all 38 notes generated, reviewed, approved, and signed.
+- **DFN 100961**: VPR fetched (49 encounters, much smaller than 100965's implied volume was expected); appointments created for the 23 encounters missing one; VPR re-fetched/re-extracted; note generation in progress as a trial before processing the larger patients.
+- **DFN 100962** (253 encounters) and **100964** (104 encounters): VPR fetched; not yet processed further — scope/cost confirmation needed before running the full generate+sign pipeline given the much higher encounter counts than 100965.
+
 ### Task 7: Future and planned encounters (after Tasks 2-5)
 - Generate `kind: "planned"` encounters in the same layout as the extracted ones, starting from the latest historical encounter: follow-up interval, labs due, med refills.
 - Scope to be decided: (a) booked future appointments only, with no note; (b) new visits dated today or recently, with notes, to simulate ongoing care; or (c) both.
 - Future appointments have no check-in and no signed note until the visit date passes.
+
+### Task 8: Pipeline orchestration/visibility (proposed, not started)
+Friction noticed while running the 9-step manual pipeline (see README.md#pipeline)
+across 4 patients: easy to forget/reorder a step, no single view of where a
+patient stands, encounter-count surprises only found after fetching VPR data.
+- `pipeline-status.js --dfn <dfn>`: report VPR fetched?/encounters extracted?/#
+  missing appointments/# in review vs ready vs signed, per patient.
+- `run-pipeline.js --dfn <dfn>`: automate steps 1-4 (fetch, extract, create
+  appointments, re-fetch/re-extract) since they require no human judgment;
+  stop before generate-notes for a manual go/no-ahead once scope is known.
+- Candidate for a proper `openspec propose` once the current 4-patient batch
+  (Task 6) is done, so the design reflects real usage pain rather than guesses.
 
 ---
 
