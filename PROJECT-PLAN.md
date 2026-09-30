@@ -90,6 +90,8 @@ Check that the VA Azure OpenAI endpoint will write a synthetic progress note bef
 - **Quality gaps found:** see Task 3, "Findings from the smoke test".
 
 ### Task 2: Encounter extraction
+**Status: DONE (implemented).** OpenSpec change `add-encounter-extraction`: [extract-encounters.js](extract-encounters.js), [src/encounters.js](src/encounters.js), [src/problem-rules.json](src/problem-rules.json). DFN 100965 gives 38 encounters (7 without appointments), with deterministic output in `output/encounters-100965.json`.
+
 - Parse VPR items by domain from `uid`.
 - Encounter key = order `start` date (YYYYMMDD); time = earliest order time that day.
 - Attach: orders that day; labs from `order.results[].uid` (fallback: lab `observed` same day); meds whose order started that day plus meds active on that date; problems with `onset <= date` (dedupe by text); vitals that day; the existing visit/appointment on that date (for dedupe).
@@ -132,6 +134,11 @@ Check that the VA Azure OpenAI endpoint will write a synthetic progress note bef
 - Fetch VPR JSON for the other 3 patients (100961, 100962, 100964) through vista-api-x, using the same call that produced `100965.json`.
 - Throttle LLM calls (handle 429) and back off/retry for RPC connection resets.
 
+### Task 7: Future and planned encounters (after Tasks 2-5)
+- Generate `kind: "planned"` encounters in the same layout as the extracted ones, starting from the latest historical encounter: follow-up interval, labs due, med refills.
+- Scope to be decided: (a) booked future appointments only, with no note; (b) new visits dated today or recently, with notes, to simulate ongoing care; or (c) both.
+- Future appointments have no check-in and no signed note until the visit date passes.
+
 ---
 
 ## 4. Open Questions
@@ -140,6 +147,8 @@ Check that the VA Azure OpenAI endpoint will write a synthetic progress note bef
 3. Should notes be signed, and as which user/DUZ?
 4. Transport: VistaJS broker (access/verify) or vista-api-x (token)?
 5. Is `o3-mini` acceptable for note quality, or is a `gpt-4o`/`gpt-4.1` deployment available on the APIM?
+6. Future encounters (Task 7): appointments only, notes for new visits, or both?
+7. The patient has 141 VistA visits but only 38 order dates. Should visits without orders (for example prenatal visits with a pregnancy test and antenatal care-plan activities) also become encounters with notes?
 
 ## 5. Security Notes
 - The API key stays in `VAOSAI/.env` (or a local `.env` that is git-ignored). Never log or commit it.

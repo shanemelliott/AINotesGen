@@ -1,0 +1,38 @@
+{
+  "categories": {
+    "social": [
+      "employment",
+      "labor force",
+      "education",
+      "housing",
+      "criminal",
+      "isolation",
+      "social contact",
+      "abuse",
+      "violence",
+      "unemployment",
+      "risk activity"
+    ],
+    "administrative": [
+      "medication review due",
+      "encountering health services"
+    ],
+    "acute": [
+      "acute",
+      "sprain",
+      "fracture",
+      "pharyngitis",
+      "sinusitis",
+      "cystitis",
+      "otitis",
+      "bronchitis",
+      "laceration",
+      "contusion",
+      "concussion",
+      "pregnancy",
+      "gingivitis",
+      "tooth eruption"
+    ]
+  },
+  "acuteWindowDays": 365
+}
