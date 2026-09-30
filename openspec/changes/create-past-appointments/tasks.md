@@ -2,13 +2,13 @@
 
 ## Group 1: Setup & Infrastructure (2 tasks)
 
-### [ ] Task 1.1: Copy or import vistaApiClient.js and tokenService.js from single-appointment-api
+### [x] Task 1.1: Copy or import vistaApiClient.js and tokenService.js from single-appointment-api
 - Copy `createAppts/single-appointment-api/src/services/vistaApiClient.js` to `src/vistaApiClient.js` (or create import alias)
 - Copy `createAppts/single-appointment-api/src/services/tokenService.js` to `src/tokenService.js` (or import alias)
 - Verify imports work: `import { callRpc } from './vistaApiClient.js'` and `import { getToken, getDuzForSite } from './tokenService.js'`
 - No modifications to vistaApiClient/tokenService needed (reuse as-is)
 
-### [ ] Task 1.2: Create src/appointments.json template (empty array)
+### [x] Task 1.2: Create src/appointments.json template (empty array)
 - Create empty file: `src/appointments.json` with content `[]`
 - This will hold created appointment records (one per successful ARSET+APPADD pair)
 - Add to .gitignore if not already there (it will grow with each run)
@@ -17,7 +17,7 @@
 
 ## Group 2: Smoke Test (2 tasks)
 
-### [ ] Task 2.1: Write test-create-appointment.js smoke test
+### [x] Task 2.1: Write test-create-appointment.js smoke test
 **Purpose**: Verify one ARSET + APPADD call works (2025-10-21, DFN 100965).
 
 **Implementation**:
@@ -40,7 +40,7 @@
 - `node test-create-appointment.js --date 2025-10-21` (with valid .env) creates appointment, prints requestIEN + appointmentIEN + latency
 - Exits with 0 on success, logs error message on failure
 
-### [ ] Task 2.2: Document smoke test output and verify with createAppts reference
+### [x] Task 2.2: Document smoke test output and verify with createAppts reference
 - Run smoke test against staging VistA (using valid TOKEN_SERVER_URL, VISTA_API_BASE_URL, VISTA_API_KEY)
 - Verify requestIEN and appointmentIEN are numeric IENs (e.g., "12345")
 - Compare response format and latency with test-appadd.js run time (~3-5s expected)
@@ -51,7 +51,7 @@
 
 ## Group 3: Batch Appointment Creation (3 tasks)
 
-### [ ] Task 3.1: Write create-appointments.js batch processor
+### [x] Task 3.1: Write create-appointments.js batch processor
 **Purpose**: Loop over 7 missing dates; create ARSET+APPADD for each; log to src/appointments.json.
 
 **Implementation**:
@@ -72,14 +72,14 @@
 - Re-running same dates skips already-created ones (idempotence)
 - Summary output shows "7 appointments created, 0 skipped, 0 failed"
 
-### [ ] Task 3.2: Add --dry-run mode to create-appointments.js
+### [x] Task 3.2: Add --dry-run mode to create-appointments.js
 - Accept `--dry-run` flag
 - When set: print what would be created (dates, clinic IEN, resource IEN, ARSET/APPADD params) without calling RPC
 - Do NOT update src/appointments.json
 - Exit 0
 - **Success Criteria**: `node create-appointments.js --dry-run` shows 7 dates, clinic 23, resource 2, and param structure
 
-### [ ] Task 3.3: Test batch run on actual VistA (all 7 dates)
+### [x] Task 3.3: Test batch run on actual VistA (all 7 dates)
 - Run `node create-appointments.js` with valid .env and 7 missing dates
 - Verify src/appointments.json has 7 entries (one per date)
 - Verify each entry has valid numeric requestIEN and appointmentIEN
@@ -91,13 +91,13 @@
 
 ## Group 4: Validation & Documentation (2 tasks)
 
-### [ ] Task 4.1: Verify appointments in VistA (visual or RPC query)
+### [x] Task 4.1: Verify appointments in VistA (visual or RPC query)
 - Check VistA SDEC interface or appointment list for DFN 100965 to confirm 7 new appointments are visible
 - Verify each appointment is on correct date and clinic (GENERAL MEDICINE)
 - Verify appointment state is correct (e.g., "requested" or "scheduled" per SDEC rules)
 - Log findings in TASK-4-IMPLEMENTATION-RESULTS.md
 
-### [ ] Task 4.2: Update PROJECT-PLAN.md and document Task 4 as DONE
+### [x] Task 4.2: Update PROJECT-PLAN.md and document Task 4 as DONE
 - Update PROJECT-PLAN.md: Task 4 status to DONE with summary:
   - 7 appointments created for missing dates (1980-06-20, 1986-06-06, 1987-03-12, 2016-10-28, 2025-10-04, 2025-10-21, 2026-04-19)
   - Smoke test passed (test-create-appointment.js, 2025-10-21, latency ~3-5s)
@@ -109,7 +109,7 @@
 
 ## Group 5: Code Quality & Testing (2 tasks)
 
-### [ ] Task 5.1: Add error handling and logging to test-create-appointment.js
+### [x] Task 5.1: Add error handling and logging to test-create-appointment.js
 - Catch network errors, timeouts, malformed responses
 - Log with context: HTTP status, upstream error message (if available), RPC name, param count
 - Provide helpful error messages:
@@ -119,7 +119,7 @@
 - Exit 1 with error message on failure
 - **Success Criteria**: Running with incomplete .env shows clear error message; running with VistA error shows upstream details
 
-### [ ] Task 5.2: Add error handling and logging to create-appointments.js
+### [x] Task 5.2: Add error handling and logging to create-appointments.js
 - Log each date as it starts and completes (for progress visibility)
 - On RPC error: log with date, RPC name, status, upstream error; mark as failed; continue
 - On write error (src/appointments.json): log and fail with helpful message
@@ -131,7 +131,7 @@
 
 ## Group 6: Integration & Handoff (1 task)
 
-### [ ] Task 6.1: Prepare for Task 5 (TIU Note Writing)
+### [x] Task 6.1: Prepare for Task 5 (TIU Note Writing)
 - Verify src/appointments.json has all 7 appointment IENs
 - Pass appointmentIEN to Task 5 note-writing module (src/notesClient.js will use it in TIU CREATE RECORD call)
 - Document appointment IEN schema in TASK-4-IMPLEMENTATION-RESULTS.md: field name, format, usage in TIU CREATE

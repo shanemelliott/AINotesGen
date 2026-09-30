@@ -127,11 +127,14 @@ Enhanced prompts to use `visitDiagnoses`, `carePlanActivities`, and filtered pro
 6. **Keep the smoke-test guards** in the real generator: identifier-leak check, format check (marker, headings, <=80 chars, no markdown), and cited-lab grounding. ✓ Enhanced.
 7. **Budget:** o3-mini takes 12-19 s and about 6k tokens per note, so 38 encounters x 4 patients is about 150 notes, about 1M tokens, about 45 min sequential. ✓ Confirmed with improved note generation.
 
-### Task 4: Appointment creation for past dates
-- Decide dedupe policy (see Finding 2). Default: skip dates that already have an appointment and create only the missing ones.
-- Reuse `SDEC ARSET` -> `SDEC APPADD` from `createAppts`. Check that APPADD accepts past dates on VEHU. Past appointments may also need `SDEC CHECKIN`/`SDEC CHECKOUT` to show as kept.
-- Clinic: GENERAL MEDICINE (loc 23) or a `DEV/` clinic, to be decided.
-- Choose the transport: direct VistaJS (bulk-appointments) or vista-api-x (single-appointment-api). Recommend vista-api-x, since that's how the patient JSON was obtained.
+### Task 4: Appointment creation for past dates — DONE
+- Dedupe policy: skip dates that already have an appointment (`src/appointments.json` tracks created records for idempotent re-runs).
+- Reused `SDEC ARSET` -> `SDEC APPADD` via `src/appointmentCreator.js` (shared by smoke test and batch script). Real clinic: IEN 532, resource IEN 185 (site-specific, configurable via `.env`).
+- Transport: vista-api-x (`src/vistaApiClient.js`), auth via PIV card exe (`src/tokenService.js` + `sts-token/sts-token-generator.exe`), not an HTTP token server.
+- **Overbook flag**: historical dates don't have a slot template in VistA, so APPADD's overbook param defaults to `true` for any date before today (auto-detected in `defaultOverbook()`).
+- **Time rounding**: encounter times are rounded backward to the nearest half-hour (`roundDownToHalfHour()`, e.g. `12:24` -> `12:00`) to land on a plausible clinic slot.
+- All 7 missing appointments created for DFN 100965 (1980-06-20, 1986-06-06, 1987-03-12, 2016-10-28, 2025-10-04, 2025-10-21, 2026-04-19); IENs logged in `src/appointments.json`.
+- See `openspec/changes/create-past-appointments/` for full spec/design/tasks.
 
 ### Task 5: Note writing to VistA
 - `TIU CREATE RECORD` with DFN, title IEN, and location IEN; `TEXT` lines from the AI output; visit string `<locIEN>;<FMdate>;<type>`.

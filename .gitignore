@@ -2,6 +2,9 @@
 createAppts/
 vista-notes/
 
+#Token files
+sts-token/
+
 # Dependencies
 node_modules/
 
@@ -10,6 +13,7 @@ node_modules/
 .env.*
 !.env.sample
 config.js
+!src/config.js
 
 # Patient data (DFN-named VPR JSON and patient list)
 [0-9]*.json

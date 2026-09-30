@@ -7,6 +7,7 @@
     "test:ai": "node test-ai.js"
   },
   "dependencies": {
+    "@va/sts-token": "file:..\\VistaJSNode\\dub\\sts-token",
     "axios": "^1.20.0",
     "dotenv": "^18.0.4"
   }
