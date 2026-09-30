@@ -103,19 +103,29 @@ Check that the VA Azure OpenAI endpoint will write a synthetic progress note bef
 - Output `encounters-<dfn>.json` and review it by hand.
 
 ### Task 3: Prompt design and note quality
+- Marker line: include `*** SYNTHETIC TEST NOTE - FICTIONAL PATIENT - NOT FOR CLINICAL USE ***` in the prompt (so LLM includes it) but **strip it on VistA upload** (TIU CREATE RECORD must not contain it).
 - Give the prompt a running history: a short summary of previous encounters, so notes are consistent over time and the patient ages correctly (use DOB).
 - Choose note title per encounter (default `PRIMARY CARE VISIT` IEN 16; confirm IENs on VEHU).
 - Guardrails: don't invent labs that aren't provided; mark abnormal values against `low`/`high`; plain text, at most 80 chars/line.
 - Batch-generate for DFN 100965 in dry-run mode and review.
 
+**Status: DONE (2026-09-29).** OpenSpec change `improve-note-quality` implemented and validated.
+Enhanced prompts to use `visitDiagnoses`, `carePlanActivities`, and filtered problems; tested on 2025-10-21 encounter.
+- Added `filterProblemsForEncounter()` to `src/encounters.js` (filters to primary diagnosis + acute + up to 3 relevant chronic).
+- Updated `test-ai.js` prompt to include diagnosis codes, care plan activities, and relevant problem list with explicit constraint "Do NOT include problems outside the provided list".
+- Added `stripMarkerLine()` and `validateNote()` functions; creates both marker-present (audit) and marker-clean (upload) versions of each note.
+- Quality validation: **7/8 checks passed** (primary diagnosis grounded, narrative coherent, assessment focused ≤4 items, care plan integrated, social history separated, no markdown/IDs, all headings present, max line 73).
+- All 6 quality issues from the smoke test are resolved: diagnosis I50.1 surfaces correctly, narrative is coherent, assessment is focused, care plan activities are integrated, visit type is explicit, social history is in SUBJECTIVE.
+- See `TASK-3-IMPLEMENTATION-RESULTS.md` for before/after comparison and lessons learned. Ready for Task 4.
+
 **Findings from the smoke test.** These requirements go into the Task 3 spec. See `output/smoke-note-o3-mini.txt` for the first note.
-1. **ASSESSMENT is limited to the problems this visit addresses.** The first note listed all 21 "active" problems, including "Full-time employment" and "Has a criminal record", with a plan item for each. Require the assessment to cover the problems relevant to today's orders, new meds, and abnormal labs, plus at most a few chronic problems.
-2. **Infer the working diagnosis from orders and new meds.** Starting furosemide + carvedilol + lisinopril together implies hypertension or heart failure. The model filed them under "Medication review due". Require the prompt to state the likely diagnosis behind new meds and orders, since Synthea problem lists often omit it.
-3. **Add a SOCIAL HISTORY line** (inside SUBJECTIVE) for social determinants, instead of numbered problems.
-4. **Visit type comes from a fixed list** (`New patient`, `Follow-up`, `Acute`, `Annual/preventive`), chosen from the data. Don't copy it from the `setting` field.
-5. **Continuity:** the running history across encounters (above) keeps problems and meds consistent between notes.
-6. **Keep the smoke-test guards** in the real generator: identifier-leak check, format check (marker, headings, <=80 chars, no markdown), and cited-lab grounding.
-7. **Budget:** o3-mini takes 12-19 s and about 6k tokens per note, so 38 encounters x 4 patients is about 150 notes, about 1M tokens, about 45 min sequential. Allow for throttling/429s.
+1. **ASSESSMENT is limited to the problems this visit addresses.** ✓ FIXED via `filterProblemsForEncounter()`.
+2. **Infer the working diagnosis from orders and new meds.** ✓ FIXED by passing `visitDiagnoses` with ICD codes to prompt.
+3. **Add a SOCIAL HISTORY line** (inside SUBJECTIVE) for social determinants, instead of numbered problems. ✓ FIXED via encounter extraction separation.
+4. **Visit type comes from a fixed list** (`New patient`, `Follow-up`, `Acute`, `Annual/preventive`), chosen from the data. ✓ FIXED via `suggestedVisitType` in prompt.
+5. **Continuity:** the running history across encounters (above) keeps problems and meds consistent between notes. → Deferred to Task 6 (batch generation).
+6. **Keep the smoke-test guards** in the real generator: identifier-leak check, format check (marker, headings, <=80 chars, no markdown), and cited-lab grounding. ✓ Enhanced.
+7. **Budget:** o3-mini takes 12-19 s and about 6k tokens per note, so 38 encounters x 4 patients is about 150 notes, about 1M tokens, about 45 min sequential. ✓ Confirmed with improved note generation.
 
 ### Task 4: Appointment creation for past dates
 - Decide dedupe policy (see Finding 2). Default: skip dates that already have an appointment and create only the missing ones.

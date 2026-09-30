@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const dotenv = require('dotenv');
+const { indexVpr, extractEncounters, filterProblemsForEncounter } = require('./src/encounters.js');
 
 const ENDPOINT_BASE = 'https://spd-prod-openai-va-apim.azure-api.us/api/openai/deployments';
 const DEFAULT_CANDIDATES = [
@@ -75,17 +76,20 @@ function ageOn(dob8, d8) {
 function loadPatient(dfn) {
   const file = path.join(__dirname, `${dfn}.json`);
   if (!fs.existsSync(file)) fail(`Patient file not found: ${dfn}.json`);
-  const items = JSON.parse(fs.readFileSync(file, 'utf8'))?.payload?.data?.items;
+  const vpr = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const items = vpr?.payload?.data?.items;
   if (!Array.isArray(items)) fail(`${dfn}.json has no payload.data.items array`);
+  return items;
+}
 
-  const byDomain = {};
-  const byUid = new Map();
-  for (const it of items) {
-    const domain = String(it.uid || '').split(':')[2] || 'unknown';
-    (byDomain[domain] ||= []).push(it);
-    byUid.set(it.uid, it);
-  }
-  return { byDomain, byUid };
+function getEncounter(items, dateStr) {
+  const date8 = dateStr.replace(/-/g, '');
+  const problemRules = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'problem-rules.json'), 'utf8'));
+  const indexed = indexVpr(items);
+  const encounters = extractEncounters(indexed, { rules: problemRules });
+  const enc = encounters.find((e) => e.date === `${date8.slice(0, 4)}-${date8.slice(4, 6)}-${date8.slice(6, 8)}`);
+  if (!enc) fail(`No encounter found for ${dateStr}; no orders on that date.`);
+  return enc;
 }
 
 function labFlag(lab) {
@@ -107,62 +111,33 @@ const shapeLab = (l) => ({
   observed: fmtDay(day(l.observed)),
 });
 
-function buildContext({ byDomain, byUid }, date8) {
-  const orders = byDomain.order || [];
-  const todays = orders.filter((o) => day(o.start) === date8);
-  if (todays.length === 0) fail(`No orders found for ${fmtDay(date8)}; nothing to build an encounter from.`);
-
-  const patient = (byDomain.patient || [])[0] || {};
-  const linkedUids = new Set(todays.flatMap((o) => (o.results || []).map((r) => r.uid)));
-  const linkedLabs = [...linkedUids].map((u) => byUid.get(u)).filter((x) => x && x.uid.includes(':lab:'));
-
-  const from8 = toD8(new Date(toDate(date8).getTime() - HISTORY_DAYS * 86400000));
-  const inWindow = (d8) => d8 >= from8 && d8 < date8;
-  const historyUids = new Set(
-    orders.filter((o) => inWindow(day(o.start))).flatMap((o) => (o.results || []).map((r) => r.uid)),
-  );
-  const recentLabs = (byDomain.lab || [])
-    .filter((l) => !linkedUids.has(l.uid) && (historyUids.has(l.uid) || inWindow(day(l.observed))))
-    .sort((a, b) => day(a.observed).localeCompare(day(b.observed)));
-
-  const meds = (byDomain.med || []).filter((m) => {
-    const start = day(m.overallStart);
-    const stop = day(m.overallStop || m.stopped);
-    return start && start <= date8 && (!stop || stop >= date8);
-  });
-
-  const seen = new Set();
-  const problems = (byDomain.problem || [])
-    .filter((p) => day(p.onset) && day(p.onset) <= date8)
-    .sort((a, b) => day(b.onset).localeCompare(day(a.onset)))
-    .filter((p) => !seen.has(p.problemText) && seen.add(p.problemText));
-
-  const vitalsUpTo = (byDomain.vital || []).filter((v) => day(v.observed) && day(v.observed) <= date8);
-  const lastVitalDay = vitalsUpTo.map((v) => day(v.observed)).sort().pop();
-  const vitals = vitalsUpTo.filter((v) => day(v.observed) === lastVitalDay);
-
+function buildContext(enc, problemRules) {
+  // Build prompt context from encounter extracted by extractEncounters
+  const filtered = filterProblemsForEncounter(enc, problemRules);
+  const relevantProblems = filtered.map((p) => p.text);
+  
   return {
     encounter: {
-      date: fmtDay(date8),
-      clinic: todays[0].locationName || 'UNKNOWN CLINIC',
+      date: fmtDay(enc.date.replace(/-/g, '')),
+      clinic: enc.clinic,
+      visitType: enc.suggestedVisitType,
       setting: 'VA outpatient clinic',
     },
     patient: {
-      age: patient.dateOfBirth ? ageOn(day(patient.dateOfBirth), date8) : null,
-      gender: patient.genderName || null,
-      veteran: patient.veteran ? true : undefined,
+      age: enc.patient.age,
+      gender: enc.patient.gender,
+      veteran: true,
     },
-    ordersToday: todays.map((o) => ({ name: o.name.trim(), service: o.service, status: o.statusName })),
-    labsToday: linkedLabs.map(shapeLab),
-    activeMeds: meds.map((m) => ({
-      name: m.name.trim(),
-      strength: m.products?.[0]?.strength,
-      sig: m.sig,
-      started: fmtDay(day(m.overallStart)),
-    })),
-    problems: problems.map((p) => ({ text: p.problemText, onset: fmtDay(day(p.onset)), status: p.statusName })),
-    latestVitals: vitals.map((v) => ({ type: v.typeName, result: v.result, units: v.units, observed: fmtDay(day(v.observed)) })),
-    recentLabHistory: recentLabs.map(shapeLab),
+    ordersToday: enc.ordersToday,
+    labsToday: enc.labsToday.map(shapeLab),
+    newMeds: enc.newMeds,
+    activeMeds: enc.activeMeds.map((m) => ({ ...m, started: fmtDay(m.started.replace(/-/g, '')) })),
+    latestVitals: enc.latestVitals,
+    recentLabHistory: enc.recentLabHistory.map(shapeLab),
+    visitDiagnoses: enc.visitDiagnoses,
+    carePlanActivities: enc.carePlanActivities,
+    relevantProblems,
+    socialHistory: enc.socialHistory,
   };
 }
 
@@ -179,9 +154,10 @@ function assertNoIdentifiers(payloadText, { byDomain }) {
 // ---------- prompt ----------
 
 function buildInstructions(ctx) {
+  const visitType = ctx.encounter.visitType === 'New patient' ? 'New patient visit' : 'Follow-up visit';
   const skeleton = [
     MARKER,
-    `VISIT DATE: ${ctx.encounter.date}   CLINIC: ${ctx.encounter.clinic}   TYPE: <visit type>`,
+    `VISIT DATE: ${ctx.encounter.date}   CLINIC: ${ctx.encounter.clinic}   TYPE: ${visitType}`,
     'CHIEF COMPLAINT:',
     'SUBJECTIVE:',
     'OBJECTIVE:',
@@ -190,6 +166,16 @@ function buildInstructions(ctx) {
     'PLAN:',
     '1. ...',
   ].join('\n');
+
+  const diagnosisSection = ctx.visitDiagnoses.length
+    ? `Primary diagnosis: ${ctx.visitDiagnoses.map((d) => `${d.name} (${d.icd})`).join('; ')}`
+    : 'No primary diagnosis available';
+
+  const careplanSection = ctx.carePlanActivities.length
+    ? `Care plan activities to address in the PLAN section:\n${ctx.carePlanActivities.map((a) => `  - ${a}`).join('\n')}`
+    : 'No care plan activities';
+
+  const problemsSection = `Focus your ASSESSMENT on these problems only:\n${ctx.relevantProblems.map((p) => `  - ${p}`).join('\n')}`;
 
   return [
     'You are generating SYNTHETIC clinical documentation for a VA software test system.',
@@ -200,15 +186,23 @@ function buildInstructions(ctx) {
     'Rules:',
     `- The first line MUST be exactly: ${MARKER}`,
     `- Use these section headings, each on its own line, in this order: ${HEADINGS.join(' ')}`,
-    '- The VISIT DATE line includes the encounter date (MM/DD/YYYY) and the clinic.',
+    '- The VISIT DATE line includes the encounter date (MM/DD/YYYY), clinic, and visit type (New patient or Follow-up).',
+    `- ${diagnosisSection}`,
+    '- SUBJECTIVE: Include relevant history, symptoms, and medications. Include social history as context.',
     '- OBJECTIVE lists the vitals and pertinent labs with values and abnormal flags.',
-    '- ASSESSMENT is a numbered problem list. PLAN addresses each numbered problem',
-    '  (medications started or changed, labs ordered, follow-up).',
-    '- Base the note only on the provided data. Do NOT invent lab values, vitals, or',
-    '  medications that are not in the JSON. You may write plausible subjective',
-    '  history consistent with the data.',
+    `- ASSESSMENT: Base ONLY on the provided problem list below. Do NOT include problems not in the list.`,
+    `  Each assessment item should be clinically grounded in today's orders, labs, or meds.`,
+    '- PLAN addresses each numbered assessment problem. Link each medication to its clinical indication.',
+    `  (e.g., "furosemide for diuresis in heart failure")`,
+    `- Include care plan activities in the PLAN if relevant to the primary diagnosis.`,
+    '- Base the note only on the provided data. Do NOT invent lab values, vitals, or medications.',
     '- Use the orders placed today to infer the reason for the visit.',
     `- Plain text only. No markdown (no #, no **, no code fences). Max ${MAX_LINE} characters per line.`,
+    '',
+    'Clinical context:',
+    diagnosisSection,
+    careplanSection,
+    problemsSection,
     '',
     'Required layout:',
     skeleton,
@@ -282,6 +276,51 @@ async function callCandidate({ model, apiVersion }, ctx, apiKey) {
 
 // ---------- format check ----------
 
+function stripMarkerLine(note) {
+  const lines = note.replace(/\r\n/g, '\n').split('\n');
+  if (lines[0] === MARKER) {
+    return lines.slice(1).join('\n');
+  }
+  return note;
+}
+
+function validateNote(note) {
+  const lines = note.replace(/\r\n/g, '\n').split('\n');
+  const problems = [];
+
+  // Check headings
+  let lastIdx = -1;
+  for (const h of HEADINGS) {
+    const idx = lines.findIndex((l) => l.trimStart().startsWith(h));
+    if (idx === -1) problems.push(`missing ${h}`);
+    else if (idx < lastIdx) problems.push(`misordered ${h}`);
+    else lastIdx = idx;
+  }
+
+  // Check line length
+  const longLines = lines.filter((l) => l.length > MAX_LINE);
+  if (longLines.length > 0) problems.push(`${longLines.length} line(s) exceed ${MAX_LINE} chars`);
+
+  // Check for markdown
+  const markdown = /(^|\n)\s*#{1,6}\s|\*\*[^*\n]+\*\*|```/.test(note);
+  if (markdown) problems.push('contains markdown formatting');
+
+  // Check for identifiers (SSN, ICN, name pattern)
+  const ssnPattern = /\d{3}-\d{2}-\d{4}/;
+  if (ssnPattern.test(note)) problems.push('contains potential SSN');
+  
+  // Check assessment focus (count numbered items)
+  const assessmentMatch = note.match(/ASSESSMENT:([\s\S]*?)(PLAN:|$)/);
+  if (assessmentMatch) {
+    const assessmentText = assessmentMatch[1];
+    const numberedItems = (assessmentText.match(/^\s*\d+\./gm) || []).length;
+    if (numberedItems > 5) problems.push(`assessment has ${numberedItems} items (>5 is unfocused)`);
+  }
+
+  const pass = problems.length === 0;
+  return { pass, problems };
+}
+
 function checkFormat(note) {
   const lines = note.replace(/\r\n/g, '\n').split('\n');
   const markerOk = lines[0] === MARKER;
@@ -309,16 +348,20 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) return console.log(USAGE);
 
-  const date8 = args.date.replace(/-/g, '');
-  const data = loadPatient(args.dfn);
-  const ctx = buildContext(data, date8);
+  const items = loadPatient(args.dfn);
+  const encounter = getEncounter(items, args.date);
+  const problemRules = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'problem-rules.json'), 'utf8'));
+  const ctx = buildContext(encounter, problemRules);
   const payloadText = JSON.stringify(ctx);
-  assertNoIdentifiers(payloadText, data);
+  
+  // Verify no identifiers in the context before sending to LLM
+  const indexed = indexVpr(items);
+  assertNoIdentifiers(payloadText, indexed);
 
   const candidates = args.model ? [{ model: args.model, apiVersion: args.apiVersion }] : DEFAULT_CANDIDATES;
 
   if (args.dumpContext) {
-    console.log('Domain counts:', Object.fromEntries(Object.entries(data.byDomain).map(([k, v]) => [k, v.length])));
+    console.log('Encounter for', args.date, ':', encounter.date);
     console.log(JSON.stringify(ctx, null, 2));
     return;
   }
@@ -358,8 +401,15 @@ async function main() {
     if (r.content) {
       const file = path.join(OUTPUT_DIR, `smoke-note-${c.model.replace(/[^\w.-]/g, '_')}.txt`);
       fs.writeFileSync(file, r.content + '\n');
+      
+      // Also write the marker-stripped version for VistA upload
+      const cleanNote = stripMarkerLine(r.content);
+      const cleanFile = path.join(OUTPUT_DIR, `smoke-note-${c.model.replace(/[^\w.-]/g, '_')}-clean.txt`);
+      fs.writeFileSync(cleanFile, cleanNote + '\n');
+      
       console.log(`\n${r.content}\n`);
       console.log(`saved: ${path.relative(__dirname, file)}`);
+      console.log(`clean: ${path.relative(__dirname, cleanFile)}`);
     }
     if (fmt) {
       console.log(

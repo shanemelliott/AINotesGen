@@ -79,6 +79,43 @@ function problemsFor(problems, date8, rules) {
   return out;
 }
 
+// ---------- problem filtering for note generation ----------
+
+function filterProblemsForEncounter(encounter, rules) {
+  // Build a filtered problem list for note generation:
+  // (1) primary diagnosis from visitDiagnoses, (2) acute problems within 365 days,
+  // (3) up to 3 chronic problems relevant to today's orders/meds/labs
+  
+  const filtered = [];
+  const orderAndMedNames = [
+    ...(encounter.ordersToday || []).map((o) => (o.name || '').toLowerCase()),
+    ...(encounter.newMeds || []).map((m) => (m.name || '').toLowerCase()),
+  ].join(' ');
+  
+  // (1) Add primary diagnosis
+  const primaryDiag = (encounter.visitDiagnoses || []).find((d) => d.primary);
+  if (primaryDiag) {
+    filtered.push({ text: primaryDiag.name, icd: primaryDiag.icd, category: 'primary-diagnosis' });
+  }
+  
+  // (2) Add acute problems (already filtered by problemsFor)
+  const acuteProblems = (encounter.problems || [])
+    .filter((p) => p.category === 'acute')
+    .slice(0, 2); // limit acute to 2
+  filtered.push(...acuteProblems);
+  
+  // (3) Add up to 3 chronic problems, prioritizing those that appear in orders/meds
+  const chronicProblems = (encounter.problems || []).filter((p) => p.category === 'clinical');
+  const scored = chronicProblems.map((p) => ({
+    ...p,
+    score: orderAndMedNames.includes(p.text.toLowerCase()) ? 2 : 1,
+  }));
+  scored.sort((a, b) => b.score - a.score || a.onset.localeCompare(b.onset));
+  filtered.push(...scored.slice(0, 3 - acuteProblems.length)); // fill to 3 total after acute
+  
+  return filtered;
+}
+
 // ---------- labs / meds / vitals ----------
 
 function labFlag(lab) {
@@ -257,4 +294,4 @@ function findIdentifierLeaks(text, { byDomain }) {
     .filter((v) => v.length >= 4 && text.includes(v));
 }
 
-module.exports = { indexVpr, extractEncounters, categorizeProblem, findIdentifierLeaks, day, isoDate, hhmm, fm, ageOn };
+module.exports = { indexVpr, extractEncounters, categorizeProblem, filterProblemsForEncounter, findIdentifierLeaks, day, isoDate, hhmm, fm, ageOn };
