@@ -1,0 +1,21 @@
+# Reference-only projects (not part of this repo)
+createAppts/
+vista-notes/
+
+# Dependencies
+node_modules/
+
+# Secrets / local config
+.env
+.env.*
+!.env.sample
+config.js
+
+# Patient data (DFN-named VPR JSON and patient list)
+[0-9]*.json
+patients.txt
+
+# Logs and output
+logs/
+*.log
+output/

@@ -1,0 +1,77 @@
+schema: spec-driven
+githubCopilot:
+  cloudAgent: false
+
+context: |
+  Purpose: generate synthetic historical encounters for test patients in a VA VistA
+  test system (VEHU, station 500, Synthea-loaded data). Derive encounter dates from
+  the patient's orders, build a clinical picture from labs/problems/orders/meds/vitals,
+  create past appointments on those dates, and write AI-generated SYNTHETIC progress
+  notes to VistA TIU for each encounter. All patient data is fictional.
+
+  Tech stack: Node.js 24 (CommonJS), pnpm (never npm/yarn), axios, dotenv. No TypeScript.
+  App code lives at the repo root (NotesGenerator). Keep it small and script-oriented.
+
+  Inputs:
+  - patients.txt: target patient names + DFNs (100961, 100962, 100964, 100965).
+  - <dfn>.json: vista-api-x rpc/invoke response containing VPR JSON. Records are in
+    payload.data.items[]; domain is the 3rd segment of uid (urn:va:<domain>:84F0:<dfn>:<id>).
+    Domains: order, lab, problem, med, vital, visit, appointment, immunization, cpt, pov,
+    factor, treatment, patient. VPR dates are YYYYMMDDHHmm numbers.
+  - order.results[].uid links an order to its lab results.
+
+  Reference-only code (git-ignored, read but do not modify; copy what is needed):
+  - vista-notes/: VistaJS RPC broker client, TIU CREATE RECORD example, ISO->FileMan
+    date conversion (FileMan = YYYMMDD.HHMM where YYY = year-1700).
+  - createAppts/bulk-appointments: VistaJS SDEC ARSET -> SDEC APPADD flow.
+  - createAppts/single-appointment-api: same flow via vista-api-x
+    (/vista-sites/{site}/users/{duz}/rpc/invoke) with token server.
+  - ../VAOSAI/openaiClient.js: Azure OpenAI via VA APIM
+    https://spd-prod-openai-va-apim.azure-api.us/api/openai/deployments/{model}/chat/completions
+    header 'api-key'. Known-good: o3-mini @ api-version 2025-04-28.
+    Key is AZURE_OPENAI_API_KEY in ../VAOSAI/.env.
+
+  Constraints:
+  - Never log, print, or commit API keys, access/verify codes, or tokens.
+  - Send the LLM only minimum clinical fields; never SSN, address, or telecom.
+  - Every generated note begins with a line marking it as synthetic test data.
+  - TIU note lines must be plain text, max 80 characters, no markdown.
+  - Anything that writes to VistA must support a --dry-run mode.
+  - PROJECT-PLAN.md at the repo root is the overall roadmap.
+
+rules:
+  proposal:
+    - Include a Non-goals section
+  tasks:
+    - Keep tasks small and independently verifiable
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing
