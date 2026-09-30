@@ -88,3 +88,37 @@ Get-Content generate-<dfn>.log -Tail 20          # snapshot
 Get-Content generate-<dfn>.log -Wait -Tail 20    # live tail (Ctrl+C to stop watching)
 ```
 
+## Gotchas / lessons learned
+
+- **Appointment scope varies wildly by patient.** Always check `--summary` /
+  `--dry-run` output before committing to a patient — encounter counts have
+  ranged from 38 to 253 across the 4 test patients, meaning very different
+  amounts of LLM generation, RPC calls, and review time.
+- **VistA is the source of truth for appointment times.** After
+  `create-appointments.js`, always re-fetch + re-extract (step 4) before
+  generating notes — the visit string's FileMan datetime must match the
+  appointment's actual time exactly, or VistA creates a duplicate encounter
+  instead of linking to the note.
+- **Line-length is auto-fixed at generation time.** `generate-notes.js` runs
+  `src/reflow.js` on the LLM output before flagging, so lines over 80 chars
+  get word-wrapped automatically (preserving list-item indentation). Only
+  genuine content issues (pregnancy/contraceptive mismatch, ungrounded
+  assessment items, truncated LLM output) should still land in
+  `output/review/`.
+- **Truncated LLM output looks like a missing-section flag**
+  (`structural validation failed: missing ASSESSMENT:; missing PLAN:`) with
+  the note text literally cutting off mid-word/mid-sentence. This is a
+  transient LLM issue, not a formatting one — delete the `.txt`/`.json` pair
+  and re-run `generate-notes.js` (already-generated notes are skipped, so
+  only the missing one regenerates).
+- **Signing fails intermittently (~5% of calls)** with "incorrect Electronic
+  Signature Code" — a transient VistA-side issue, not something in our
+  control. `signNote()` retries automatically (2 extra attempts); for
+  failures that persist after a full run, use `resign-notes.js`.
+- **Never commit patient data.** `.gitignore` excludes `[0-9]*.json` (VPR
+  dumps), `patients.txt`, `output/` (generated notes), and `*.log`. Verify
+  with `git status --short` before committing — only code, docs, and
+  non-PII metadata logs (`src/notes.json`, `src/appointments.json`, which
+  hold only dfn/date/IEN, no note text or demographics) should be tracked.
+
+

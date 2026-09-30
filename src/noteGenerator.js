@@ -19,14 +19,30 @@ function loadApiKey() {
   return apiKey;
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function generateNoteText(dfn, date) {
   const items = loadPatient(dfn);
   const encounter = getEncounter(items, date);
   const problemRules = JSON.parse(fs.readFileSync(path.join(__dirname, 'problem-rules.json'), 'utf8'));
   const ctx = buildContext(encounter, problemRules);
-
   const apiKey = loadApiKey();
-  const result = await callCandidate(DEFAULT_MODEL, ctx, apiKey);
+
+  // o-series reasoning tokens count against max_completion_tokens, so a
+  // complex encounter can exhaust the budget before producing visible
+  // output (finish_reason=length, empty content). Retry once with a much
+  // higher budget before giving up. Also retry once on 429 (rate limit).
+  const attempts = [{ maxTokens: 4000, delayMs: 0 }, { maxTokens: 8000, delayMs: 5000 }];
+  let result;
+  for (const attempt of attempts) {
+    if (attempt.delayMs) await delay(attempt.delayMs);
+    result = await callCandidate(DEFAULT_MODEL, ctx, apiKey, attempt.maxTokens);
+    const retryable = result.outcome === 'http-429' || result.finishReason === 'length';
+    if (!retryable) break;
+  }
+
   if (result.outcome !== 'ok') {
     throw new Error(`Note generation failed: ${result.outcome} ${result.detail || ''}`);
   }

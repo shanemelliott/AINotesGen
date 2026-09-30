@@ -211,18 +211,18 @@ function buildInstructions(ctx) {
 
 const isOSeries = (model) => /^o\d/i.test(model);
 
-function buildBody(model, ctx) {
+function buildBody(model, ctx, maxTokens) {
   const instructions = buildInstructions(ctx);
   const user = `Encounter data (JSON):\n${JSON.stringify(ctx)}`;
   if (isOSeries(model)) {
     return {
       messages: [{ role: 'developer', content: instructions }, { role: 'user', content: user }],
-      max_completion_tokens: 4000,
+      max_completion_tokens: maxTokens || 4000,
     };
   }
   return {
     messages: [{ role: 'system', content: instructions }, { role: 'user', content: user }],
-    max_tokens: 1500,
+    max_tokens: maxTokens || 1500,
     temperature: 0.4,
   };
 }
@@ -236,12 +236,12 @@ function filterCategories(results) {
   return Object.entries(results).filter(([, v]) => v && v.filtered).map(([k, v]) => `${k}${v.severity ? `(${v.severity})` : ''}`).join(',');
 }
 
-async function callCandidate({ model, apiVersion }, ctx, apiKey) {
+async function callCandidate({ model, apiVersion }, ctx, apiKey, maxTokens) {
   const url = `${ENDPOINT_BASE}/${encodeURIComponent(model)}/chat/completions?api-version=${encodeURIComponent(apiVersion)}`;
   const started = Date.now();
   let res;
   try {
-    res = await axios.post(url, buildBody(model, ctx), {
+    res = await axios.post(url, buildBody(model, ctx, maxTokens), {
       headers: { 'api-key': apiKey, 'Content-Type': 'application/json' },
       timeout: 180000,
       validateStatus: () => true,

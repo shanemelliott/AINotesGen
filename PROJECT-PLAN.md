@@ -116,7 +116,7 @@ Enhanced prompts to use `visitDiagnoses`, `carePlanActivities`, and filtered pro
 - Added `stripMarkerLine()` and `validateNote()` functions; creates both marker-present (audit) and marker-clean (upload) versions of each note.
 - Quality validation: **7/8 checks passed** (primary diagnosis grounded, narrative coherent, assessment focused ≤4 items, care plan integrated, social history separated, no markdown/IDs, all headings present, max line 73).
 - All 6 quality issues from the smoke test are resolved: diagnosis I50.1 surfaces correctly, narrative is coherent, assessment is focused, care plan activities are integrated, visit type is explicit, social history is in SUBJECTIVE.
-- See `TASK-3-IMPLEMENTATION-RESULTS.md` for before/after comparison and lessons learned. Ready for Task 4.
+- See `openspec/changes/archive/2026-09-29-improve-note-quality/TASK-3-IMPLEMENTATION-RESULTS.md` for before/after comparison and lessons learned. Ready for Task 4.
 
 **Findings from the smoke test.** These requirements go into the Task 3 spec. See `output/smoke-note-o3-mini.txt` for the first note.
 1. **ASSESSMENT is limited to the problems this visit addresses.** ✓ FIXED via `filterProblemsForEncounter()`.
@@ -178,6 +178,47 @@ patient stands, encounter-count surprises only found after fetching VPR data.
   stop before generate-notes for a manual go/no-ahead once scope is known.
 - Candidate for a proper `openspec propose` once the current 4-patient batch
   (Task 6) is done, so the design reflects real usage pain rather than guesses.
+
+### Task 9: Repo cleanup — DONE (first pass)
+The root vs `src/` split is intentional (root = CLI entry points run via
+`node x.js`; `src/` = shared library modules they `require()`) but had
+accumulated clutter:
+- **Stray log files in repo root**: moved to `logs/` (already gitignored).
+- **Early one-off scripts from Task 1-3** (`test-filter.js`, `test-quality.js`,
+  `test-validate.js`): deleted — fully superseded by `src/encounters.js`'s
+  `filterProblemsForEncounter()` and `test-ai.js`'s `validateNote()`/
+  `stripMarkerLine()` (verified nothing else required them).
+- **`TASK-3-IMPLEMENTATION-RESULTS.md` / `TASK-3-QUALITY-REVIEW.md`**: moved into
+  `openspec/changes/archive/2026-09-29-improve-note-quality/` alongside the
+  spec they document.
+- **Remaining/deferred**: `test-*.js` naming for the manual smoke-test scripts
+  (`test-ai.js`, `test-create-appointment.js`, `test-write-note.js`) is still
+  misleading since there's no automated test runner — leave as-is for now,
+  revisit if/when real automated tests are added.
+
+### Task 10: Note cleanup tool (proposed, not started)
+A `reset-notes.js --dfn <dfn> [--stage review|ready|signed|all]` to clear
+locally-generated note artifacts for a patient, for re-testing/re-runs:
+- Deletes matching `.txt`/`.json` pairs from `output/review/`,
+  `output/ready/`, and/or `output/signed/`.
+- Removes matching entries from `src/notes.json` (by dfn, optionally by date).
+- Does **not** touch VistA — a `TIU CREATE RECORD`/`TIU SIGN RECORD` note
+  cannot be un-created via a simple RPC call once written, especially once
+  signed. If a note is written in error, that needs a separate, explicit,
+  human-reviewed path (likely a VistA administrative action, not a script) —
+  flag this clearly in the tool's help text so it isn't mistaken for a
+  VistA-side undo.
+- Useful today already: several notes were manually deleted+regenerated
+  (100961's truncated/flagged notes) via ad hoc `Remove-Item` — this would
+  make that a proper, safer, documented command.
+- **Retention**: once a note is signed, `src/notes.json` already has the
+  authoritative record (dfn, date, tiuIen, signed) and VistA has the note
+  itself — the local `.txt`/`.json` pair in `output/signed/` is then just a
+  convenience copy, not the source of truth. `--stage signed` cleanup (after
+  confirming `src/notes.json` shows `signed: true`) is the safe, low-risk
+  case to support first; `review`/`ready` cleanup (before anything is
+  written to VistA) is even lower-risk and useful for the regenerate/retry
+  workflow above.
 
 ---
 

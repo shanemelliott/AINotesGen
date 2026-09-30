@@ -72,9 +72,9 @@ Replaces the original single `write-notes.js` batch script with a 3-stage, file-
 - Verify `src/notes.json` has all 38 entries and `output/ready/`/`output/review/` are empty
 - **Done**: 100965 (38/38 signed) and 100961 (49/49 signed) completed end-to-end; 2 intermittent e-sig failures caught and fixed via `resign-notes.js` + retry logic in `signNote()`.
 
-### [ ] Task 3.6: Document results
+### [x] Task 3.6: Document results
 - Document counts (generated, flagged, approved, signed), any failures, and the pregnancy/eclampsia flag-check catch rate in TASK-5-IMPLEMENTATION-RESULTS.md
-- **Pending**: finish once 100962/100964 are processed so the doc covers all 4 patients in one pass.
+- **Done**: see `TASK-5-IMPLEMENTATION-RESULTS.md` (covers 100965, 100961, 100962; 100964 pending, doc will be updated once processed).
 
 ---
 
