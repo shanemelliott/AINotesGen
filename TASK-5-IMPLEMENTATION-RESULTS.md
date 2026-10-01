@@ -11,11 +11,9 @@ patients so far (100964 pending).
 | 100965 | 38 | 7 | 38 | 12 | 0 | 38/38 |
 | 100961 | 49 | 23 | 49 | 12 | 0 (after 2 truncation retries) | 49/49 |
 | 100962 | 253 | 163 | 253 | 4 (peak, after retries) | 9 (peak, before retry fix) | 253/253 |
-| 100964 | 104 | TBD | — | — | — | — |
+| 100964 | 104 | 42 | 104 | 1 | 0 | 104/104 |
 
-**Total signed so far: 340/340** attempted (100%), across two rounds of
-intermittent e-sig failures (2 for 100965, 2 for 100962) resolved via
-`resign-notes.js` / the built-in retry in `signNote()`.
+**Total: 444/444 signed (100%)**, across one round of 2 intermittent e-sig failures (100964) resolved via `resign-notes.js`.
 
 ## Flag-check catch rate (pregnancy/eclampsia bleed-through)
 

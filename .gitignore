@@ -15,9 +15,11 @@ node_modules/
 config.js
 !src/config.js
 
-# Patient data (DFN-named VPR JSON and patient list)
+# Patient data (DFN-named VPR JSON, patient list, and operational metadata)
 [0-9]*.json
 patients.txt
+src/appointments.json
+src/notes.json
 
 # Logs and output
 logs/
