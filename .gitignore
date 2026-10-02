@@ -20,7 +20,7 @@ config.js
 patients.txt
 src/appointments.json
 src/notes.json
-
+SynthiaFiles/
 # Logs and output
 logs/
 *.log
