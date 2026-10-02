@@ -59,8 +59,15 @@ the primary plan.
 `wsPostFHIR^SYNFHIR` is only exposed today via a GT.M-native HTTP listener (`POST addpatient/*`,
 `docs/web-service-entries.txt`), which doesn't translate to an InterSystems IRIS Web Gateway
 without custom CSP/REST mapping work. Since we already have RPC Broker access via vista-api-x,
-the simpler path is one **custom RPC** (e.g., `VAOS SYNFHIR LOAD`, name TBD by whoever defines it
-in file #8994) that forwards a chunked JSON payload to `wsPostFHIR^SYNFHIR` directly.
+the simpler path is one **custom RPC** that forwards a chunked JSON payload to
+`wsPostFHIR^SYNFHIR` directly.
+
+**IMPLEMENTED (2026-10-02):** RPC `CDSP UTIL LOAD FHIR` (#5024), routine `CDSPFHIR` tag `LOAD` in the
+`cds-vista-routines` repo (the `VAOS`/`VAOSFHIR` names and the draft routine below are superseded).
+Differences from the draft: JSON-only returns (`{"ERROR":"..."}`), fail-closed pre-checks
+(`$$PROD^XUPROD` non-production, SYN routines present), `$ETRAP` handler, broker context
+`CDSP RPC UTILS`, and `ARRAY` return. If one request proves too large, the fallback is a staged
+upload (stage RPC appends chunks to `^TMP`, a second RPC processes them).
 
 ### Verified `wsPostFHIR` signature (read directly from `SYNFHIR.m` source)
 ```

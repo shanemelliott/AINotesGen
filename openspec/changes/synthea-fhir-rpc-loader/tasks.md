@@ -47,7 +47,7 @@ resource inventory (18 resource types, 1948 entries, 6.7MB for one patient) and 
 
 ---
 
-## Task 1.5: Build and verify the custom VistA RPC (`VAOS SYNFHIR LOAD`) — BLOCKING
+## Task 1.5: Build and verify the custom VistA RPC (`CDSP UTIL LOAD FHIR`, was `VAOS SYNFHIR LOAD`) — Steps 1-5 DONE (2026-10-02), full-patient load pending
 **Goal**: Get one working, verified RPC that forwards a chunked FHIR bundle to
 `wsPostFHIR^SYNFHIR` and returns its load summary. **This gates all later Node-side loader work
 (Tasks 3, 4, 11)** — nothing downstream can be tested until this RPC exists and is confirmed
@@ -55,6 +55,22 @@ working from a terminal and from vista-api-x.
 
 **Owner split**: VistA-side M code and RPC definition — the user (has programmer access); Node-side
 chunking function, vista-api-x wiring, and response parsing — done together.
+
+**Progress (2026-10-02) — RPC built and verified end to end:**
+- Routine `CDSPFHIR` (tag `LOAD`) in `cds-vista-routines`, RPC `CDSP UTIL LOAD FHIR` (#5024), return type `ARRAY`,
+  one `LIST` parameter `CHUNKS`. Returns JSON only; errors are `{"ERROR":"..."}`. DEV ONLY.
+- Pre-checks fail closed: `$$PROD^XUPROD(1)` must be non-production and routines `SYNFHIR`, `SYNFPAT`, `SYNDHP61` must exist.
+- Broker context is `CDSP RPC UTILS` (the option name; `CDSP UTILS` is rejected with errorCode 182005). The production
+  `CDSP RPC CONTEXT` is not modified.
+- Node: `src/fhirBundleTransport.js` (`chunkBundleJson`, `parseRpcResult`, `loadBundle`) and `load-synthea.js`
+  (`--dry-run`, `--chunk-size`, `--skip-types`, `--keep-all`, `--per-type`). Default skip types: `Claim`,
+  `ExplanationOfBenefit`, `DocumentReference` (no SYN loader; they cut Norman647 from 18.4M to 9.1M chars).
+- Live test: Norman647 with `--per-type 3` (46 entries, 138 chunks) created DFN 100968; patient, vitals, 3 problems,
+  3 encounters and 1 lab panel verified in VistA. Allergy/careplan/immunization/meds/procedures errors are expected
+  from the subset (entries reference encounters not sent) and not yet investigated.
+- **Open:** full trimmed bundle (9.1M chars, about 2,300 chunks) not yet loaded; M-side time and the 10MB request
+  limit untested. If either fails, build a staged upload (stage RPC appending to `^TMP`, then one process RPC).
+  Norman647 now exists (DFN 100968); a reload returns `-1^Duplicate SSN`.
 
 **Progress (2026-10-01) — Step 1 confirmed working, stopped before Step 2:**
 Ran multiple terminal tests directly against `wsPostFHIR^SYNFHIR` (`D ^XUP`, hand-set `BODY(n)`
@@ -88,26 +104,23 @@ avoids the missing-resource-type bug class since real bundles have every type pr
 
 **Steps**:
 1. **Terminal-only verification first (no RPC Broker yet)** — ✅ DONE, see progress notes above.
-2. **Write the wrapper routine** (see `design.md`'s "Payload Transport" section for the draft
-   `VAOSFHIR` routine — thin pass-through confirmed viable by step 1's testing) — NOT STARTED
-3. **Define the RPC** in file #8994 (`VAOS SYNFHIR LOAD` or final agreed name): one `array`-type
-   input parameter, string return value, appropriate RPC context — NOT STARTED
-4. **Wire up via RPC Broker** — test with a minimal 2–3 chunk payload via a raw broker test tool
-   (or vista-api-x's own test/Swagger UI) before involving our Node code at all
-5. **Node-side integration**: implement `chunkBundleJson()` (see `design.md`) in
-   `src/fhir-bundle-transport.js`, call via `src/vistaApiClient.js`'s existing `callRpc()`, parse
-   the returned **chunked** JSON summary (reassemble `RESULT(n)` same as `BODY(n)`)
-6. **End-to-end test**: a real, complete Synthea patient (programmatically chunked, not hand-built)
+2. **Write the wrapper routine** (`CDSPFHIR`, see `cds-vista-routines`) — DONE (2026-10-02)
+3. **Define the RPC** in file #8994 (`CDSP UTIL LOAD FHIR`, #5024): one `LIST` input parameter, `ARRAY` return — DONE (2026-10-02)
+4. **Wire up via RPC Broker** — DONE (2026-10-02): verified through vista-api-x with context `CDSP RPC UTILS`
+5. **Node-side integration**: `chunkBundleJson()` in `src/fhirBundleTransport.js`, call via
+   `src/vistaApiClient.js`'s `callRpc()`, reassemble the chunked JSON `RESULT(n)` — DONE (2026-10-02)
+6. **End-to-end test**: a real, complete Synthea patient (programmatically chunked, not hand-built) —
+   subset (`--per-type 3`) DONE; full trimmed bundle PENDING
    → full round trip → confirm via VPR fetch that all domains landed in VistA
 
-**Output**: Working `VAOS SYNFHIR LOAD` RPC, confirmed from both a terminal and from Node via
+**Output**: Working `CDSP UTIL LOAD FHIR` RPC, confirmed from both a terminal and from Node via
 vista-api-x, with a known-good chunk size baseline.
 
 **Exit criteria**:
 - ✓ `wsPostFHIR` confirmed callable (public) or shim built
 - ✓ Terminal test with hand-set chunked array succeeds and returns parseable `RESULT`
-- ○ RPC defined in file #8994 and reachable via vista-api-x — NOT YET DONE
-- ○ Node `chunkBundleJson()` round-trips a small test bundle successfully — NOT YET DONE
+- ✓ RPC defined in file #8994 and reachable via vista-api-x
+- ✓ Node `chunkBundleJson()` round-trips a small test bundle successfully (DFN 100968)
 - ○ Known per-chunk size ceiling documented (tested empirically, not guessed) — NOT YET DONE
 - ✓ Confirmed `importEncounters^SYNFENC`'s automatic appointment-creation side effect is disabled
   per Task 1.6 before relying on `wsPostFHIR` for real patient loads (not the originally-assumed
