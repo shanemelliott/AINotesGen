@@ -128,7 +128,7 @@ vista-api-x, with a known-good chunk size baseline.
 
 ---
 
-## Task 1.6: Disable automatic appointment creation in `ENCTUPD^SYNDHP61` — DONE (2026-10-01)
+## Task 1.6: Disable automatic appointment creation in `ENCTUPD^SYNDHP61` — DONE (2026-10-01, verified 2026-10-05)
 **Goal**: Stop every `Encounter` load from unconditionally attempting the broken, direct-file-write
 appointment path, so appointments are created exclusively by our own `src/appointmentCreator.js`
 (SDEC ARSET/APPADD). Confirmed via a live VistA load-log screenshot + source inspection that
@@ -172,11 +172,91 @@ appointment side effects, appointments handled entirely by `src/appointmentCreat
 **Exit criteria** (all met):
 - ✓ Actual installed routine source located and patched (confirmed via screenshot, not assumed)
 - ✓ Single `Q` inserted with explanatory comment, appointment block unreachable
-- ⏳ Regression check (one fresh encounter load, confirm visit still creates, no `APPT` in log) —
-  recommended before relying on this for a full patient load, not yet explicitly verified
+- ✓ Regression check (2026-10-05, Lan153 full load, DFN 100969): 100 of 104 encounters loaded,
+  VPR shows 102 visits and 0 appointments, no `APPT`/appointment text in any of the 1808 load-log entries
 
 ---
 
+## Task 1.7: Preload evaluation (PROPOSED — not committed, may not be finished)
+**Goal**: Before loading a Synthea patient, tell the user which codes/labs/vitals the bundle needs
+and which of them VistA cannot map, so gaps can be fixed in VistA (or a cleaner patient chosen)
+instead of being discovered after the load.
+
+**Why (evidence, 2026-10-05)**: Full-patient load of Lan153_Torphy630 (DFN 100969, graph IEN 182,
+494 chunks, ~2MB trimmed) succeeded through `CDSP UTIL LOAD FHIR`, but the load log
+(`CDSP UTIL LOAD LOG`, `fetch-load-log.js`) showed most failures were unmapped codes:
+- 227 procedures: `-1^Code 430193006 not mapped` (SNOMED medication reconciliation); also dental
+  CDT codes (`D1110`, `D7140`, `D0150`, `D0330`, `D0120`) unmapped, from `PRCADD^SYNDHP65`
+- ~97 vitals `cannotLoad`: `Snomed Code not found for vitals code ...` (LOINC e.g. 8289-1, 9843-4,
+  2708-6, 8310-5)
+- 42 labs `readyToLoad`: `LABADD^SYNDHP63` `Couldn't find ien for LAB_TEST (#60)`; ~30 labs
+  `cannotLoad`: `VistA lab not found for loinc code ...` (NT-proBNP, magnesium, ferritin, LVEF, ...)
+- 9 conditions, 4 encounters, 6 meds: `-1^<number>` / blank message, cause not yet identified
+- Related reference: loader README `docs/vehu-lab-package-config.md` (VEHU lab package config)
+
+**Proposed approach (two layers)**:
+1. **Bundle inventory (Node, offline)** — `preflight-synthea.js <bundle.json>`: list distinct
+   SNOMED (procedures/conditions), LOINC (labs/vitals), RxNorm (meds) and CDT codes with counts and
+   display names; write `logs/preflight-<patient>.json`. Useful on its own for choosing which of
+   the server's Synthea files to load.
+2. **Read-only VistA check (new RPC in `CDSPFHIR`)** — e.g. `CDSP UTIL LOAD PREFLIGHT`: takes the
+   code list and runs the same lookups the loader uses without creating anything; returns
+   `{type, code, mapped, vistaTarget}`. Needs side-effect-free entry points in `SYNDHP65`,
+   `SYNDHP63`, `SYNFVIT` and the meds path; may require copying their mapping logic. **Source
+   not yet read — feasibility unknown.**
+
+**Output**: one "what's missing" report (e.g. "42 labs have no file #60 entry for these LOINCs")
+for the VistA admin to fix mappings before loading.
+
+**Open questions**:
+- Can each lookup be called without side effects, or must mapping logic be duplicated?
+- Is it worth it? Procedure failures (one code, 227 entries) do not affect notes generation;
+  lab/vital gaps matter more because notes are generated from labs/vitals/meds/problems.
+- Alternative: skip preflight, pick patients by trial load and just read the load log.
+
+**Status**: Not started. Prerequisite already done: `LOG` tag in `CDSPFHIR`, RPC
+`CDSP UTIL LOAD LOG`, [`fetch-load-log.js`](../../../fetch-load-log.js).
+
+---
+
+## Task 1.8: Encounter location/clinic mapping — all encounters land on GENERAL MEDICINE (PROPOSED)
+**Problem (observed 2026-10-05)**: Every encounter loaded by the SYN loader ends up as a visit at
+GENERAL MEDICINE (hospital location 23), regardless of the Synthea encounter type/class
+(wellness, ER, inpatient, dental, specialty, ...). Downstream, `extract-encounters.js` shows
+GENERAL MEDICINE for all 23 encounters of DFN 100969 and notes use that clinic in the header.
+The same assumption is baked into appointment creation (clinic IEN 532 / resource 185 via `.env`)
+and note writing (single note title, `PRIMARY CARE VISIT`).
+
+**Previously documented only as deferred** (no fix designed):
+- create-past-appointments design: "assume all patients use GENERAL MEDICINE ... for now"
+- write-progress-notes proposal: single note title for all notes, per-encounter-type titles out of scope
+- this change's design/spec: `LOCATION` should map from the FHIR encounter to a hospital location,
+  falling back to `VISTA_DATA_LOAD_LOCATION`
+
+**To investigate** (not yet read — root cause unknown):
+1. Where the loader picks the location: likely the SYN package init (post-install sets "Hospital
+   Location 23") and `ENCTUPD^SYNDHP61` / `SYNFENC`. Is it a hardcoded default, or a lookup that
+   finds no match?
+2. Which Synthea fields could drive a mapping: `Encounter.class.code` (AMB/EMER/IMP),
+   `Encounter.type[].coding`, `serviceProvider`, `location`.
+3. Which hospital locations exist on the target VistA (file #44) for those types: ER, dental,
+   inpatient, specialty clinics.
+
+**Proposed approach (to be validated)**:
+- Define a Synthea-type to VistA hospital-location mapping (config file, e.g. `src/clinic-map.json`).
+- Loader side: apply it where the SYN loader chooses the encounter location (may need a patch to
+  the SYN routines, like Task 1.6, or a post-load step).
+- Pipeline side: appointment creation and note writing take clinic/resource IEN and note title
+  from the encounter's mapped clinic instead of one global `.env` value.
+- Add the encounter type to the preload evaluation (Task 1.7) so missing locations are reported.
+
+**Open questions**: patch the SYN routines vs. fix up visits after load? Do appointments for
+non-clinic encounters (ER, inpatient) make sense, or only notes? Which clinics to create on the
+test VistA?
+
+**Status**: Not started.
+
+---
 
 
 ## Task 2: Implement `src/fhir-transformer.js`

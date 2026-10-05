@@ -46,6 +46,45 @@ function checkAssessmentGrounding(noteText, ctx) {
   return null;
 }
 
+// Flags "Name: value" lines whose value is not a result recorded for that lab, or
+// is another lab's value under the wrong name (the shift o3-mini produced).
+const NON_LAB_NAMES = /weight|height|bmi|pulse|temp|resp|\bbp\b|blood pressure|pain|oxygen|spo2|heart rate/i;
+
+function normLabName(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function checkLabPairing(noteText, ctx) {
+  const labs = [...(ctx.labsToday || []), ...(ctx.recentLabHistory || [])].filter((l) => l.name);
+  const byName = new Map();
+  const nameByValue = new Map();
+  for (const l of labs) {
+    const v = parseFloat(l.result);
+    if (Number.isNaN(v)) continue;
+    const key = normLabName(l.name);
+    if (!byName.has(key)) byName.set(key, new Set());
+    byName.get(key).add(v);
+    nameByValue.set(v, l.name);
+  }
+  if (byName.size === 0) return null;
+
+  const bad = [];
+  for (const line of noteText.split('\n')) {
+    if (/^\s*(VISIT DATE|CHIEF COMPLAINT|SUBJECTIVE|OBJECTIVE|ASSESSMENT|PLAN):/.test(line)) continue;
+    const m = line.match(/^\s*([A-Za-z][A-Za-z0-9 ,()/[\]-]{1,60}?):\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) continue;
+    const n = normLabName(m[1]);
+    const v = parseFloat(m[2]);
+    const keys = [...byName.keys()].filter((k) => k === n || (Math.min(k.length, n.length) >= 3 && (k.includes(n) || n.includes(k))));
+    if (keys.length > 0) {
+      if (!keys.some((k) => byName.get(k).has(v))) bad.push(`${m[1].trim()}: ${m[2]}`);
+    } else if (!NON_LAB_NAMES.test(m[1]) && nameByValue.has(v)) {
+      bad.push(`${m[1].trim()}: ${m[2]} (value belongs to ${nameByValue.get(v)})`);
+    }
+  }
+  return bad.length ? `lab name/value mismatch: ${bad.slice(0, 4).join('; ')}` : null;
+}
+
 function checkStructuralValidation(noteText) {
   const result = validateNote(noteText);
   return result.pass ? null : `structural validation failed: ${result.problems.join('; ')}`;
@@ -69,7 +108,7 @@ function checkLineLength(noteText, maxChars = 80) {
 // where no deterministic rule fires but the note reads as uncertain.
 function flagNote(noteText, ctx) {
   const reasons = [];
-  const checks = [checkStructuralValidation, checkLineLength, checkPregnancyContraceptiveMismatch, checkAssessmentGrounding];
+  const checks = [checkStructuralValidation, checkLineLength, checkPregnancyContraceptiveMismatch, checkAssessmentGrounding, checkLabPairing];
   for (const check of checks) {
     const reason = check(noteText, ctx);
     if (reason) reasons.push(reason);
@@ -77,4 +116,4 @@ function flagNote(noteText, ctx) {
   return { flagged: reasons.length > 0, reasons };
 }
 
-module.exports = { flagNote, checkPregnancyContraceptiveMismatch, checkAssessmentGrounding, checkStructuralValidation, checkLineLength };
+module.exports = { flagNote, checkPregnancyContraceptiveMismatch, checkAssessmentGrounding, checkStructuralValidation, checkLineLength, checkLabPairing };

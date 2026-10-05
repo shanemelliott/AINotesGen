@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const { loadPatient, getEncounter, buildContext, callCandidate } = require('../test-ai');
+const { insertLabBlock } = require('./labBlock');
 
 const DEFAULT_MODEL = { model: 'o3-mini', apiVersion: '2025-04-28' };
 
@@ -46,7 +47,7 @@ async function generateNoteText(dfn, date) {
   if (result.outcome !== 'ok') {
     throw new Error(`Note generation failed: ${result.outcome} ${result.detail || ''}`);
   }
-  return { noteText: result.content, encounter, ctx };
+  return { noteText: insertLabBlock(result.content, ctx), encounter, ctx };
 }
 
 module.exports = { generateNoteText, loadApiKey, DEFAULT_MODEL };

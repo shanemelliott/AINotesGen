@@ -60,7 +60,7 @@ function fail(msg, code = 1) {
 
 // ---------- dates (VPR dates are YYYYMMDD[HHmm[ss]] numbers) ----------
 
-const day = (v) => (v === undefined || v === null ? '' : String(v).slice(0, 8));
+const day = (v) => (v === undefined || v === null ? '' : String(v).replace(/\D/g, '').slice(0, 8));
 const fmtDay = (d8) => (d8 ? `${d8.slice(4, 6)}/${d8.slice(6, 8)}/${d8.slice(0, 4)}` : '');
 const toDate = (d8) => new Date(Date.UTC(+d8.slice(0, 4), +d8.slice(4, 6) - 1, +d8.slice(6, 8)));
 const toD8 = (dt) => dt.toISOString().slice(0, 10).replace(/-/g, '');
@@ -101,13 +101,14 @@ function labFlag(lab) {
   return '';
 }
 
+// Accepts raw VPR labs (typeName) and labs already shaped by extractEncounters (name).
 const shapeLab = (l) => ({
-  name: l.typeName || l.displayName,
+  name: l.name || l.typeName || l.displayName,
   result: l.result,
   units: l.units,
   low: l.low,
   high: l.high,
-  flag: labFlag(l),
+  flag: l.flag || labFlag(l),
   observed: fmtDay(day(l.observed)),
 });
 
@@ -161,6 +162,8 @@ function buildInstructions(ctx) {
     'CHIEF COMPLAINT:',
     'SUBJECTIVE:',
     'OBJECTIVE:',
+    '(vitals)',
+    '[[LABS]]',
     'ASSESSMENT:',
     '1. ...',
     'PLAN:',
@@ -189,7 +192,10 @@ function buildInstructions(ctx) {
     '- The VISIT DATE line includes the encounter date (MM/DD/YYYY), clinic, and visit type (New patient or Follow-up).',
     `- ${diagnosisSection}`,
     '- SUBJECTIVE: Include relevant history, symptoms, and medications. Include social history as context.',
-    '- OBJECTIVE lists the vitals and pertinent labs with values and abnormal flags.',
+    '- OBJECTIVE lists the vitals only, then a line containing exactly [[LABS]] on its own.',
+    '  The lab results are inserted at that line automatically. Do NOT write lab names or',
+    '  numeric lab values anywhere in the note; you may refer to labs flagged abnormal in',
+    '  words only (e.g. "potassium was low").',
     `- ASSESSMENT: Base ONLY on the provided problem list below. Do NOT include problems not in the list.`,
     `  Each assessment item should be clinically grounded in today's orders, labs, or meds.`,
     '- PLAN addresses each numbered assessment problem. Link each medication to its clinical indication.',
