@@ -14,16 +14,16 @@
 - [ ] 2.2 Read the veteran-linked and injury modules to see which conditions, medications and encounters they generate
 - [x] 2.3 Find how to make every patient a veteran: a keep-patients module (`-k`) that requires the `veteran` attribute, instead of the override attribute
 - [x] 2.4 Confirm the command-line options (`-s -r -cs -p -g -a -c -d -k -fm`, optional state and city)
-- [ ] 2.5 Check whether the FHIR export carries any veteran flag
+- [x] 2.5 Check whether the FHIR export carries any veteran flag: it does not (no veteran marker on Patient), so veteran status is guaranteed by the generation settings, not checked in the file
 - [ ] 2.6 Find where hearing loss, tinnitus, migraines, back injuries, anxiety, bipolar and schizophrenia come from, or whether they need custom modules
-- [ ] 2.7 Confirm that `exporter.years_of_history = 0` keeps the full record and what the exporter does with childhood conditions
+- [x] 2.7 Confirm that `exporter.years_of_history = 0` keeps the full record: yes, records start at birth
 
 ## 3. Generate a batch
 
-- [ ] 3.1 Set up Synthea (Java and the jar or a source build) and record the version
+- [x] 3.1 Set up Synthea: Java 26 (Corretto); `synthea/bin/synthea-with-dependencies.jar` from master-branch-latest, downloaded 2026-10-06, SHA-256 018AD7F04F7AACB995804D7D4781C76D5FC714F7F23257BA50DAA9EEFAE224AC (gitignored)
 - [ ] 3.2 Write the configuration and run commands for the men and the women (age range up to 92), with recorded seeds
 - [ ] 3.2a Write keep modules for veterans and for each forced injury group, and test that each can be satisfied
-- [ ] 3.3 Write the trim step that drops resources dated before each patient's 18th birthday; decide how to treat childhood chronic conditions
+- [x] 3.3 Write the trim step (`trim-synthea.js`): drops resources dated before the 18th birthday, re-dates conditions and medications still active at 18 (or drops them with `--childhood drop`), removes references to dropped resources; tested on 3 patients (earliest record at age 18.0 to 18.2, no dangling references)
 - [ ] 3.4 Write the batch check that reports sex, age, era, condition and forced-injury counts against the profile
 - [ ] 3.4a Write the service-connected record (cause and percentage) for each patient from a mapping table
 - [ ] 3.5 Generate a larger pool, pick the first batch of 10 to 20 that fits, and record seeds

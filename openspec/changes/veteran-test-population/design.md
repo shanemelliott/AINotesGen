@@ -69,7 +69,8 @@ Checked on 2026-10-06 from the repository and wiki.
 ## Decisions
 
 - **Trim after generation.** Because `years_of_history` cannot start a record at 18, generate with full history (`years_of_history = 0`) and run a trim step that drops resources dated before each patient's 18th birthday. Open question: what to do with chronic conditions that began in childhood (drop them, or re-date them to the entry date).
-- **Force veterans and injuries with keep modules.** Use `-k` with a keep module that requires the `veteran` attribute, and further keep modules per forced injury group (traumatic brain injury, limb loss, burns, PTSD or military sexual trauma for the young woman), run as separate small runs so each forced patient is generated on purpose.
+- **Force veterans and injuries.** Every patient is made a veteran with `generate.veteran_population_override = true` (verified: 3 of 3 generated men had veteran-linked conditions, one had a VA community care provider). Keep modules (`-k`) are used only for the forced injury groups (traumatic brain injury, limb loss, burns, PTSD or military sexual trauma for the young woman), run as separate small runs so each forced patient is generated on purpose.
+- **Generation settings** (`synthea/veteran.properties`): full history, living patients only (`generate.only_alive_patients`), and Claim, ExplanationOfBenefit, DocumentReference and ImagingStudy excluded from export, since the loader does not use them.
 - **Age cap 92.** Run with `-a` ranges that stop at 92, so the oldest era groups are Korea-era and later.
 - **Service connection is derived, not generated.** Synthea has no service-connection data. For each kept patient, derive a service-connected cause (combat, training injury, Agent Orange for Vietnam-era lung or prostate cancer, Gulf War or burn pit exposure) and a rating percentage from the patient's veteran-linked conditions with a mapping table, and store it in a sidecar file for the later VistA eligibility step. The mapping table and the rating values need a VA source before use.
 - **Two runs for the sex mix.** Synthea selects one sex per run, so produce the men and the women as two runs and combine them.
@@ -79,7 +80,7 @@ Checked on 2026-10-06 from the repository and wiki.
 
 - Forcing veteran status through an attribute may not carry through to the FHIR export; the export may carry no veteran flag, so the batch check has to identify veterans another way (the veteran-linked modules' conditions), and VistA's veteran flag is set at load.
 - Trimming pre-service history can leave inconsistent records (a medication with no condition, an immunization series cut mid-way).
-- Older veterans' records are long; loading and note generation take longer.
+- Older veterans' records are long; loading and note generation take longer. Smoke test (2026-10-06, seed 1001, 3 men aged 60 to 92): after trimming, 3.8 to 16.6 MB and up to about 750 encounters per patient, against 8 to 14 MB for the files loaded so far. Load time needs a test before a full batch.
 - Over-sampling conditions makes the batch unrepresentative on purpose; the profile must say so.
 
 ## Open Questions

@@ -20,8 +20,7 @@ function chunkBundleJson(jsonText, chunkSize = DEFAULT_CHUNK_SIZE) {
 function parseRpcResult(payload) {
   let text;
   if (typeof payload === 'string') {
-    // XLFJSON escapes newlines inside strings, so any raw one is a broker line wrap.
-    text = payload.replace(/\r?\n/g, '');
+    text = payload;
   } else if (Array.isArray(payload)) {
     text = payload.join('');
   } else if (payload && typeof payload === 'object') {
