@@ -1,0 +1,93 @@
+{
+  "name": "batch-1",
+  "profile": "openspec/changes/veteran-test-population/design.md",
+  "referenceDate": "20261006",
+  "runs": [
+    {
+      "id": "vet-m-70-92",
+      "gender": "M",
+      "age": "70-92",
+      "population": 2,
+      "seed": 4101
+    },
+    {
+      "id": "hearing-htn-m",
+      "gender": "M",
+      "age": "60-69",
+      "population": 4,
+      "seed": 4110,
+      "modulesDir": "modules/hearing",
+      "keep": "keep/hypertension.json"
+    },
+    {
+      "id": "sleep-m-60-79",
+      "gender": "M",
+      "age": "60-79",
+      "population": 3,
+      "seed": 4111,
+      "keep": "keep/sleep_apnea.json"
+    },
+    {
+      "id": "tbi-m-25-44",
+      "gender": "M",
+      "age": "25-44",
+      "population": 2,
+      "seed": 4104,
+      "modulesDir": "modules/tbi"
+    },
+    {
+      "id": "amp-m-45-59",
+      "gender": "M",
+      "age": "45-59",
+      "population": 1,
+      "seed": 4105,
+      "modulesDir": "modules/amputation"
+    },
+    {
+      "id": "burn-m-60-70",
+      "gender": "M",
+      "age": "60-70",
+      "population": 1,
+      "seed": 4106,
+      "modulesDir": "modules/burn"
+    },
+    {
+      "id": "ptsd-f-25-44",
+      "gender": "F",
+      "age": "25-44",
+      "population": 1,
+      "seed": 4107,
+      "keep": "keep/ptsd.json"
+    },
+    {
+      "id": "vet-f-60-80",
+      "gender": "F",
+      "age": "60-80",
+      "population": 1,
+      "seed": 4108
+    },
+    {
+      "id": "vet-f-45-59",
+      "gender": "F",
+      "age": "45-59",
+      "population": 1,
+      "seed": 4109
+    }
+  ],
+  "generated": {
+    "at": "2026-10-06T22:41:23.575Z",
+    "java": "openjdk version \"26.0.2.1\" 2026-08-18\r",
+    "jarSha256": "018AD7F04F7AACB995804D7D4781C76D5FC714F7F23257BA50DAA9EEFAE224AC",
+    "commands": {
+      "vet-m-70-92": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/vet-m-70-92/ -s 4101 -r 20261006 -p 2 -g M -a 70-92 Massachusetts",
+      "hearing-htn-m": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/hearing-htn-m/ -s 4110 -r 20261006 -p 4 -g M -a 60-69 -d modules/hearing -k keep/hypertension.json Massachusetts",
+      "sleep-m-60-79": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/sleep-m-60-79/ -s 4111 -r 20261006 -p 3 -g M -a 60-79 -k keep/sleep_apnea.json Massachusetts",
+      "tbi-m-25-44": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/tbi-m-25-44/ -s 4104 -r 20261006 -p 2 -g M -a 25-44 -d modules/tbi Massachusetts",
+      "amp-m-45-59": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/amp-m-45-59/ -s 4105 -r 20261006 -p 1 -g M -a 45-59 -d modules/amputation Massachusetts",
+      "burn-m-60-70": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/burn-m-60-70/ -s 4106 -r 20261006 -p 1 -g M -a 60-70 -d modules/burn Massachusetts",
+      "ptsd-f-25-44": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/ptsd-f-25-44/ -s 4107 -r 20261006 -p 1 -g F -a 25-44 -k keep/ptsd.json Massachusetts",
+      "vet-f-60-80": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/vet-f-60-80/ -s 4108 -r 20261006 -p 1 -g F -a 60-80 Massachusetts",
+      "vet-f-45-59": "java -jar bin\\synthea-with-dependencies.jar -c veteran.properties --exporter.baseDirectory=./output/batch-1/raw/vet-f-45-59/ -s 4109 -r 20261006 -p 1 -g F -a 45-59 Massachusetts"
+    }
+  }
+}

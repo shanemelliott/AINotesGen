@@ -1,0 +1,36 @@
+{
+  "name": "keep_sleep_apnea",
+  "remarks": [
+    "Keep only patients with an active sleep apnea condition (73430006)."
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "conditional_transition": [
+        {
+          "transition": "Keep",
+          "condition": {
+            "condition_type": "Active Condition",
+            "codes": [
+              {
+                "system": "SNOMED-CT",
+                "code": 73430006,
+                "display": "Sleep apnea"
+              }
+            ]
+          }
+        },
+        {
+          "transition": "Terminal"
+        }
+      ]
+    },
+    "Terminal": {
+      "type": "Terminal"
+    },
+    "Keep": {
+      "type": "Terminal"
+    }
+  },
+  "gmf_version": 2
+}

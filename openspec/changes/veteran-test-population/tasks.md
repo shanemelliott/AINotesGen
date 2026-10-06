@@ -21,12 +21,12 @@
 ## 3. Generate a batch
 
 - [x] 3.1 Set up Synthea: Java 26 (Corretto); `synthea/bin/synthea-with-dependencies.jar` from master-branch-latest, downloaded 2026-10-06, SHA-256 018AD7F04F7AACB995804D7D4781C76D5FC714F7F23257BA50DAA9EEFAE224AC (gitignored)
-- [ ] 3.2 Write the configuration and run commands for the men and the women (age range up to 92), with recorded seeds
+- [x] 3.2 Write the configuration and run commands: `synthea/batches/batch-1.json` (9 runs, seeds, age bands, modules) and `generate-batch.js` (runs Synthea, trims, records java version, jar hash and exact command lines under `generated`)
 - [x] 3.2a Write keep modules and forced-injury modules, and test that each can be satisfied: `synthea/modules/{tbi,amputation,burn}` (loaded with `-d`, one injury per run) and `synthea/keep/ptsd.json` (`-k`); each produced the intended condition on a test patient (TBI at 21 with PTSD at 21, lower-limb amputation at 21, full thickness burn at 21, PTSD at 24 for a 31-year-old woman). Military sexual trauma has no module and is not forced; PTSD meets the young-woman requirement
 - [x] 3.3 Write the trim step (`trim-synthea.js`): drops resources dated before the 18th birthday, re-dates conditions and medications still active at 18 (or drops them with `--childhood drop`), removes references to dropped resources; tested on 3 patients (earliest record at age 18.0 to 18.2, no dangling references)
-- [ ] 3.4 Write the batch check that reports sex, age, era, condition and forced-injury counts against the profile
+- [x] 3.4 Write the batch check (`check-batch.js`): sex, age, era, first-record age, condition groups and forced injuries against the profile; batch 1 passes every required line (dermatitis and hernia are optional and absent: no Synthea module)
 - [ ] 3.4a Write the service-connected record (cause and percentage) for each patient from a mapping table
-- [ ] 3.5 Generate a larger pool, pick the first batch of 10 to 20 that fits, and record seeds
+- [x] 3.5 Generate batch 1: 16 patients (13 men, 3 women; 11 aged 60 or older, 3 under 45, oldest 88), written to `synthea/output/batch-1/trimmed/` (gitignored). First pass failed sleep apnea, hypertension and hearing loss; fixed with keep modules (`keep/hypertension.json`, `keep/sleep_apnea.json`) and a hearing loss and tinnitus module (`modules/hearing`)
 
 ## 4. Load and use
 

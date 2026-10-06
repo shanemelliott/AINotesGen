@@ -1,0 +1,86 @@
+{
+  "name": "Forced veteran hearing loss and tinnitus",
+  "remarks": [
+    "Test-data module for the veteran test population: every patient in a run that loads this module gets",
+    "noise-induced hearing loss between age 30 and 55 and, for 70 percent of them, tinnitus within 3 years.",
+    "Load it with -d in its own run. Noise-induced hearing loss (73415002) maps to ICD-10 and ICD-9 in the",
+    "VistA loader; tinnitus (60862001) maps to ICD-9 388.30 only (checked 2026-10-06)."
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Wait_Until_30"
+    },
+    "Wait_Until_30": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Age",
+        "operator": ">=",
+        "quantity": 30,
+        "unit": "years"
+      },
+      "direct_transition": "Years_Of_Exposure"
+    },
+    "Years_Of_Exposure": {
+      "type": "Delay",
+      "range": {
+        "low": 0,
+        "high": 25,
+        "unit": "years"
+      },
+      "direct_transition": "Hearing_Loss_Encounter"
+    },
+    "Hearing_Loss_Encounter": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "185347001",
+          "display": "Encounter for problem (procedure)"
+        }
+      ],
+      "direct_transition": "Noise_Induced_Hearing_Loss"
+    },
+    "Noise_Induced_Hearing_Loss": {
+      "type": "ConditionOnset",
+      "assign_to_attribute": "noise_hearing_loss",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "73415002",
+          "display": "Noise-induced hearing loss (disorder)"
+        }
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Tinnitus_Onset",
+          "distribution": 0.7
+        },
+        {
+          "transition": "End_Hearing_Loss_Encounter",
+          "distribution": 0.3
+        }
+      ]
+    },
+    "Tinnitus_Onset": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "60862001",
+          "display": "Tinnitus (finding)"
+        }
+      ],
+      "direct_transition": "End_Hearing_Loss_Encounter"
+    },
+    "End_Hearing_Loss_Encounter": {
+      "type": "EncounterEnd",
+      "direct_transition": "Terminal"
+    },
+    "Terminal": {
+      "type": "Terminal"
+    }
+  },
+  "gmf_version": 2
+}
