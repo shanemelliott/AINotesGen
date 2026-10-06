@@ -388,6 +388,15 @@ The Synthea files we were given start at birth and are not veteran-specific. Fin
 - **Loader side:** `SYNFPAT` never sets `VETERAN` (Task 13 item 8), so the flag has to be fixed either way.
 - **Candidate command** (to verify with `-h`): `java -jar synthea-with-dependencies.jar -p 50 -g M -a 50-80 -s <seed> -c veteran.properties`
   with `exporter.years_of_history = 15` in the properties file.
+- **Future work: veteran eligibility and service data after load.** Patient inquiry for DFN 100970 (Shonta375, 2026-10-06)
+  shows what the loader leaves empty: primary eligibility `UNSPECIFIED`, enrollment priority `IN PROCESS`, service connected
+  `NO` with no rated disabilities, combat status `NOT ELIGIBLE`, Persian Gulf `UNKNOWN`, no military service data (branch,
+  period, dates), residential address unknown (only a mailing address is loaded) and no insurance. A veteran-looking record
+  needs these set. Preferred option: a post-load CDSP RPC that sets them from a per-patient config (same pattern as
+  `CDSP UTIL MAP SET`), because it also works on patients already loaded and survives a loader reinstall; the alternative is
+  patching `SYNFPAT`, which a reinstall removes and which only helps new loads. To confirm first: the file #2 field numbers
+  (believed `.361` primary eligibility, `.301` service connected, `.302` service-connected percentage) and how enrollment
+  priority is stored (a separate file), and whether the `VETERAN` flag patched on 2026-10-06 shows on a fresh load.
 
 **Status**: Not started.
 
