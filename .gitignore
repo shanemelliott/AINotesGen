@@ -8,6 +8,9 @@ sts-token/
 # Dependencies
 node_modules/
 
+#codespaces
+*.code-workspace
+
 # Secrets / local config
 .env
 .env.*
@@ -25,3 +28,4 @@ SynthiaFiles/
 logs/
 *.log
 output/
+reference/

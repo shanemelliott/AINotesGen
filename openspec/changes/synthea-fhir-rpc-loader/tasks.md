@@ -177,7 +177,7 @@ appointment side effects, appointments handled entirely by `src/appointmentCreat
 
 ---
 
-## Task 1.7: Preload evaluation (PROPOSED — not committed, may not be finished)
+## Task 1.7: Preload evaluation — labs/vitals/procedures DONE (2026-10-05); meds, conditions, encounters open
 **Goal**: Before loading a Synthea patient, tell the user which codes/labs/vitals the bundle needs
 and which of them VistA cannot map, so gaps can be fixed in VistA (or a cleaner patient chosen)
 instead of being discovered after the load.
@@ -191,7 +191,16 @@ instead of being discovered after the load.
   2708-6, 8310-5)
 - 42 labs `readyToLoad`: `LABADD^SYNDHP63` `Couldn't find ien for LAB_TEST (#60)`; ~30 labs
   `cannotLoad`: `VistA lab not found for loinc code ...` (NT-proBNP, magnesium, ferritin, LVEF, ...)
-- 9 conditions, 4 encounters, 6 meds: `-1^<number>` / blank message, cause not yet identified
+- 9 conditions `notLoaded` (`-1^<visit IEN>`, no message), 4 encounters, 6 meds: conditions explained
+  2026-10-05 (see below); encounters and meds not yet identified
+  - Conditions: all 9 failures are the only conditions that HAVE an ICD-9 map (visits 1953-1975,
+    `sct2icdnine`); all 54 conditions with no ICD map loaded through the SNOMED-only fallback. So the
+    failing path is `PRBUPDT^SYNDHP62` (PCE with an ICD code). Hypothesis: ICD-9 codes are not
+    effective on pre-1978 visit dates. Supported: `$$ICDDX^ICDCODE("959.09",2530907)` returns effective
+    date 2781001 (1978-10-01) with "CODE TEXT MAY BE INACCURATE"; all 9 failing visits predate it. Not
+    proven (no ICD-mapped condition after 1978 in this patient). Possible fix if confirmed: in
+    `wsIntakeConditions^SYNFPRB`, treat the code as not mapped when it is not effective on the visit date,
+    so it takes the SNOMED-only fallback.
 - Related reference: loader README `docs/vehu-lab-package-config.md` (VEHU lab package config)
 
 **Proposed approach (two layers)**:
@@ -214,7 +223,26 @@ for the VistA admin to fix mappings before loading.
   lab/vital gaps matter more because notes are generated from labs/vitals/meds/problems.
 - Alternative: skip preflight, pick patients by trial load and just read the load log.
 
-**Status**: Not started. Prerequisite already done: `LOG` tag in `CDSPFHIR`, RPC
+**Status**: IN PROGRESS (2026-10-05). SYN source read; lookups are side-effect-free, so layer 2 is feasible.
+- Layer 1 DONE: [`preflight-synthea.js`](../../../preflight-synthea.js) (offline inventory, writes
+  `logs/preflight-<name>.json`; tested on Lan153).
+- Layer 2 DONE and VALIDATED (2026-10-05): RPC `CDSP UTIL LOAD PREFLIGHT` (`PREFLIGHT` tag in
+  `CDSPFHIR`) and [`preflight-vista.js`](../../../preflight-vista.js). Predictions for Lan153 matched
+  the actual load (DFN 100969): procedures 247 predicted vs 247 failed; vitals 97 vs 97; labs 38
+  unmapped vs 30 cannotLoad + 8 skipped, and 43 target-missing vs 42 readyToLoad.
+- Fix list from the Lan153 report: lab names mapped but missing from file #60: `RDW-CV`, `TOT PROT`,
+  `TOT. BIL`, `ALK PHOS`, `PDW` (add the tests, or change the `loinc-lab-map` entries); unmapped labs
+  incl. NT-proBNP, GFR, magnesium, ferritin, LVEF; unmapped vitals BMI, head circumference, SpO2
+  (2708-6), temperature 8310-5 (hardcoded table in `SYNFVIT`).
+- Not covered yet: meds (RxNorm path in `SYNFMED2`), conditions (SNOMED to ICD), encounters.
+- Lookups used (from the SYN source): procedures `$$MAP^SYNDHPMP("sct2os5",code)`; vitals
+  `$$loinc2sct^SYNFVIT(loinc)` (hardcoded table: weight, height, BP, pulse, temp, resp, pain only,
+  so other vitals can only be fixed by editing M code); labs `$$graphmap^SYNGRAPH("loinc-lab-map",code)`
+  then `" "_code`, `$$covid^SYNGRAPH`, `$$MAP^SYNQLDM(code,"labs")`, then the name must exist in
+  file #60 (the `readyToLoad` / `Couldn't find ien for LAB_TEST` case).
+- Not covered yet: meds (RxNorm path in `SYNFMED2`), conditions (SNOMED to ICD), encounters.
+
+**Prerequisite already done**: `LOG` tag in `CDSPFHIR`, RPC
 `CDSP UTIL LOAD LOG`, [`fetch-load-log.js`](../../../fetch-load-log.js).
 
 ---
@@ -233,10 +261,26 @@ and note writing (single note title, `PRIMARY CARE VISIT`).
 - this change's design/spec: `LOCATION` should map from the FHIR encounter to a hospital location,
   falling back to `VISTA_DATA_LOAD_LOCATION`
 
-**To investigate** (not yet read — root cause unknown):
-1. Where the loader picks the location: likely the SYN package init (post-install sets "Hospital
-   Location 23") and `ENCTUPD^SYNDHP61` / `SYNFENC`. Is it a hardcoded default, or a lookup that
-   finds no match?
+**To investigate** (partly answered 2026-10-05 from the SYN source):
+- ROOT CAUSE FOUND: `SYNFVIT` and `SYNFLAB` set the location with `$$MAP^SYNQLDM("OP","location")`
+  then `$O(^SC("B",name))`, falling back to IEN 4; provider likewise via
+  `$$MAP^SYNQLDM("OP","provider")` (fallback DUZ 3). One fixed "OP" (outpatient) mapping serves every
+  encounter, so the type never matters. Still to read: `SYNFENC` / `ENCTUPD^SYNDHP61` for the encounter
+  (visit) location itself.
+1. Does `SYNQLDM` allow per-type keys (e.g. an "ER" or "IMP" entry), or must the lookup be patched?
+
+**File #44 findings (2026-10-05, from `reference/FILE44.TXT`, parsed to `logs/file44-locations.json`)**:
+528 hospital locations, 411 with a stop code and 117 without (mostly wards).
+- `SYNQLDM` location targets present: GENERAL MEDICINE (IEN 23) only. `EMERGENCY DEPT`, `CERT MED SURG`,
+  `CERT ICU`, `CLINIC A`, `CLINIC PSYCHIATRY` do not exist in #44, so even with per-type keys the
+  `$O(^SC("B",name))` lookup would miss and fall back to IEN 4.
+- Candidates that do exist: EMERGENCY DEPARTMENT (426, stop code EMERGENCY DEPT) and ER (70);
+  DENTAL (228); MENTAL HYGIENE (17); a number of ward-style locations (e.g. 7A GEN MED 158,
+  7A SURG 157) with no stop code.
+- Appointment creation uses clinic 532 (`DEV PACT MD 4`, primary care), while loader visits sit in
+  GENERAL MEDICINE (23). That clinic mismatch is separate from the all-GENERAL-MEDICINE problem.
+- No women's health, OB or pediatric clinics were found by name or stop code, although Synthea
+  generates prenatal and well-child encounters.
 2. Which Synthea fields could drive a mapping: `Encounter.class.code` (AMB/EMER/IMP),
    `Encounter.type[].coding`, `serviceProvider`, `location`.
 3. Which hospital locations exist on the target VistA (file #44) for those types: ER, dental,

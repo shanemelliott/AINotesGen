@@ -237,12 +237,44 @@ locally-generated note artifacts for a patient, for re-testing/re-runs:
 - **Not started** because: all 444 notes eventually signed with 100% success (current workaround is sufficient); defer pending real-world scale (Task 7+) and feedback on signing throughput/latency requirements.
 - **Acceptance criteria**: 0 signing failures in a batch of 1000+ notes, no manual intervention required.
 
+### Task 12: Multiple providers / authors and signers (proposed, design not started)
+**Why**: every appointment, note and signature today comes from a single user (`VISTA_DUZ`,
+`VISTA_ESIG_CODE` in `.env`, one note title). Real charts have many authors, cosigners and
+clinics. Realistic test data needs notes written and signed by different providers.
+
+**Current single-user assumptions** (all will need to become per-note):
+- Author/DUZ: `config.duz()` (`VISTA_DUZ`) is stamped on every note (`TIU CREATE RECORD` field `1202`)
+  and used as the vista-api-x user in the URL (`/vista-sites/{site}/users/{duz}/rpc/invoke`).
+- Signer: `signNote()` uses one `VISTA_ESIG_CODE`; the PIV-based STS token is for one identity.
+- Clinic/resource and note title are global too (see `synthea-fhir-rpc-loader` Task 1.8).
+- Source data has providers: VPR orders carry `providerName`, so a Synthea-to-VistA provider
+  mapping may be derivable.
+
+**Questions to settle (the design thinking still to do)**:
+1. Where do the providers come from? Existing VEHU users with the right keys, or new test users?
+   Which keys/menus do they need (e.g. TIU authoring, signing, clinic assignment)?
+2. How do we authenticate as each one? Per-user e-sig codes stored where (not in the repo), and
+   whether vista-api-x/STS tokens can act as another DUZ or each needs its own token.
+3. Assignment rule: by encounter type or clinic, by Synthea `providerName`, round-robin, or a
+   fixed mapping table (e.g. `src/providers.json`)?
+4. Cosigner or attending/resident flows, and addenda signed by a different user?
+5. Do appointments need the provider too (resource/clinic assignment)?
+6. Do the note text and generator need to know the author (e.g. specialty-appropriate notes)?
+
+**Likely shape (to be validated)**: a provider table (DUZ, name, e-sig reference, clinics, note
+titles); `generate-notes.js` writes the chosen provider into the note record; `sign-notes.js` and
+`notesClient.js` take DUZ and e-sig per note instead of from `config`; per-provider secrets
+supplied through env/secret store.
+
+**Status**: Not started. Related: Task 5 (signing), Task 11 (e-sig reliability, which per-provider
+signing will exercise more), Task 1.8 in `openspec/changes/synthea-fhir-rpc-loader/tasks.md`.
+
 ---
 
 ## 4. Open Questions
 1. Create appointments only on dates without one, or on every order date?
 2. Which clinic/location and which note title(s)?
-3. Should notes be signed, and as which user/DUZ?
+3. Should notes be signed, and as which user/DUZ? (Currently one user for all; see Task 12 for multiple providers.)
 4. Transport: VistaJS broker (access/verify) or vista-api-x (token)?
 5. Is `o3-mini` acceptable for note quality, or is a `gpt-4o`/`gpt-4.1` deployment available on the APIM?
 6. Future encounters (Task 7): appointments only, notes for new visits, or both?
