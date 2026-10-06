@@ -8,7 +8,7 @@ A generated veteran batch SHALL be predominantly men, with women making up about
 - **THEN** it contains 12 to 14 men and 2 to 4 women
 
 ### Requirement: Veteran test batch has a defined age and service-era mix
-A batch SHALL be mostly patients aged 60 or older, with the remainder younger adults, and every patient SHALL be a veteran. Each patient's service era SHALL follow from their age: Vietnam era, the period between Vietnam and the Gulf War, the Gulf War, or after 2001.
+A batch SHALL be mostly patients aged 60 or older, with the remainder younger adults, no patient SHALL be older than 92, and every patient SHALL be a veteran. Each patient's service era SHALL follow from their age: Vietnam era, the period between Vietnam and the Gulf War, the Gulf War, or after 2001.
 
 #### Scenario: Older majority
 - **WHEN** a batch of 16 is generated
@@ -35,6 +35,28 @@ A batch SHALL include patients with the conditions veterans commonly carry, with
 #### Scenario: Batch check
 - **WHEN** a batch is generated
 - **THEN** a report lists, for each target condition group, how many patients have it and whether the profile's target is met
+
+### Requirement: Combat injuries are forced into some patients
+A batch SHALL include patients given combat-type injuries on purpose, not by chance: at least one limb loss, at least two traumatic brain injuries and at least one burn injury in a batch of 16. The batch SHALL include at least one woman under 45 with PTSD or military sexual trauma.
+
+#### Scenario: Forced injuries present
+- **WHEN** a batch of 16 is generated
+- **THEN** the batch report shows at least one limb loss, two traumatic brain injuries and one burn injury
+
+#### Scenario: Young woman with PTSD or MST
+- **WHEN** a batch of 16 is generated
+- **THEN** at least one patient is a woman under 45 with PTSD or military sexual trauma
+
+### Requirement: Each patient has a service-connected cause and percentage
+Each patient in a batch SHALL have a service-connected record, kept alongside the patient file, giving the cause of each service-connected condition (such as combat, training injury or exposure) and an overall rating percentage in steps of ten, consistent with that patient's conditions and service era.
+
+#### Scenario: Cause follows conditions and era
+- **WHEN** a Vietnam-era patient has lung or prostate cancer
+- **THEN** the service-connected record names an exposure cause and a rating percentage
+
+#### Scenario: Patient without service-connected conditions
+- **WHEN** a patient has no service-connected condition
+- **THEN** the record states zero percent and no cause
 
 ### Requirement: A batch is reproducible
 Each batch SHALL record the Synthea version, configuration, command lines and seeds used, so the same batch can be regenerated.

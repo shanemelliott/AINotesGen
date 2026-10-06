@@ -16,7 +16,7 @@ Synthea generates a whole population and exports each patient's lifetime. Our lo
 
 ## Population profile
 
-Decisions from the owner (2026-10-06): about 80% men and 20% women, mostly 60 and older with some younger, first batch of 10 to 20.
+Decisions from the owner (2026-10-06): about 80% men and 20% women, mostly 60 and older with some younger, first batch of 10 to 20 patients, no one older than 92, combat injuries forced into some patients, a young woman with PTSD or military sexual trauma in the first batch, and service-connected cause and percentage as the first service data to carry.
 
 **Sex.** The veteran population is about 90% men today and projected to move toward roughly 80% men by the 2050s (VA population projection by sex, FY 2023 to FY 2053, as provided; read from the chart, not exact). The 80/20 target over-samples women compared with today so that women's care is exercised. Older veteran cohorts are almost all men (the 2000 census table shows 1.6 million women against 24.9 million men).
 
@@ -24,7 +24,7 @@ Decisions from the owner (2026-10-06): about 80% men and 20% women, mostly 60 an
 
 | Era (date the patient turned 18) | Born about | Age in 2026 |
 |----------------------------------|-----------|-------------|
-| WWII, Korea and between (1941 to 1961) | 1923 to 1943 | 83 to 103 (few alive) |
+| WWII, Korea and between (1941 to 1961) | 1923 to 1943 | 83 to 103 (capped at 92, so only the youngest of this group) |
 | Vietnam era (1961 to 1975) | 1943 to 1957 | 69 to 83 |
 | Between Vietnam and Gulf War (1975 to 1990) | 1957 to 1972 | 54 to 69 |
 | Early Gulf War (1990 to 2001) | 1972 to 1983 | 43 to 54 |
@@ -62,11 +62,16 @@ Checked on 2026-10-06 from the repository and wiki.
 - **General modules that cover conditions on our list:** `mTBI` (mild traumatic brain injury), `sleep_apnea`, `hypertension`, `metabolic_syndrome*` (diabetes), `dermatitis`, `osteoarthritis`, `rheumatoid_arthritis`, `fibromyalgia`, `chronic_kidney_disease`, `dialysis`, `injuries`, `prescribing_opioids_for_chronic_pain_and_treatment_of_oud`, `opioid_addiction`, `lung_cancer`, `colorectal_cancer`.
 - **Not seen at the module-file level (still to check in subfolders and `injuries`):** anxiety disorders, bipolar disorder, schizophrenia, migraines, back and spinal injuries, tinnitus, hearing loss, hernias, amputations, MS, Parkinson's, military sexual trauma.
 - **History length.** `exporter.years_of_history` keeps the last N years from the day Synthea runs (default 10); conditions and medications still active are exported regardless; 0 keeps everything. It cannot align a record to start at age 18, because it counts back from today.
-- **Selection.** Command-line options choose population size, sex, age range, seed, configuration file and module filtering. Exact flags and how to force the override attribute still need confirming in the repository.
+- **Selection.** Command-line options (basic setup): `-s` seed, `-r` reference date, `-cs` clinician seed, `-p` population size, `-g` gender, `-a minAge-maxAge`, `-c` configuration file, `-d` modules directory, then an optional state and city; configuration keys can also be passed as `--key value`. Java 17 or newer is required; the released jar is `synthea-with-dependencies.jar`.
+- **Keep Patients module (experimental).** `-k keep_module.json` runs each candidate patient through a small module and exports only those that end in a state named `Keep`; otherwise Synthea draws a new patient for that slot, up to 1000 attempts, then leaves the slot empty. The module can test patient attributes (the sample keeps patients with `diabetes == true`) and active conditions. A keep module that tests `veteran` is not nil gives an all-veteran batch without the override attribute, and a keep module that also requires an active condition (for example a traumatic brain injury) forces that condition into the kept patients. The wiki warns it is easy to write one that no patient can satisfy.
+- **Flexporter (experimental).** `-fm mapping.yml` post-processes bundles (also standalone: `run_flexporter -fm mapping -s source_fhir`). Actions include keep or delete resources by FHIRPath, set values, create resources and execute JavaScript. Resources it deletes leave dangling references. A Node trim script is simpler for the pre-18 trim.
 
 ## Decisions
 
 - **Trim after generation.** Because `years_of_history` cannot start a record at 18, generate with full history (`years_of_history = 0`) and run a trim step that drops resources dated before each patient's 18th birthday. Open question: what to do with chronic conditions that began in childhood (drop them, or re-date them to the entry date).
+- **Force veterans and injuries with keep modules.** Use `-k` with a keep module that requires the `veteran` attribute, and further keep modules per forced injury group (traumatic brain injury, limb loss, burns, PTSD or military sexual trauma for the young woman), run as separate small runs so each forced patient is generated on purpose.
+- **Age cap 92.** Run with `-a` ranges that stop at 92, so the oldest era groups are Korea-era and later.
+- **Service connection is derived, not generated.** Synthea has no service-connection data. For each kept patient, derive a service-connected cause (combat, training injury, Agent Orange for Vietnam-era lung or prostate cancer, Gulf War or burn pit exposure) and a rating percentage from the patient's veteran-linked conditions with a mapping table, and store it in a sidecar file for the later VistA eligibility step. The mapping table and the rating values need a VA source before use.
 - **Two runs for the sex mix.** Synthea selects one sex per run, so produce the men and the women as two runs and combine them.
 - **Generate extra, then pick.** Generate more patients than needed and keep the ones that fit the age and condition profile, recording the seeds.
 
@@ -79,7 +84,10 @@ Checked on 2026-10-06 from the repository and wiki.
 
 ## Open Questions
 
-- Which service-linked data matters first (era, branch, deployment, service-connected percentage)? These are VistA fields, not Synthea output.
-- Should combat injuries (amputation, TBI, burns) be forced into a few patients or left to the modules?
-- Is a young woman with PTSD or military sexual trauma wanted for the first batch?
-- Keep Vietnam-era patients (the oldest living large group), or cap age at 85?
+Answered 2026-10-06: combat injuries are forced (not left to chance); the first batch includes a young woman with PTSD or military sexual trauma; ages are capped at 92; service-connected cause and percentage come first among the service data.
+
+Still open:
+- Which injuries to force and how many, within the minimums above (amputation, traumatic brain injury and burns are the ones named).
+- The service-connected cause categories and rating percentages to use, and the VA source for them.
+- What to do with childhood chronic conditions when trimming (drop or re-date to entry).
+- Whether any Synthea module generates military sexual trauma, hearing loss, tinnitus, migraines or back injuries, or whether those need custom modules.
