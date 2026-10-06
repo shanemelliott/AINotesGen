@@ -10,7 +10,8 @@ const { parseRpcResult } = require('./src/fhirBundleTransport');
 const RPC_NAME = 'CDSP UTIL LOAD PREFLIGHT';
 const RPC_CONTEXT = 'CDSP RPC UTILS';
 // inventory domain -> RPC type; other domains have no side-effect-free lookup yet.
-const DOMAIN_TYPE = { procedures: 'PROC', vitals: 'VITAL', labs: 'LAB', conditions: 'COND' };
+const DOMAIN_TYPE = { procedures: 'PROC', vitals: 'VITAL', labs: 'LAB', conditions: 'COND', meds: 'MED' };
+const OK_STATUS = new Set(['mapped', 'will-create']);
 // Codes the loader cannot map but VistA does not need; never counted as failures.
 const NOT_NEEDED = {
   VITAL: { '39156-5': 'VistA calculates BMI from height and weight' },
@@ -65,14 +66,14 @@ async function main() {
   for (const domain of Object.keys(DOMAIN_TYPE)) {
     const rs = report.filter((r) => r.domain === domain);
     const total = rs.reduce((n, r) => n + r.count, 0);
-    const bad = rs.filter((r) => r.status !== 'mapped');
+    const bad = rs.filter((r) => !OK_STATUS.has(r.status));
     const badTotal = bad.reduce((n, r) => n + r.count, 0);
     // Conditions without an ICD map still load through a SNOMED-only fallback, so they are gaps, not failures.
     const verb = domain === 'conditions' ? 'lack a full ICD map (fallback path used)' : 'will fail';
     console.log(`${domain}: ${rs.length - bad.length}/${rs.length} codes mapped; ${badTotal} of ${total} resources ${verb}`);
     for (const r of bad.sort((a, b) => b.count - a.count)) {
       const why = r.status === 'target-missing' ? `mapped to "${r.target}", not in file #60`
-        : domain === 'conditions' ? `${r.status} (${r.target})` : r.status;
+        : (domain === 'conditions' || domain === 'meds') ? `${r.status} (${r.target})` : r.status;
       console.log(`  ${String(r.count).padStart(4)}  ${r.code.padEnd(12)} ${String(r.display).slice(0, 52).padEnd(52)} ${why}`);
     }
     for (const s of skipped.filter((x) => x.domain === domain)) {

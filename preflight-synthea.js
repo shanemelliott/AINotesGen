@@ -70,7 +70,7 @@ function main() {
   const args = process.argv.slice(2);
   const topIdx = args.indexOf('--top');
   const top = topIdx >= 0 ? Number(args[topIdx + 1]) : 8;
-  const file = args.find((a, i) => !a.startsWith('--') && i !== topIdx + 1);
+  const file = args.find((a, i) => !a.startsWith('--') && (topIdx < 0 || i !== topIdx + 1));
   if (!file) {
     console.error('Usage: node preflight-synthea.js <bundle.json> [--keep-all] [--top N]');
     process.exit(1);

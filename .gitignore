@@ -4,6 +4,7 @@ vista-notes/
 
 #Token files
 sts-token/
+.token-cache.json
 
 # Dependencies
 node_modules/

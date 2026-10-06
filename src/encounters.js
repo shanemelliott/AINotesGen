@@ -248,7 +248,12 @@ function extractEncounters({ byDomain, byUid, byEncounter }, { rules }) {
       .sort((a, b) => day(a.observed).localeCompare(day(b.observed)) || labSort(a, b))
       .map(shapeLab);
 
-    const clinic = earliest.locationName || dayVisits[0]?.locationName || 'UNKNOWN CLINIC';
+    // The visit's hospital location is the clinic; order locations are always the loader default.
+    const visitFirst = [...dayVisits].sort(
+      (a, b) => String(a.dateTime).localeCompare(String(b.dateTime))
+        || (b.locationName === 'EMERGENCY DEPARTMENT') - (a.locationName === 'EMERGENCY DEPARTMENT')
+    )[0];
+    const clinic = visitFirst?.locationName || earliest.locationName || 'UNKNOWN CLINIC';
 
     return {
       seq: i + 1,

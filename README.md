@@ -34,6 +34,7 @@ re-run; already-processed items are skipped or logged).
 3. **Create missing appointments**: `node create-appointments.js --dfn <dfn> [--dry-run]`
    Creates a past VistA appointment for every encounter date that doesn't
    already have one (via SDEC ARSET/APPADD). Logs to `src/appointments.json`.
+   For the RPCs, clinic and resource IENs, and walk-ins, see [docs/APPOINTMENT-RPCS.md](docs/APPOINTMENT-RPCS.md).
    Always `--dry-run` first to preview.
 
 4. **Re-fetch + re-extract**: repeat steps 1-2.

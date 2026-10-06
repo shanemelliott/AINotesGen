@@ -1,7 +1,7 @@
 // PIV card auth via STS token server; ported from createAppts/single-appointment-api
 // (converted to CommonJS). See @va/sts-token for the underlying exe wrapper.
 const path = require('path');
-const { existsSync } = require('fs');
+const { existsSync, readFileSync, writeFileSync, unlinkSync } = require('fs');
 const { createOccJwtClient } = require('@va/sts-token');
 
 function getStsExePath() {
@@ -21,6 +21,31 @@ const tokenCache = {
 
 let inflightRequest = null;
 let occJwtClient = null;
+
+// Disk cache lets separate node runs reuse a token; keyed by env and PIV serial.
+const DISK_CACHE = path.join(__dirname, '..', '.token-cache.json');
+const cacheKey = () => `${process.env.STS_ENV || 'preprod'}|${process.env.PIV_SERIAL || ''}`;
+
+function loadDiskCache() {
+  try {
+    const c = JSON.parse(readFileSync(DISK_CACHE, 'utf8'));
+    if (c.key === cacheKey() && c.token) {
+      tokenCache.token = c.token;
+      tokenCache.expiresAt = c.expiresAt;
+      tokenCache.payload = c.payload;
+    }
+  } catch (err) {
+    // no usable cache file
+  }
+}
+
+function saveDiskCache() {
+  try {
+    writeFileSync(DISK_CACHE, JSON.stringify({ key: cacheKey(), ...tokenCache }), { mode: 0o600 });
+  } catch (err) {
+    console.error('[tokenService] Could not write token cache:', err.message);
+  }
+}
 
 async function initializeJwtClient(forceNew = false) {
   if (!occJwtClient || forceNew) {
@@ -60,6 +85,7 @@ function shouldRefreshToken() {
 }
 
 async function getToken() {
+  if (shouldRefreshToken()) loadDiskCache();
   if (!shouldRefreshToken()) {
     return tokenCache.token;
   }
@@ -89,6 +115,7 @@ async function getToken() {
       tokenCache.token = token;
       tokenCache.expiresAt = expiresAt;
       tokenCache.payload = payload;
+      saveDiskCache();
       return token;
     } finally {
       inflightRequest = null;
@@ -125,6 +152,11 @@ function clearJwtClient() {
   tokenCache.token = null;
   tokenCache.expiresAt = 0;
   tokenCache.payload = null;
+  try {
+    unlinkSync(DISK_CACHE);
+  } catch (err) {
+    // already gone
+  }
 }
 
 module.exports = {

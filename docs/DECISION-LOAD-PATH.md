@@ -65,7 +65,8 @@ equivalent test. BMI is calculated by VistA and is not a loss.
 |---|---|---|
 | Appointments | `SDEC ARSET` and `SDEC APPADD` (`src/appointmentCreator.js`) | Built; clinic should come from the encounter, not one global clinic |
 | Notes | `TIU CREATE RECORD` and sign (`src/notesClient.js`) | Built |
-| Meds (add and renew) | New CDSP RPC, parameterized from `WRITERXPS^SYNFMED` (SIG, quantity, supply, refills, provider, clinic, date) | **To build**; renew and discontinue need the pharmacy renewal and discontinue APIs, not yet researched |
+| Meds (add) | New CDSP RPC, parameterized from `WRITERXPS^SYNFMED` (SIG, quantity, supply, refills, provider, clinic, date) | **To build** |
+| Meds (renew, discontinue) | Standard CPRS RPCs (context `OR CPRS GUI CHART`) driven by a script, not custom M code | **Decided 2026-10-06; to build with Task 14** |
 | Allergies, immunizations, problems | `ISI IMPORT ALLERGY`, `IMMUNIZATIONS`, `PROB` | Later, if needed |
 | Labs, vitals | Separate process owned elsewhere | Out of scope |
 
@@ -83,9 +84,12 @@ equivalent test. BMI is calculated by VistA and is not a loss.
 
 1. **Meds append RPC:** none of the 26 ISI RPCs renews, discontinues or edits a prescription; `ISI IMPORT MED` only
    creates, and only for a drug that already exists in #50. SYN creates missing drugs but hardcodes quantity 30, 30 days,
-   1 refill and "ONE TABLET DAILY", and also only creates. The planned RPC wraps the SYN logic with real values. A
-   "renewal" would be a new prescription with a later date unless we find and use the pharmacy renewal API. Also needed:
-   a way to expire or discontinue old prescriptions (today every loaded med shows `active`).
+   1 refill and "ONE TABLET DAILY", and also only creates. The planned RPC wraps the SYN logic with real values. Renewals and
+   discontinues use the standard CPRS RPCs through a script (decided 2026-10-06), so no custom renewal code is needed.
+   Still to research when that task starts: the exact CPRS call sequence for renew and discontinue, the e-signature step
+   (we already encrypt the e-sig for `TIU SIGN RECORD`), which prescriptions are eligible (CPRS refuses some expired or
+   controlled-substance prescriptions), and the provider keys required (ties to PROJECT-PLAN Task 12). Today every loaded
+   med shows `active`, so old prescriptions also need discontinuing or expiring.
 2. **Encounter patch is untested.** It needs a fresh patient with ED and specialty encounters. Use the preflight
    check to find one among the files on the server.
 3. **Duplicate visits:** the loader creates a visit per encounter at its chosen clinic, and our appointments and

@@ -3,7 +3,14 @@
 const fs = require('fs');
 const path = require('path');
 const config = require('./src/config');
+const clinicLookup = require('./src/clinic-lookup.json');
 const { createAppointment, defaultOverbook, roundDownToHalfHour } = require('./src/appointmentCreator');
+
+// Clinic for the encounter's visit location; unknown locations use the lookup default.
+function clinicFor(encounter) {
+  const name = clinicLookup.clinics[encounter.clinic] ? encounter.clinic : clinicLookup.default;
+  return { clinicName: name, ...clinicLookup.clinics[name] };
+}
 
 const APPOINTMENTS_LOG_PATH = path.join(__dirname, 'src', 'appointments.json');
 
@@ -40,9 +47,6 @@ function saveAppointmentsLog(records) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const clinicIen = config.clinicIen();
-  const resourceIen = config.resourceIen();
-  const clinicName = 'GENERAL MEDICINE';
 
   const encounters = loadEncounters(args.dfn);
   const missing = encounters.filter((e) => !e.hasAppointment);
@@ -51,8 +55,7 @@ async function main() {
     log.filter((r) => r.dfn === args.dfn).map((r) => r.date)
   );
 
-  console.log(`Found ${missing.length} encounters missing appointments for DFN ${args.dfn}.`);
-  console.log(`clinicIen=${clinicIen} resourceIen=${resourceIen} dryRun=${args.dryRun}`);
+  console.log(`Found ${missing.length} encounters missing appointments for DFN ${args.dfn}. dryRun=${args.dryRun}`);
 
   const created = [];
   const skipped = [];
@@ -69,9 +72,10 @@ async function main() {
     }
 
     const overbook = defaultOverbook(date);
+    const { clinicName, clinicIen, resourceIen } = clinicFor(encounter);
 
     if (args.dryRun) {
-      console.log(`DRY   ${date} @ ${time} -> ${slotTime}: would create (overbook=${overbook})`);
+      console.log(`DRY   ${date} @ ${time} -> ${slotTime}: would create at ${clinicName} (${clinicIen}/${resourceIen}, overbook=${overbook})`);
       continue;
     }
 

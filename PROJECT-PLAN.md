@@ -29,8 +29,8 @@ flowchart LR
 | Notes pipeline (Tasks 1-6) | Done; 444 notes for 4 patients plus 23 for DFN 100969 (TORPHY630,LAN153), all signed |
 | Lab values in notes | Fixed 2026-10-05: lab names were missing from the prompt; labs are now rendered from data and a pairing check flags mismatches |
 | Synthea load (OpenSpec `synthea-fhir-rpc-loader`) | RPCs built and working (`LOAD`, `LOG`, `PREFLIGHT`); one full patient loaded; gap analysis done; fixes not yet applied (Task 13) |
-| Specialty / ED encounters | Root cause found in `SYNFENC`; patch designed, untested (Task 13) |
-| Append path | Appointments and notes built; meds spike open (Task 14) |
+| Specialty / ED encounters | Working: `CDSPENC` plus one `SYNFENC` line (`patches/synfenc-location.txt`) loaded on dev; tested on DFN 100970 (ED, CARDIOLOGY and DENTAL visits landed in their clinics; notes and appointments created and signed) (Task 13) |
+| Append path | Appointments and notes built; appointments choose the clinic from the visit location (`src/clinic-lookup.json`); meds `ADDRX` written but PARKED (Task 14) |
 | Multiple providers | Not started (Task 12) |
 
 ---
@@ -309,41 +309,66 @@ Decision and rationale: [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md)
 `openspec/changes/synthea-fhir-rpc-loader/tasks.md` (Tasks 1.5 to 1.10). Findings: [docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md](docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md).
 
 **Done**
-- Custom RPCs in `cds-vista-routines` (`CDSPFHIR`): `CDSP UTIL LOAD FHIR`, `CDSP UTIL LOAD LOG`, `CDSP UTIL LOAD PREFLIGHT`.
+- Custom RPCs in `cds-vista-routines` (`CDSPFHIR`): `CDSP UTIL LOAD FHIR`, `CDSP UTIL LOAD LOG`, `CDSP UTIL LOAD PREFLIGHT`,
+  `CDSP UTIL MAP SET` and `CDSP UTIL MAP GET` (edit and read the `loinc-lab-map` graph; dry-run by default in the client).
 - `load-synthea.js` (chunked bundle load), `fetch-load-log.js` (load log as JSON), `preflight-synthea.js` and
-  `preflight-vista.js` (predict which codes will fail; matched the real load for Lan153).
+  `preflight-vista.js` (predict which codes will fail; matched the real load for Lan153), `apply-loader-maps.js` with
+  `patches/loader-maps.json` (repeatable lab map fixes).
 - One full patient loaded (TORPHY630,LAN153, DFN 100969) and taken through appointments and signed notes.
 - Auto-appointment creation in `ENCTUPD^SYNDHP61` disabled and verified (Task 1.6).
+- Lab map fixes applied 2026-10-06 (8 entries; TOT PROT, TOT. BIL, ALK PHOS, RDW-CV, urine protein corrected; magnesium,
+  ferritin, urine blood added). Predicted lab failures for Lan153 fell from 81 to 26 of 378 resources.
+- Veteran flag: `SYNFPAT` patched on dev (2026-10-06) to send `VETERAN`; to be confirmed on the next patient load.
 
 **To do, in priority order**
-1. Encounter location by class and type (specialty and ED): patch `SYNFENC` and the `SYNQLDM` location values; test on a
-   fresh patient with ED and specialty encounters (find one with the preflight check).
-2. Lab fixes: mapped names to existing #60 tests; rebuild the `^XTMP("SYNQLD","MAPS")` cache; re-run the preflight check.
-3. Two failing med RxNorm codes: translate in `RXNBADDATA`.
+1. Encounter location by class and type (specialty and ED): DONE on dev 2026-10-06. `CDSPENC.int`
+   (cds-vista-routines) picks the location: emergency class, then encounter type, then reason code, with a table of SNOMED
+   code to clinic (ED, CARDIOLOGY, DENTAL, PULMONARY, SLEEP LAB, HEMATOLOGY, DIABETIC, HEMODIALYSIS - MIKEB); anything else
+   keeps GENERAL MEDICINE. `SYNFENC` needs one added line (`patches/synfenc-location.txt`). Next: load both on the server,
+   load a patient with ED and specialty visits (candidates in `SynthiaFiles/`: Shonta375, Antonetta450, Madlyn383) and
+   check where the visits land. Not known: how `ENCTUPD^SYNDHP61` handles a clinic other than GENERAL MEDICINE.
+   Clinic and resource IENs are in `src/clinic-lookup.json`; see [docs/CLINIC-AVAILABILITY.md](docs/CLINIC-AVAILABILITY.md).
+2. Lab fixes: DONE for the mapped names and three missing entries. Remaining labs with no #60 equivalent are accepted
+   (PDW, ejection fraction, urine culture, NYHA); NT-proBNP and GFR (to `eGFR (CKD-EPI)` 5145) are an open call.
+3. Two failing med RxNorm codes: DONE 2026-10-06. Added to `RXNBADDATA` in `SYNFMED` on dev: `243670;318272` (aspirin 81 MG
+   to the chewable tablet) and `235389;198043` (mestranol / norethynodrel to mestranol / norethindrone, a substitution).
+   The preflight now shows 11 of 11 Lan153 med codes mapped. The lines still need to go in a repo patch set (item 5).
 4. Conditions on pre-1978 dates: confirm the date theory with a post-1978 patient, then patch or accept.
 5. Keep local patches in a repo-tracked patch set with an apply step (a loader reinstall removes them).
-6. Add a `MED` check to the preflight RPC; investigate the 4 failed encounters and the lab panels with no status.
+6. `MED` check in the preflight RPC: DONE. Still open: investigate the 4 failed encounters and the lab panels with no status.
 7. Rank the Synthea files on the server with the preflight check and choose the next patients.
-8. Veteran flag: `SYNFPAT` never sets `VETERAN`, so every loaded patient has `isVet` 0 and no service connection or
-   eligibility. Add one line to pass `VETERAN` to the patient import (or set it after the load).
+8. Veteran flag: DONE on dev (`SYNFPAT` now passes `VETERAN`); verify on the next load. Service connection and eligibility
+   are still not set.
 
 **Accepted losses** (low priority): vitals gaps, procedures, dental codes, labs with no equivalent test.
 
 ### Task 14: Append path for existing patients (proposed)
 Per the decision, appends to an existing patient use our own tools plus the ISI RPCs where they fit.
-- **Appointments and notes:** already built (SDEC, TIU). Change appointment creation to use the existing visit's clinic
-  (per encounter) instead of one global clinic, once Task 13 item 1 lands. Task 7 (future encounters) builds on this.
-- **Meds:** build a CDSP RPC (working name `CDSP UTIL ADD RX`) from the logic in `WRITERXPS^SYNFMED`, taking DFN, RxNorm code,
+- **Appointments and notes:** already built (SDEC, TIU). Appointment creation now takes the clinic and resource from each
+  encounter's visit location (`src/clinic-lookup.json`; unknown locations use `DEV PACT MD 4`); ED visits are walk-ins and
+  get no appointment yet (the walk-in RPC is not known). Past-dated bookings in DENTAL, HEMODIALYSIS, PULMONARY and
+  CARDIOLOGY were tested on 2026-10-06 and accepted (test appointments 61664 to 61667 for DFN 100969 were left in place).
+  Task 7 (future encounters) builds on this.
+- **Meds:** PARKED (2026-10-06). `ADDRX` is written in `CDSPRX.int` (cds-vista-routines), untested. It is the
+  `WRITERXPS^SYNFMED` logic with the SIG, quantity, days supply, refills, provider, clinic and date as parameters, and it
+  reuses the loader's `RXNCONV` and `ADDDRUG`, so RxNorm translations apply. To resume: load and compile `CDSPRX`, define
+  the RPC `CDSP UTIL ADD RX` (context `CDSP RPC UTILS`, tag `ADDRX`, routine `CDSPRX`, return type array; parameters DFN,
+  RXNCUI, RXDATE, SIG, QTY, DAYS, REFILLS, PROV, CLINIC), then write `add-rx.js` and run a first add. Check the provider
+  keys (only existence in file #200 is validated) and the NULL-device print step first if it fails. This is for the append
+  path only; the initial load already files meds. Original design notes: a CDSP RPC taking DFN, RxNorm code,
   issue date, SIG, quantity, days supply, refills, provider and clinic. None of the 26 ISI RPCs renews, discontinues or
   edits a prescription, and `ISI IMPORT MED` cannot create a missing drug, so ISI is not the maintenance path for meds.
-  Open: whether a "renewal" is a new prescription (what Synthea does: each refill is a new MedicationRequest) or must use
-  the pharmacy renewal API; how to expire or discontinue old prescriptions (all loaded meds show `active`).
+  Renewals and discontinues: decided (2026-10-06) to use the standard CPRS RPCs (context `OR CPRS GUI CHART`) through a
+  script, so no custom renewal code is needed. To research when this starts: the CPRS call sequence for renew and
+  discontinue, the e-signature step (the encrypted e-sig code from `src/notesClient.js` should apply), which prescriptions
+  are eligible (CPRS refuses some expired or controlled-substance ones), and the provider keys needed (see Task 12). The
+  order ID comes from the VPR (`orders[].orderUid`). All loaded meds currently show `active`, so old ones need discontinuing.
 - **Later, if needed:** allergies, immunizations and problems through their ISI RPCs.
 - **Out of scope:** labs and vitals (another process owns them).
 - Needs the broker context and security for `ISI IMPORT *` (see `DataLoader_User_Setup.txt`) and a check of how the V-file
   RPCs choose a visit location.
 
-**Status**: Not started.
+**Status**: Appointment clinic selection done; meds append parked (code written, untested); renew and discontinue script not started.
 
 ### Task 15: Veteran-appropriate Synthea files (proposed)
 The Synthea files we were given start at birth and are not veteran-specific. Findings so far (from the Synthea wiki and
@@ -375,7 +400,7 @@ user today (multiple providers are Task 12); transport is vista-api-x with a PIV
 Still open:
 1. Appointments: create them in the clinic of each encounter's loaded visit (needs Task 13 item 1) or keep clinic 532?
 2. Which clinics and note titles for specialty and ED encounters (IDs from file #44: ER 70, EMERGENCY DEPARTMENT 426, DENTAL 228, CARDIOLOGY 195)?
-3. Meds: is a renewal a new prescription (as Synthea models it) or must it use the pharmacy renewal API, and how do we expire or discontinue old prescriptions (Task 14)?
+3. Meds: which CPRS RPC sequence renews and discontinues a prescription, and which loaded prescriptions are eligible (Task 14)?
 4. Future encounters (Task 7): appointments only, notes for new visits, or both?
 5. The patient has 141 VistA visits but only 38 order dates. Should visits without orders (for example prenatal visits with a pregnancy test and antenatal care-plan activities) also become encounters with notes?
 6. Should the 444 earlier notes be spot-checked for lab name and value mismatches? Decided not to for now (owner, 2026-10-05).

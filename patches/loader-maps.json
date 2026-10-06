@@ -1,0 +1,10 @@
+[
+  { "map": "loinc-lab-map", "key": "2885-2", "value": "TOTAL PROTEIN", "note": "was TOT PROT; #60 IEN 184" },
+  { "map": "loinc-lab-map", "key": "1975-2", "value": "TOT. BILIRUBIN", "note": "was TOT. BIL; #60 IEN 186" },
+  { "map": "loinc-lab-map", "key": "6768-6", "value": "ALKALINE PHOSPHATASE", "note": "was ALK PHOS; #60 IEN 188" },
+  { "map": "loinc-lab-map", "key": "788-0", "value": "RDW", "note": "was RDW-CV; #60 IEN 416" },
+  { "map": "loinc-lab-map", "key": "5804-0", "value": "URINE PROTEIN", "note": "was TOT PROT (serum); #60 IEN 149" },
+  { "map": "loinc-lab-map", "key": "19123-9", "value": "MAGNESIUM", "note": "no map entry; #60 IEN 201" },
+  { "map": "loinc-lab-map", "key": "2276-4", "value": "FERRITIN", "note": "no map entry; #60 IEN 113" },
+  { "map": "loinc-lab-map", "key": "5794-3", "value": "URINE BLOOD", "note": "no map entry; #60 IEN 1158" }
+]

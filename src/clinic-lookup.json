@@ -1,0 +1,15 @@
+{
+  "_note": "Clinics the loader can place visits in (CDSPENC TABLE) with their SDES clinic and resource IENs; any other visit location (e.g. GENERAL MEDICINE) uses the default clinic. From node fetch-clinics.js on SQA/VEHU, 2026-10-06.",
+  "default": "DEV PACT MD 4",
+  "clinics": {
+    "DEV PACT MD 4": { "clinicIen": 532, "resourceIen": 185 },
+    "CARDIOLOGY": { "clinicIen": 195, "resourceIen": 46 },
+    "DENTAL": { "clinicIen": 228, "resourceIen": 53 },
+    "PULMONARY": { "clinicIen": 429, "resourceIen": 79 },
+    "SLEEP LAB": { "clinicIen": 430, "resourceIen": 80 },
+    "HEMATOLOGY": { "clinicIen": 229, "resourceIen": 54 },
+    "DIABETIC": { "clinicIen": 285, "resourceIen": 71 },
+    "HEMODIALYSIS - MIKEB": { "clinicIen": 257, "resourceIen": 85 },
+    "EMERGENCY DEPARTMENT": { "clinicIen": 426, "resourceIen": 76 }
+  }
+}

@@ -1,0 +1,11 @@
+SYNFENC patch: choose the encounter location from the Synthea class/type (needs CDSPENC on the server)
+Routine: SYNFENC, tag wsIntakeEncounters. Reinstalling the SYN KIDS build replaces SYNFENC, so reapply.
+
+Find this line:
+ . s CLINIC=$$MAP^SYNQLDM("OP","location") ; map containes the name of the clinic file #44
+
+Add this line directly after it:
+ . i $t(LOC^CDSPENC)'="" s CLINIC=$$LOC^CDSPENC($g(@json@("entry",zi,"resource","class","code")),enccode,reasoncode,CLINIC)
+
+The log line that follows ("Location for outpatient is: ...") then shows the chosen location.
+Type code to location rows live in the TABLE tag of CDSPENC.
