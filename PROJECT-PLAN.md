@@ -371,6 +371,8 @@ Per the decision, appends to an existing patient use our own tools plus the ISI 
 **Status**: Appointment clinic selection done; meds append parked (code written, untested); renew and discontinue script not started.
 
 ### Task 15: Veteran-appropriate Synthea files (proposed)
+Now tracked as the OpenSpec change `veteran-test-population` (population profile, Synthea review, first batch of 10 to 20);
+the findings below are kept for context, and the VistA eligibility future work below stays here.
 The Synthea files we were given start at birth and are not veteran-specific. Findings so far (from the Synthea wiki and
 `veteran.json`; nothing generated or tested yet):
 - **History length:** `exporter.years_of_history` (default 10) limits exported history to the last N years; currently active
