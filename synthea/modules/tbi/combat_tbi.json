@@ -1,0 +1,87 @@
+{
+  "name": "Forced combat traumatic brain injury",
+  "remarks": [
+    "Test-data module for the veteran test population: every patient run with this module gets a traumatic",
+    "brain injury between age 19 and 21. Sets attribute mTBI, which the built-in veteran PTSD module uses",
+    "(about 44% of patients with mTBI go on to PTSD). Only load it (-d) in the run that should produce TBI.",
+    "Code 127295002 maps to ICD-10 S06.9X0A (no ICD-9 map, so pre-2015 onsets use the SNOMED-only path)."
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Wait_Until_19"
+    },
+    "Wait_Until_19": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Age",
+        "operator": ">=",
+        "quantity": 19,
+        "unit": "years"
+      },
+      "direct_transition": "Time_In_Service"
+    },
+    "Time_In_Service": {
+      "type": "Delay",
+      "range": {
+        "low": 0,
+        "high": 2,
+        "unit": "years"
+      },
+      "direct_transition": "Traumatic_Brain_Injury"
+    },
+    "Traumatic_Brain_Injury": {
+      "type": "ConditionOnset",
+      "target_encounter": "Trauma_Admission",
+      "assign_to_attribute": "mTBI",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "127295002",
+          "display": "Traumatic brain injury (disorder)"
+        }
+      ],
+      "direct_transition": "Trauma_Admission"
+    },
+    "Trauma_Admission": {
+      "type": "Encounter",
+      "encounter_class": "emergency",
+      "reason": "mTBI",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "50849002",
+          "display": "Emergency room admission (procedure)"
+        }
+      ],
+      "direct_transition": "Head_Injury_Care_Plan"
+    },
+    "Head_Injury_Care_Plan": {
+      "type": "CarePlanStart",
+      "reason": "mTBI",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "47387005",
+          "display": "Head injury rehabilitation (regime/therapy)"
+        }
+      ],
+      "activities": [
+        {
+          "system": "SNOMED-CT",
+          "code": "183051005",
+          "display": "Recommendation to rest (procedure)"
+        }
+      ],
+      "direct_transition": "End_Trauma_Admission"
+    },
+    "End_Trauma_Admission": {
+      "type": "EncounterEnd",
+      "direct_transition": "Terminal"
+    },
+    "Terminal": {
+      "type": "Terminal"
+    }
+  },
+  "gmf_version": 2
+}

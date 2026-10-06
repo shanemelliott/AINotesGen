@@ -1,0 +1,104 @@
+{
+  "name": "Forced combat amputation",
+  "remarks": [
+    "Test-data module for the veteran test population: every patient run with this module gets a traumatic",
+    "lower-limb amputation between age 19 and 23. Only load it (-d) in the run that should produce amputees.",
+    "Codes checked against the VistA loader maps on 2026-10-06: condition 95860004 maps to ICD-10 S88.919A",
+    "(no ICD-9 map, so pre-2015 onsets use the SNOMED-only path); procedure 88312006 has no CPT map."
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Wait_Until_19"
+    },
+    "Wait_Until_19": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Age",
+        "operator": ">=",
+        "quantity": 19,
+        "unit": "years"
+      },
+      "direct_transition": "Time_In_Service"
+    },
+    "Time_In_Service": {
+      "type": "Delay",
+      "range": {
+        "low": 0,
+        "high": 4,
+        "unit": "years"
+      },
+      "direct_transition": "Traumatic_Amputation"
+    },
+    "Traumatic_Amputation": {
+      "type": "ConditionOnset",
+      "target_encounter": "Trauma_Admission",
+      "assign_to_attribute": "combat_amputation",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "95860004",
+          "display": "Traumatic amputation of lower extremity (disorder)"
+        }
+      ],
+      "direct_transition": "Trauma_Admission"
+    },
+    "Trauma_Admission": {
+      "type": "Encounter",
+      "encounter_class": "emergency",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "50849002",
+          "display": "Emergency room admission (procedure)"
+        }
+      ],
+      "direct_transition": "Amputation_Procedure"
+    },
+    "Amputation_Procedure": {
+      "type": "Procedure",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "88312006",
+          "display": "Amputation of leg through tibia and fibula (procedure)"
+        }
+      ],
+      "duration": {
+        "low": 2,
+        "high": 4,
+        "unit": "hours"
+      },
+      "direct_transition": "Rehab_Care_Plan"
+    },
+    "Rehab_Care_Plan": {
+      "type": "CarePlanStart",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "408869004",
+          "display": "Musculoskeletal care (regime/therapy)"
+        }
+      ],
+      "activities": [
+        {
+          "system": "SNOMED-CT",
+          "code": "229070002",
+          "display": "Stretching exercises (regime/therapy)"
+        }
+      ],
+      "direct_transition": "End_Trauma_Admission"
+    },
+    "End_Trauma_Admission": {
+      "type": "EncounterEnd",
+      "direct_transition": "Terminal"
+    },
+    "Terminal": {
+      "type": "Terminal"
+    }
+  },
+  "gmf_version": 2
+}

@@ -1,0 +1,98 @@
+{
+  "name": "Forced combat burn",
+  "remarks": [
+    "Test-data module for the veteran test population: every patient run with this module gets a full",
+    "thickness burn between age 19 and 23, with a burn unit admission. Only load it (-d) in the run that",
+    "should produce burn injuries. Condition 403192003 maps to ICD-10 and ICD-9; procedure 183450002 maps."
+  ],
+  "states": {
+    "Initial": {
+      "type": "Initial",
+      "direct_transition": "Wait_Until_19"
+    },
+    "Wait_Until_19": {
+      "type": "Guard",
+      "allow": {
+        "condition_type": "Age",
+        "operator": ">=",
+        "quantity": 19,
+        "unit": "years"
+      },
+      "direct_transition": "Time_In_Service"
+    },
+    "Time_In_Service": {
+      "type": "Delay",
+      "range": {
+        "low": 0,
+        "high": 4,
+        "unit": "years"
+      },
+      "direct_transition": "Full_Thickness_Burn"
+    },
+    "Full_Thickness_Burn": {
+      "type": "ConditionOnset",
+      "target_encounter": "Trauma_Admission",
+      "assign_to_attribute": "combat_burn",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "403192003",
+          "display": "Full thickness burn (disorder)"
+        }
+      ],
+      "direct_transition": "Trauma_Admission"
+    },
+    "Trauma_Admission": {
+      "type": "Encounter",
+      "encounter_class": "emergency",
+      "reason": "combat_burn",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "50849002",
+          "display": "Emergency room admission (procedure)"
+        }
+      ],
+      "direct_transition": "Burn_Unit_Admission"
+    },
+    "Burn_Unit_Admission": {
+      "type": "Procedure",
+      "reason": "combat_burn",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "183450002",
+          "display": "Admission to burn unit (procedure)"
+        }
+      ],
+      "direct_transition": "Burn_Care_Plan"
+    },
+    "Burn_Care_Plan": {
+      "type": "CarePlanStart",
+      "reason": "combat_burn",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "133901003",
+          "display": "Burn care (regime/therapy)"
+        }
+      ],
+      "activities": [
+        {
+          "system": "SNOMED-CT",
+          "code": "385949008",
+          "display": "Dressing change management (procedure)"
+        }
+      ],
+      "direct_transition": "End_Trauma_Admission"
+    },
+    "End_Trauma_Admission": {
+      "type": "EncounterEnd",
+      "direct_transition": "Terminal"
+    },
+    "Terminal": {
+      "type": "Terminal"
+    }
+  },
+  "gmf_version": 2
+}
