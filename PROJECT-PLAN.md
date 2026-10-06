@@ -1,10 +1,44 @@
 # NotesGenerator – Project Plan
 
-Goal: take a synthetic (Synthea-loaded) VistA patient record, derive historical encounter dates from orders, build a clinical picture from labs/problems/orders, create past appointments on those dates, and write AI-generated synthetic progress notes to VistA for each encounter.
+Goal: take a synthetic (Synthea) patient, load it into VistA, derive historical encounter dates from the loaded orders, build a clinical picture from labs/problems/orders/meds, create past appointments on those dates, and write AI-generated synthetic progress notes to VistA for each encounter. Later additions (appointments, meds, notes) are appended to existing patients.
 
 ---
 
-## 1. What Exists Today (inventory)
+## 0. Current state and load path (2026-10-06)
+
+**Decision:** hybrid. The initial load uses the VistA FHIR Data Loader (SYN), with local patches; appends use the
+VistA Data Loader RPCs (`ISI IMPORT *`) where they fit, plus our own SDEC (appointments) and TIU (notes) tools.
+See [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md).
+
+**Priorities (owner):** notes, labs, meds, problems, appointments. Vitals and procedures are low priority. Specialty and ED
+encounters are wanted (everything is currently GENERAL MEDICINE).
+
+```mermaid
+flowchart LR
+  A[Synthea JSON] --> B[preflight-synthea.js<br/>code inventory]
+  B --> C[preflight-vista.js<br/>mapping check, read-only]
+  C --> D[load-synthea.js<br/>CDSP UTIL LOAD FHIR to SYN loader]
+  D --> E[fetch-vpr.js + extract-encounters.js]
+  E --> F[create-appointments.js<br/>SDEC]
+  F --> G[generate / approve / sign notes<br/>TIU]
+  H[append later:<br/>meds via ISI, appts, notes] -.-> G
+```
+
+| Area | Status |
+|---|---|
+| Notes pipeline (Tasks 1-6) | Done; 444 notes for 4 patients plus 23 for DFN 100969 (TORPHY630,LAN153), all signed |
+| Lab values in notes | Fixed 2026-10-05: lab names were missing from the prompt; labs are now rendered from data and a pairing check flags mismatches |
+| Synthea load (OpenSpec `synthea-fhir-rpc-loader`) | RPCs built and working (`LOAD`, `LOG`, `PREFLIGHT`); one full patient loaded; gap analysis done; fixes not yet applied (Task 13) |
+| Specialty / ED encounters | Root cause found in `SYNFENC`; patch designed, untested (Task 13) |
+| Append path | Appointments and notes built; meds spike open (Task 14) |
+| Multiple providers | Not started (Task 12) |
+
+---
+
+## 1. Original inventory (historical, from project start)
+
+This section records what existed when the project began. Several folders listed here (`vista-notes/`,
+`createAppts/`) are no longer in the repo; their logic now lives in `src/` (see section 2).
 
 | Asset | What it is | Reuse for |
 |---|---|---|
@@ -42,7 +76,7 @@ No TIU `document` domain is present, so the patient currently has **no notes**.
 
 ---
 
-## 2. Target Architecture
+## 2. Notes Pipeline Architecture
 
 ```mermaid
 flowchart LR
@@ -55,15 +89,16 @@ flowchart LR
   F --> G[(VistA)]
 ```
 
-App code lives at the repo root (`NotesGenerator/`, Node + pnpm). Modules:
+App code lives at the repo root (`NotesGenerator/`, Node + pnpm): root files are CLI entry points, `src/` holds shared modules. Current layout:
 
-- `loadPatient.js`: reads `<dfn>.json` (later fetches the VPR via vista-api-x).
-- `buildEncounters.js`: groups orders by date and attaches linked labs, active meds, problems active on that date, and vitals from that date.
-- `aiClient.js`: copied from VAOSAI `openaiClient.js` (dotenv, `AZURE_OPENAI_API_KEY`), with system+user messages.
-- `generateNote.js`: builds the prompt and returns note text lines.
-- `createAppointment.js`: reuses `createAppts` ARSET/APPADD logic.
-- `writeNote.js`: reuses `vista-notes` `TIU CREATE RECORD` logic.
-- `index.js`: orchestration with `--dfn`, `--dry-run`, `--limit`, `--only-date`.
+- Load and diagnose: `load-synthea.js`, `fetch-load-log.js`, `preflight-synthea.js`, `preflight-vista.js`; `src/fhirBundleTransport.js`.
+- Patient data and encounters: `fetch-vpr.js`, `extract-encounters.js`; `src/encounters.js`, `src/problem-rules.json`.
+- Appointments: `create-appointments.js`; `src/appointmentCreator.js`.
+- Notes: `generate-notes.js`, `approve-note.js`, `sign-notes.js`, `resign-notes.js`; `src/noteGenerator.js`, `src/labBlock.js`, `src/noteFlags.js`, `src/reflow.js`, `src/noteStore.js`, `src/notesClient.js`; prompt and validation in `test-ai.js`.
+- Transport and auth: `src/vistaApiClient.js`, `src/tokenService.js`, `src/config.js`.
+- Manual smoke tests: `test-ai.js`, `test-create-appointment.js`, `test-write-note.js`.
+
+The module plan originally written here (`loadPatient.js`, `buildEncounters.js`, `index.js`, and so on) was replaced by these discrete, idempotent scripts.
 
 ---
 
@@ -269,16 +304,81 @@ supplied through env/secret store.
 **Status**: Not started. Related: Task 5 (signing), Task 11 (e-sig reliability, which per-provider
 signing will exercise more), Task 1.8 in `openspec/changes/synthea-fhir-rpc-loader/tasks.md`.
 
+### Task 13: Synthea initial load: preflight and fixes (IN PROGRESS)
+Decision and rationale: [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md). Work is tracked in
+`openspec/changes/synthea-fhir-rpc-loader/tasks.md` (Tasks 1.5 to 1.10). Findings: [docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md](docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md).
+
+**Done**
+- Custom RPCs in `cds-vista-routines` (`CDSPFHIR`): `CDSP UTIL LOAD FHIR`, `CDSP UTIL LOAD LOG`, `CDSP UTIL LOAD PREFLIGHT`.
+- `load-synthea.js` (chunked bundle load), `fetch-load-log.js` (load log as JSON), `preflight-synthea.js` and
+  `preflight-vista.js` (predict which codes will fail; matched the real load for Lan153).
+- One full patient loaded (TORPHY630,LAN153, DFN 100969) and taken through appointments and signed notes.
+- Auto-appointment creation in `ENCTUPD^SYNDHP61` disabled and verified (Task 1.6).
+
+**To do, in priority order**
+1. Encounter location by class and type (specialty and ED): patch `SYNFENC` and the `SYNQLDM` location values; test on a
+   fresh patient with ED and specialty encounters (find one with the preflight check).
+2. Lab fixes: mapped names to existing #60 tests; rebuild the `^XTMP("SYNQLD","MAPS")` cache; re-run the preflight check.
+3. Two failing med RxNorm codes: translate in `RXNBADDATA`.
+4. Conditions on pre-1978 dates: confirm the date theory with a post-1978 patient, then patch or accept.
+5. Keep local patches in a repo-tracked patch set with an apply step (a loader reinstall removes them).
+6. Add a `MED` check to the preflight RPC; investigate the 4 failed encounters and the lab panels with no status.
+7. Rank the Synthea files on the server with the preflight check and choose the next patients.
+8. Veteran flag: `SYNFPAT` never sets `VETERAN`, so every loaded patient has `isVet` 0 and no service connection or
+   eligibility. Add one line to pass `VETERAN` to the patient import (or set it after the load).
+
+**Accepted losses** (low priority): vitals gaps, procedures, dental codes, labs with no equivalent test.
+
+### Task 14: Append path for existing patients (proposed)
+Per the decision, appends to an existing patient use our own tools plus the ISI RPCs where they fit.
+- **Appointments and notes:** already built (SDEC, TIU). Change appointment creation to use the existing visit's clinic
+  (per encounter) instead of one global clinic, once Task 13 item 1 lands. Task 7 (future encounters) builds on this.
+- **Meds:** build a CDSP RPC (working name `CDSP UTIL ADD RX`) from the logic in `WRITERXPS^SYNFMED`, taking DFN, RxNorm code,
+  issue date, SIG, quantity, days supply, refills, provider and clinic. None of the 26 ISI RPCs renews, discontinues or
+  edits a prescription, and `ISI IMPORT MED` cannot create a missing drug, so ISI is not the maintenance path for meds.
+  Open: whether a "renewal" is a new prescription (what Synthea does: each refill is a new MedicationRequest) or must use
+  the pharmacy renewal API; how to expire or discontinue old prescriptions (all loaded meds show `active`).
+- **Later, if needed:** allergies, immunizations and problems through their ISI RPCs.
+- **Out of scope:** labs and vitals (another process owns them).
+- Needs the broker context and security for `ISI IMPORT *` (see `DataLoader_User_Setup.txt`) and a check of how the V-file
+  RPCs choose a visit location.
+
+**Status**: Not started.
+
+### Task 15: Veteran-appropriate Synthea files (proposed)
+The Synthea files we were given start at birth and are not veteran-specific. Findings so far (from the Synthea wiki and
+`veteran.json`; nothing generated or tested yet):
+- **History length:** `exporter.years_of_history` (default 10) limits exported history to the last N years; currently active
+  conditions and medications are still exported. `0` keeps everything. Our files cover a whole lifetime, so they were
+  generated with `0` or an old configuration. A value such as 10 to 20 gives a VA-like record that does not start at birth.
+- **Age and sex:** `-a minAge-maxAge` and `-g M|F` select the population; `-p` sets the size, `-s` the seed, `-r YYYYMMDD` the
+  reference date.
+- **Veterans:** the built-in `veteran` module sets a `veteran` attribute at age 18 using era and sex odds from census data (WW2,
+  Korean, Vietnam, Gulf War eras; for example about 57% of men over 75, about 1% of women). Related modules add veteran-linked
+  conditions (PTSD, major depression, TBI, lung and prostate cancer, hyperlipidemia, substance abuse). The module also honors
+  an attribute `veteran_population_override` that forces veteran status; how to set it from the command line is not yet checked.
+- **Not yet verified:** whether the exported FHIR carries the `veteran` attribute (if not, filter by the veteran-linked
+  conditions, or mark every loaded patient a veteran, since these are VA test patients); the exact command line and a
+  configuration file with `exporter.years_of_history`; whether the loader copes with shorter histories.
+- **Loader side:** `SYNFPAT` never sets `VETERAN` (Task 13 item 8), so the flag has to be fixed either way.
+- **Candidate command** (to verify with `-h`): `java -jar synthea-with-dependencies.jar -p 50 -g M -a 50-80 -s <seed> -c veteran.properties`
+  with `exporter.years_of_history = 15` in the properties file.
+
+**Status**: Not started.
+
 ---
 
 ## 4. Open Questions
-1. Create appointments only on dates without one, or on every order date?
-2. Which clinic/location and which note title(s)?
-3. Should notes be signed, and as which user/DUZ? (Currently one user for all; see Task 12 for multiple providers.)
-4. Transport: VistaJS broker (access/verify) or vista-api-x (token)?
-5. Is `o3-mini` acceptable for note quality, or is a `gpt-4o`/`gpt-4.1` deployment available on the APIM?
-6. Future encounters (Task 7): appointments only, notes for new visits, or both?
-7. The patient has 141 VistA visits but only 38 order dates. Should visits without orders (for example prenatal visits with a pregnancy test and antenatal care-plan activities) also become encounters with notes?
+Answered (2026-10-06): the load path is hybrid (see section 0 and docs/DECISION-LOAD-PATH.md); notes are signed as one
+user today (multiple providers are Task 12); transport is vista-api-x with a PIV token; `o3-mini` is the working model.
+
+Still open:
+1. Appointments: create them in the clinic of each encounter's loaded visit (needs Task 13 item 1) or keep clinic 532?
+2. Which clinics and note titles for specialty and ED encounters (IDs from file #44: ER 70, EMERGENCY DEPARTMENT 426, DENTAL 228, CARDIOLOGY 195)?
+3. Meds: is a renewal a new prescription (as Synthea models it) or must it use the pharmacy renewal API, and how do we expire or discontinue old prescriptions (Task 14)?
+4. Future encounters (Task 7): appointments only, notes for new visits, or both?
+5. The patient has 141 VistA visits but only 38 order dates. Should visits without orders (for example prenatal visits with a pregnancy test and antenatal care-plan activities) also become encounters with notes?
+6. Should the 444 earlier notes be spot-checked for lab name and value mismatches? Decided not to for now (owner, 2026-10-05).
 
 ## 5. Security Notes
 - The API key stays in `VAOSAI/.env` (or a local `.env` that is git-ignored). Never log or commit it.

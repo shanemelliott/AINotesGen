@@ -269,6 +269,16 @@ and note writing (single note title, `PRIMARY CARE VISIT`).
   (visit) location itself.
 1. Does `SYNQLDM` allow per-type keys (e.g. an "ER" or "IMP" entry), or must the lookup be patched?
 
+**Root cause confirmed in `SYNFENC` (read 2026-10-06)**: `wsIntakeEncounters^SYNFENC` sets
+`CLINIC=$$MAP^SYNQLDM("OP","location")` and `ENCPROV=$$MAP^SYNQLDM("OP","provider")` for every encounter. It never
+reads `Encounter.class.code` (AMB, EMER, IMP) or the encounter type, so everything lands at the "OP" location
+(GENERAL MEDICINE). `ENCTUPD^SYNDHP61` then hardcodes ENCOUNTER TYPE `P` and SERVICE CATEGORY `A` (the historical `E`
+logic is overwritten), and files a procedure for the visit: `sct2cpt`, then `sct2os5`, then the placeholder `6456Q`.
+The `SYNQLDM` location map already has keys `OP`, `ER`, `IP`, `ICU`, `PS`, but only `OP` (GENERAL MEDICINE) exists in #44.
+**Candidate patch**: in `SYNFENC`, choose the map key from `class.code` (AMB to OP, EMER to ER, IMP to IP, and
+specialty keys from the encounter type code), and change the `SYNQLDM` location values to names that exist in #44
+(for example `ER` to `EMERGENCY DEPARTMENT` 426, `DENTAL` 228, `CARDIOLOGY` 195). Untested.
+
 **File #44 findings (2026-10-05, from `reference/FILE44.TXT`, parsed to `logs/file44-locations.json`)**:
 528 hospital locations, 411 with a stop code and 117 without (mostly wards).
 - `SYNQLDM` location targets present: GENERAL MEDICINE (IEN 23) only. `EMERGENCY DEPT`, `CERT MED SURG`,
@@ -310,6 +320,16 @@ choose one disposition and record it here, so fixes are deliberate and the rest 
 C = CDSP-owned override or patch set, D = accept the loss (record it), E = avoid via patient selection
 (preflight ranking), I = investigate first (cause unknown).
 
+**Priorities (owner, 2026-10-06)**: what matters most for notes, in order: notes, labs, meds, problems, appointments.
+Vitals are not on the list: another process will add labs and vitals going forward, so the need is to append
+appointments, meds and notes. A different clinic and provider per encounter is a nice-to-have, but specialty and ED data
+are wanted, because everything currently shows as medicine/primary care. Patients are loaded once; appends come later.
+
+**Leaning from those priorities** (not a decision): keep the SYN loader for the initial load; skip vitals and procedure
+fixes (gaps 4 to 7 become accept); fix labs (1, 2), the 2 failing med codes (9) and the encounter location (10, via the
+`SYNFENC` patch in Task 1.8); build appends on our own tools (SDEC appointments and TIU notes already exist; meds need a
+spike: `ISI IMPORT MED` versus a wrapper on `WRITERXRXN^SYNFMED`). ISI RPCs are then needed only for appending meds.
+
 **Cross-cutting decision (first)**: `POSTSYN` and `POSTMAP` in the loader KIDS build kill and re-merge
 `sct2icd`, `sct2icdnine`, `sct2os5` and the `loinc-lab-map` graph, and a reinstall replaces the SYN
 routines. Any local fix (A or B) is lost on reinstall unless we keep it in a repo-tracked patch set with an
@@ -326,10 +346,16 @@ accept re-applying fixes by hand.
 | 6 | Procedures with no `sct2os5` entry (SNOMED) | 227 procedures | A/C: map the most frequent codes (the top 10 are about half of the resources) to targets in file #81; or D. Needs a decision on targets | D now; revisit if notes need procedures | TBD |
 | 7 | Dental procedures (CDT, no map) | 20 procedures | D accept; or build a CDT map (needs #81 targets) | D | TBD |
 | 8 | Conditions with an ICD-9 map on pre-1978 visits | 9 conditions | Confirm the date theory with a post-1978 patient; if confirmed, B: patch `SYNFPRB` to treat a not-yet-effective ICD code as unmapped so it takes the fallback | I, then B or D | TBD |
-| 9 | Meds (6 failed), encounters (4 failed), lab panels (28 with no status) | 38 records | I: pull the log text with `fetch-load-log.js` and classify before choosing | I | TBD |
+| 9 | Meds (6 failed), encounters (4 failed), lab panels (28 with no status) | 38 records | Meds are explained (below): 2 RxNorm codes. Encounters and panels: I, pull the log text with `fetch-load-log.js` and classify. Meds: add a `MED` preflight type; fix per code (add to `RXNBADDATA`, or accept) | I for encounters and panels; meds D or B per code | TBD |
 | 10 | Every encounter lands at GENERAL MEDICINE | all encounters | See Task 1.8 | per 1.8 | TBD |
 | 11 | One provider and one e-signature for all notes | all notes | See Task 12 | per Task 12 | TBD |
 | 12 | Choosing which Synthea files to load | 39 files on the server | E: run the preflight check on every bundle and rank by mappable share; set a threshold | E | TBD |
+
+Meds detail (2026-10-06, log line `Response from WRITERXRXN^SYNFMED is:`): 3 failures are RxNorm 243670
+(Aspirin 81 MG Oral Tablet) with `-1 ... could not be resolved into a drug`; 3 are RxNorm 235389
+(Mestranol / Norethynodrel) with `-2 ... is not a valid RxNorm`. The first is a valid SCD that did not resolve to a
+VA Product or drug through ETS and the NDF; the second is not known to ETS as an SCD (a multi-ingredient code).
+Both are fixable only by translating the code (`RXNBADDATA` in `SYNFMED`) or by accepting the loss.
 
 **Suggested order**: (cross-cutting decision) then 12 (cheap, shapes everything), 2 (free test), 9 (find the
 unknowns), 1, then 4, 8, 3/5/6/7 as accept-or-fix calls.
@@ -343,6 +369,87 @@ unknowns), 1, then 4, 8, 3/5/6/7 as accept-or-fix calls.
 
 ---
 
+
+## Task 1.10: Alternative path — Synthea JSON to ISI IMPORT RPCs (gap analysis, 2026-10-06)
+**Question**: Instead of fixing the SYN (FHIR Data Loader) path, preprocess Synthea JSON in Node and load
+everything with the VistA-DataLoader `ISI IMPORT *` RPCs (26 documented RPCs, package `VISTA DATALOADER` 3.1).
+Source: the RPC docs at `WorldVistA/VistA-DataLoader/Documentation/RPCs`. **Read so far**: PAT, PROB, VITALS,
+LAB, MED, ALLERGY, IMMUNIZATIONS, HFACTOR, V CPT, V POV. **Not read**: LAB PANEL, NONVA MED, V EXAM,
+V PATIENT ED, NOTE, APPT, `DataLoader_User_Setup.txt`, and the routines (e.g. `CHECKENC^ISIIMPUG`). Nothing was
+tested against VistA, so every "avoids" below is from documentation.
+
+**How the ISI path differs**
+- One record per RPC call (about 1,500 calls for Lan153, versus one chunked call), but each call returns its own
+  `-1^message`, instead of a load-log tree.
+- The code-to-VistA mapping moves into our Node code (repo-tracked, not wiped by a loader reinstall).
+- Location and provider (`LOCATION`, `ENTERED_BY`, `PROV`, `PROVIDER`) are per-call parameters, so we choose them.
+- We must build: transformers per domain, FileMan dates, unit conversion (Synthea gives kg and cm; VistA vitals
+  take lb and inches), blood pressure combine, race and ethnicity mapping, SSN generation, and sequencing.
+
+**Per-domain summary**
+
+| Domain | ISI RPC | What it takes | Notes |
+|---|---|---|---|
+| Patient | `ISI IMPORT PAT` | NAME, SEX, DOB, SSN, address, race and ethnicity pointers | Creates #2; whether an ICN is assigned is unknown |
+| Problems | `ISI IMPORT PROB` | PROBLEM as description, ICD or SNOMED (Lexicon lookup), PROVIDER, STATUS, TYPE | Hard-coded 799.9 fallback for SNOMED with no ICD; doc says ICD must be active for the date |
+| Vitals | `ISI IMPORT VITALS` | VITAL_TYPE by name or abbreviation (#120.51), RATE, LOCATION, ENTERED_BY | No LOINC table limit; LOCATION must be active on the date and not type Z |
+| Labs | `ISI IMPORT LAB` | LAB_TEST by #60 name or LOINC with a dash (via `LOINC2L`), RESULT_VAL, LOCATION | No units parameter; duplicate check; panels need `ISI IMPORT LAB PANEL` |
+| Meds | `ISI IMPORT MED` | DRUG (#50, needs orderable item), SIG (#51), QTY, SUPPLY, REFILL, EXPIRDT, PROV | Synthea has none of SIG, QTY, SUPPLY, REFILL; SYN invents the same defaults (below). Drug must already exist in #50; RxNorm lookup via #50.68 |
+| Allergies | `ISI IMPORT ALLERGY` | ALLERGEN (#120.82), SYMPTOM (#120.83, required), ORIGINTR, HISTORIC | Severity fixed to 2 |
+| Immunizations | `ISI IMPORT IMMUNIZATIONS` | IZ name (#9999999.14), PROVIDER, DATETIME | Needs a CVX-to-name map |
+| Procedures | `ISI IMPORT V CPT` | CPT code or description (#81), PROVIDER_NARRATIVE (required), PROVIDER, DATETIME | Still needs a SNOMED/CDT to #81 code |
+| Visit diagnoses | `ISI IMPORT V POV` | ICD code (#80), PRIMSEC, PROVIDER, DATETIME | |
+| Health factors | `ISI IMPORT HFACTOR` | HFACTOR name (#9999999.64) | Optional; Synthea survey and social-history observations |
+| Encounters | none | the V-file RPCs resolve or create a visit from DATETIME | No explicit encounter RPC; no LOCATION parameter on the V-file RPCs |
+
+**Against the 12 gaps in Task 1.9** (A = avoids, S = same gap, U = unknown, W = worse)
+
+| # | Gap | ISI path |
+|---|---|---|
+| 1 | Lab map names not in #60 | A: our own LOINC-to-#60 table, or `LOINC2L` |
+| 2 | Labs with a test but no map | A: same |
+| 3 | Labs with no equivalent test | S: the test must exist in #60 |
+| 4 | Vitals with a type but no loader entry | A: we choose the vital type by name (plus unit conversion) |
+| 5 | Vitals with no type | S |
+| 6 | Procedures with no map | S: needs a #81 code; mapping becomes ours to maintain |
+| 7 | Dental (CDT) | S: not in #81 unless added |
+| 8 | Conditions on pre-1978 dates | U: ICD date check is documented for PROB; test needed |
+| 9 | Meds, encounters, panels failing | meds W on drug resolution only (no auto-create of drugs, no RxNorm repair); SIG, QTY, SUPPLY, REFILL defaults are no worse than SYN's own; others U |
+| 10 | All encounters at GENERAL MEDICINE | A for vitals and labs (`LOCATION` per call); U for V-file RPCs (no location parameter) |
+| 11 | One provider for everything | A: provider per call; Task 12 becomes natural |
+| 12 | Choosing which Synthea file | S: preflight still applies, against our tables |
+
+**Open questions to answer before deciding**
+1. Visit handling: the V-file RPCs resolve or create a visit from DATETIME with no location parameter. Which
+   location does `CHECKENC^ISIIMPUG` use, and how does that interact with our SDEC appointment and note
+   visit-linking (exact FileMan datetime match)? Does appointment creation need to move before the load?
+2. Does `LOINC2L` resolve the LOINC codes the SYN map misses (magnesium, ferritin, GFR, and others)?
+3. Does `ISI IMPORT PROB` accept the pre-1978 SNOMED conditions, and what does a SNOMED with no ICD land as?
+4. Which broker context and security does calling `ISI IMPORT *` need (see `DataLoader_User_Setup.txt`)?
+5. Is `ISI IMPORT LAB PANEL` needed to keep lab accession grouping, and what do panels need as input?
+6. Are meds viable through `ISI IMPORT MED`: what share of Synthea RxNorm drugs already exist in #50 with an
+   orderable item (SYN auto-creates the rest)?
+
+**How SYN handles meds (read from `SYNFMED2` and `SYNFMED`, 2026-10-06)**
+- Input used: only the RxNorm code and `authoredOn`. `dosageInstruction`, quantity, supply and refills are ignored.
+- Drug resolution: converts a non-SCD RxNorm to an SCD (`RXNCONV`, via the ETS RxNorm API); corrects known-bad
+  Synthea codes with a built-in table (`RXNBADDATA`); RxNorm to VUID to VA Product (#50.68) to the #50 drug; if no
+  drug exists, `ADDDRUG` creates it in #50 (name, NDC, dispense unit, generic, class, uses) and creates the
+  orderable item in #50.7 if needed.
+- Order: `WRITERXPS` hardcodes quantity 30, days supply 30, 1 refill, dose "ONE TABLET DAILY" (even for
+  injections), provider `PROVIDER,UNKNOWN SYNTHEA`, clinic GENERAL MEDICINE, pharmacist `PHARMACIST,UNKNOWN
+  SYNTHEA`; files via `EN^PSON52`, prints to the null device and releases it (`BATCH^PSODISP`).
+- Requires the ETS routines (`^ETSRXN`). The loader reports failures with a blank message: `SYNFMED2` logs
+  `$G(RETSTA)` (never set), while the real result is in the log line `Response from WRITERXRXN^SYNFMED is:`.
+- So SYN also invents the defaults; its advantage is drug resolution. Its provider and clinic for meds are fixed.
+
+**Cheap experiments (need a throwaway patient, write to dev VistA)**: one vital (temperature), one lab by
+LOINC (`19123-9`), one `ISI IMPORT PROB` with a 1953 SNOMED code, one `ISI IMPORT V CPT`, one `ISI IMPORT MED`.
+
+**Status**: Analysis from documentation only; no decision. Hybrid option: keep `wsPostFHIR` for the domains that
+work and use ISI RPCs only for chosen gaps (vitals, immunizations, labs).
+
+---
 
 ## Task 2: Implement `src/fhir-transformer.js`
 **Goal**: Pure transformations from Synthea FHIR → `ISI IMPORT *` RPC MISC-array param format.

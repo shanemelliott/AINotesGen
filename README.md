@@ -6,7 +6,7 @@ Generates synthetic AI-authored progress notes for VistA test patients: derives 
 
 This project uses [OpenSpec](openspec/) for spec-driven development. Proposed and in-progress changes live under `openspec/changes/`; completed changes are archived under `openspec/changes/archive/`.
 
-See [PROJECT-PLAN.md](PROJECT-PLAN.md) for the full plan, task breakdown, and current status.
+See [PROJECT-PLAN.md](PROJECT-PLAN.md) for the full plan, task breakdown, and current status. How patients get into VistA (SYN initial load, ISI appends) is recorded in [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md).
 
 ## Setup
 
