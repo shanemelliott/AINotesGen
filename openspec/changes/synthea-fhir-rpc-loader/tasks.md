@@ -302,6 +302,47 @@ test VistA?
 
 ---
 
+## Task 1.9: Decide a path for each load gap (PROPOSED — decisions needed)
+**Goal**: For every gap in [`docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md`](../../../docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md),
+choose one disposition and record it here, so fixes are deliberate and the rest are accepted on purpose.
+
+**Dispositions**: A = VistA data change (global or file entry), B = patch loader (SYN) code,
+C = CDSP-owned override or patch set, D = accept the loss (record it), E = avoid via patient selection
+(preflight ranking), I = investigate first (cause unknown).
+
+**Cross-cutting decision (first)**: `POSTSYN` and `POSTMAP` in the loader KIDS build kill and re-merge
+`sct2icd`, `sct2icdnine`, `sct2os5` and the `loinc-lab-map` graph, and a reinstall replaces the SYN
+routines. Any local fix (A or B) is lost on reinstall unless we keep it in a repo-tracked patch set with an
+apply step run after each loader install. Decide whether to build that patch set (recommended), or to
+accept re-applying fixes by hand.
+
+| # | Gap | Size (Lan153) | Options | Recommended | Decision |
+|---|---|---|---|---|---|
+| 1 | Lab map names not in #60 (TOT. BIL, TOT PROT, ALK PHOS, RDW-CV) | 37 labs | A/C: point the map names at the existing #60 tests (TOT. BILIRUBIN 186, TOTAL PROTEIN 184, ALKALINE PHOSPHATASE 188, RDW 416). First find which map supplies each wrong name (`loinc-lab-map` graph or `SYNQLDM`) | A or C | TBD |
+| 2 | Labs with a #60 test but no usable map (GFR, magnesium, ferritin) | up to 24 labs | Rebuild the `^XTMP("SYNQLD","MAPS")` cache first (free, tests the stale-cache theory); then add map entries (GFR to eGFR (CKD-EPI) 5145) | A | TBD |
+| 3 | Labs with no equivalent test (PDW, NT-proBNP, LVEF, NYHA, urine Hgb and culture) | about 25 labs | D accept; or add the tests to #60 | D | TBD |
+| 4 | Vitals with a vital type but no loader entry (temperature 8310-5, SpO2 2708-6, head circumference 9843-4) | 23 vitals | B: add rows to the `SYNFVIT` LOINC table (+ `sct2vit` row for head circumference) | B/C if the patch set exists, otherwise D | TBD |
+| 5 | Vitals with no vital type (BMI percentile, weight-for-length, head circumference percentile) | 48 vitals | D accept; BMI is already on the preflight skip list | D | TBD |
+| 6 | Procedures with no `sct2os5` entry (SNOMED) | 227 procedures | A/C: map the most frequent codes (the top 10 are about half of the resources) to targets in file #81; or D. Needs a decision on targets | D now; revisit if notes need procedures | TBD |
+| 7 | Dental procedures (CDT, no map) | 20 procedures | D accept; or build a CDT map (needs #81 targets) | D | TBD |
+| 8 | Conditions with an ICD-9 map on pre-1978 visits | 9 conditions | Confirm the date theory with a post-1978 patient; if confirmed, B: patch `SYNFPRB` to treat a not-yet-effective ICD code as unmapped so it takes the fallback | I, then B or D | TBD |
+| 9 | Meds (6 failed), encounters (4 failed), lab panels (28 with no status) | 38 records | I: pull the log text with `fetch-load-log.js` and classify before choosing | I | TBD |
+| 10 | Every encounter lands at GENERAL MEDICINE | all encounters | See Task 1.8 | per 1.8 | TBD |
+| 11 | One provider and one e-signature for all notes | all notes | See Task 12 | per Task 12 | TBD |
+| 12 | Choosing which Synthea files to load | 39 files on the server | E: run the preflight check on every bundle and rank by mappable share; set a threshold | E | TBD |
+
+**Suggested order**: (cross-cutting decision) then 12 (cheap, shapes everything), 2 (free test), 9 (find the
+unknowns), 1, then 4, 8, 3/5/6/7 as accept-or-fix calls.
+
+**Exit criteria**:
+- A decision (or an explicit "accept") is recorded for each row
+- The patch-set decision is made and, if yes, the patch set exists with an apply step
+- Gaps chosen for fixing have an owner and a verification (preflight re-run shows the change)
+
+**Status**: Not started.
+
+---
+
 
 ## Task 2: Implement `src/fhir-transformer.js`
 **Goal**: Pure transformations from Synthea FHIR → `ISI IMPORT *` RPC MISC-array param format.
