@@ -30,9 +30,9 @@
 
 ## 4. Load and use
 
-- [ ] 4.1 Run the preflight checks on each patient file and fix mapping gaps that matter
-- [ ] 4.2 Load the batch, then create appointments, generate notes, review and sign
-- [ ] 4.3 Compare the result with the profile and record what to change for the next batch
+- [ ] 4.1 Run the preflight checks on each patient file and fix mapping gaps that matter. Done for 1 of 16 (Doug189, age 26): meds 2 of 4 codes map (abuse-deterrent oxycodone ER, RxNorm 1049504, and sodium fluoride gel have no VUID: 12 of 23 med resources fail), procedures 1 of 22 (dental and screening codes), conditions mostly social findings; labs and vitals mostly map
+- [ ] 4.2 Load the batch, then create appointments, generate notes, review and sign. Done for 1 of 16: Doug189 loaded as DFN 100971 (22 encounters, 28 conditions, 18 labs, 54 vitals, 11 meds; ED visit placed in EMERGENCY DEPARTMENT), 11 appointments (IENs 61699 to 61709), 11 notes generated with none flagged, signed on 2026-10-06. Still to do: the other 15 patients; check the veteran flag in the patient inquiry for DFN 100971; find a replacement RxNorm code for oxycodone ER (add a translation in RXNBADDATA as done for aspirin)
+- [ ] 4.3 Compare the result with the profile and record what to change for the next batch. Findings so far: the extract only lists days with orders, labs or meds, so visit-only days (for example the brain injury emergency visit at about age 21) get no note; the generated ED note reads as a veteran (status, support referral) but does not mention the brain injury; load time of the 34 MB patient is untested
 
 ## 5. Related, not part of this change
 
