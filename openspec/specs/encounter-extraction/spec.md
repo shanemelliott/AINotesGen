@@ -1,10 +1,10 @@
-# Spec Delta
+# encounter-extraction Specification
 
 ## Purpose
 
 Derive a fictional test patient's historical encounters from the order dates in their VPR JSON and assemble each encounter's minimized clinical context, so that appointments and synthetic progress notes can be generated for those encounters.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: One encounter per order date
 The extractor SHALL create exactly one encounter for each distinct calendar date (YYYYMMDD) on which the patient has at least one order. Its date/time SHALL be the earliest order start time on that date, and its clinic SHALL be the location of the earliest order that day. Encounters SHALL be output in ascending date order, with a sequence number starting at 1.

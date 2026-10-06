@@ -107,7 +107,7 @@ equivalent test. BMI is calculated by VistA and is not a loss.
 ## Evidence and references
 
 - `docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md`: gap findings and the preflight results for Lan153.
-- `openspec/changes/synthea-fhir-rpc-loader/tasks.md`: Task 1.7 (preflight), 1.8 (encounter location), 1.9 (gap
+- `openspec/changes/archive/2026-10-06-synthea-fhir-rpc-loader/tasks.md`: Task 1.7 (preflight), 1.8 (encounter location), 1.9 (gap
   decisions), 1.10 (ISI RPC gap analysis).
 - SYN routines read: `SYNFENC`, `SYNDHP61`, `SYNFMED`, `SYNFMED2`, `SYNFPRB`, `SYNFLAB`, `SYNFVIT`, `SYNDHP65`, `SYNDHPMP`,
   `SYNQLDM`, `SYNKIDS`, `SYNINIT`, `SYNFHIR`.

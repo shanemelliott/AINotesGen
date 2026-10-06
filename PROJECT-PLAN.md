@@ -302,11 +302,11 @@ titles); `generate-notes.js` writes the chosen provider into the note record; `s
 supplied through env/secret store.
 
 **Status**: Not started. Related: Task 5 (signing), Task 11 (e-sig reliability, which per-provider
-signing will exercise more), Task 1.8 in `openspec/changes/synthea-fhir-rpc-loader/tasks.md`.
+signing will exercise more), Task 1.8 in `openspec/changes/archive/2026-10-06-synthea-fhir-rpc-loader/tasks.md`.
 
 ### Task 13: Synthea initial load: preflight and fixes (IN PROGRESS)
 Decision and rationale: [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md). Work is tracked in
-`openspec/changes/synthea-fhir-rpc-loader/tasks.md` (Tasks 1.5 to 1.10). Findings: [docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md](docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md).
+`openspec/changes/archive/2026-10-06-synthea-fhir-rpc-loader/tasks.md` (Tasks 1.5 to 1.10). Findings: [docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md](docs/SYNTHEA-LOAD-PREFLIGHT-FINDINGS.md).
 
 **Done**
 - Custom RPCs in `cds-vista-routines` (`CDSPFHIR`): `CDSP UTIL LOAD FHIR`, `CDSP UTIL LOAD LOG`, `CDSP UTIL LOAD PREFLIGHT`,
