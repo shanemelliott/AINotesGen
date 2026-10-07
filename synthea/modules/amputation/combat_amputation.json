@@ -2,9 +2,13 @@
   "name": "Forced combat amputation",
   "remarks": [
     "Test-data module for the veteran test population: every patient run with this module gets a traumatic",
-    "lower-limb amputation between age 19 and 23. Only load it (-d) in the run that should produce amputees.",
-    "Codes checked against the VistA loader maps on 2026-10-06: condition 95860004 maps to ICD-10 S88.919A",
-    "(no ICD-9 map, so pre-2015 onsets use the SNOMED-only path); procedure 88312006 has no CPT map."
+    "lower-limb amputation between age 19 and 23, then two follow-up visits. Only load it (-d) in the run that",
+    "should produce amputees.",
+    "Codes checked against the VistA loader on dev (CDSP UTIL LOAD PREFLIGHT) on 2026-10-07: condition 95860004",
+    "maps to ICD-10 S88.919A; abnormal gait 22325002 maps to ICD-9 781.2; chronic pain 82423001 has no ICD map",
+    "(SNOMED-only fallback); procedure 88312006 has no CPT map. Meds 1049221 (acetaminophen / oxycodone) and",
+    "310431 (gabapentin 300 MG) resolve to drugs; vitals 85354-9, 8867-4, 9279-1, 8331-1, 72514-3 and the CBC",
+    "LOINC codes map."
   ],
   "states": {
     "Initial": {
@@ -54,6 +58,221 @@
           "display": "Emergency room admission (procedure)"
         }
       ],
+      "direct_transition": "ED_Blood_Pressure"
+    },
+    "ED_Blood_Pressure": {
+      "type": "MultiObservation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85354-9",
+          "display": "Blood pressure panel with all children optional"
+        }
+      ],
+      "observations": [
+        {
+          "category": "vital-signs",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "8480-6",
+              "display": "Systolic Blood Pressure"
+            }
+          ],
+          "unit": "mm[Hg]",
+          "range": {
+            "low": 92,
+            "high": 110
+          }
+        },
+        {
+          "category": "vital-signs",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "8462-4",
+              "display": "Diastolic Blood Pressure"
+            }
+          ],
+          "unit": "mm[Hg]",
+          "range": {
+            "low": 55,
+            "high": 70
+          }
+        }
+      ],
+      "direct_transition": "ED_Heart_Rate"
+    },
+    "ED_Heart_Rate": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "8867-4",
+          "display": "Heart rate"
+        }
+      ],
+      "unit": "/min",
+      "range": {
+        "low": 108,
+        "high": 130
+      },
+      "direct_transition": "ED_Respiratory_Rate"
+    },
+    "ED_Respiratory_Rate": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "9279-1",
+          "display": "Respiratory rate"
+        }
+      ],
+      "unit": "/min",
+      "range": {
+        "low": 20,
+        "high": 26
+      },
+      "direct_transition": "ED_Temperature"
+    },
+    "ED_Temperature": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "8331-1",
+          "display": "Oral temperature"
+        }
+      ],
+      "unit": "Cel",
+      "range": {
+        "low": 36.4,
+        "high": 37.4
+      },
+      "direct_transition": "ED_Pain"
+    },
+    "ED_Pain": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "72514-3",
+          "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+        }
+      ],
+      "unit": "{score}",
+      "range": {
+        "low": 8,
+        "high": 10
+      },
+      "direct_transition": "ED_CBC"
+    },
+    "ED_CBC": {
+      "type": "DiagnosticReport",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "58410-2",
+          "display": "CBC panel - Blood by Automated count"
+        }
+      ],
+      "observations": [
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "6690-2",
+              "display": "Leukocytes [#/volume] in Blood by Automated count"
+            }
+          ],
+          "unit": "10*3/uL",
+          "range": {
+            "low": 11.5,
+            "high": 16.5
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "789-8",
+              "display": "Erythrocytes [#/volume] in Blood by Automated count"
+            }
+          ],
+          "unit": "10*6/uL",
+          "range": {
+            "low": 3.2,
+            "high": 4.1
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "718-7",
+              "display": "Hemoglobin [Mass/volume] in Blood"
+            }
+          ],
+          "unit": "g/dL",
+          "range": {
+            "low": 8.8,
+            "high": 11.5
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "4544-3",
+              "display": "Hematocrit [Volume Fraction] of Blood by Automated count"
+            }
+          ],
+          "unit": "%",
+          "range": {
+            "low": 26,
+            "high": 34
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "787-2",
+              "display": "MCV [Entitic volume] by Automated count"
+            }
+          ],
+          "unit": "fL",
+          "range": {
+            "low": 82,
+            "high": 96
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "777-3",
+              "display": "Platelets [#/volume] in Blood by Automated count"
+            }
+          ],
+          "unit": "10*3/uL",
+          "range": {
+            "low": 160,
+            "high": 380
+          }
+        }
+      ],
       "direct_transition": "Amputation_Procedure"
     },
     "Amputation_Procedure": {
@@ -71,6 +290,18 @@
         "high": 4,
         "unit": "hours"
       },
+      "direct_transition": "Prescribe_Opioid"
+    },
+    "Prescribe_Opioid": {
+      "type": "MedicationOrder",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "RxNorm",
+          "code": "1049221",
+          "display": "Acetaminophen 325 MG / Oxycodone Hydrochloride 5 MG Oral Tablet"
+        }
+      ],
       "direct_transition": "Rehab_Care_Plan"
     },
     "Rehab_Care_Plan": {
@@ -93,6 +324,157 @@
       "direct_transition": "End_Trauma_Admission"
     },
     "End_Trauma_Admission": {
+      "type": "EncounterEnd",
+      "direct_transition": "Wait_For_Wound_Check"
+    },
+    "Wait_For_Wound_Check": {
+      "type": "Delay",
+      "range": {
+        "low": 2,
+        "high": 3,
+        "unit": "weeks"
+      },
+      "direct_transition": "Wound_Check_Visit"
+    },
+    "Wound_Check_Visit": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "390906007",
+          "display": "Follow-up encounter (procedure)"
+        }
+      ],
+      "direct_transition": "Wound_Check_Pain"
+    },
+    "Wound_Check_Pain": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "72514-3",
+          "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+        }
+      ],
+      "unit": "{score}",
+      "range": {
+        "low": 5,
+        "high": 7
+      },
+      "direct_transition": "Wound_Check_Heart_Rate"
+    },
+    "Wound_Check_Heart_Rate": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "8867-4",
+          "display": "Heart rate"
+        }
+      ],
+      "unit": "/min",
+      "range": {
+        "low": 74,
+        "high": 92
+      },
+      "direct_transition": "Stop_Opioid"
+    },
+    "Stop_Opioid": {
+      "type": "MedicationEnd",
+      "medication_order": "Prescribe_Opioid",
+      "direct_transition": "Abnormal_Gait"
+    },
+    "Abnormal_Gait": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "22325002",
+          "display": "Abnormal gait (finding)"
+        }
+      ],
+      "direct_transition": "Prescribe_Gabapentin"
+    },
+    "Prescribe_Gabapentin": {
+      "type": "MedicationOrder",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "RxNorm",
+          "code": "310431",
+          "display": "gabapentin 300 MG Oral Capsule"
+        }
+      ],
+      "direct_transition": "End_Wound_Check_Visit"
+    },
+    "End_Wound_Check_Visit": {
+      "type": "EncounterEnd",
+      "direct_transition": "Wait_For_Prosthetic_Visit"
+    },
+    "Wait_For_Prosthetic_Visit": {
+      "type": "Delay",
+      "range": {
+        "low": 3,
+        "high": 6,
+        "unit": "months"
+      },
+      "direct_transition": "Prosthetic_Visit"
+    },
+    "Prosthetic_Visit": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "reason": "combat_amputation",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "390906007",
+          "display": "Follow-up encounter (procedure)"
+        }
+      ],
+      "direct_transition": "Prosthetic_Visit_Pain"
+    },
+    "Prosthetic_Visit_Pain": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "72514-3",
+          "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+        }
+      ],
+      "unit": "{score}",
+      "range": {
+        "low": 2,
+        "high": 5
+      },
+      "distributed_transition": [
+        {
+          "transition": "Chronic_Pain",
+          "distribution": 0.6
+        },
+        {
+          "transition": "End_Prosthetic_Visit",
+          "distribution": 0.4
+        }
+      ]
+    },
+    "Chronic_Pain": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "82423001",
+          "display": "Chronic pain (finding)"
+        }
+      ],
+      "direct_transition": "End_Prosthetic_Visit"
+    },
+    "End_Prosthetic_Visit": {
       "type": "EncounterEnd",
       "direct_transition": "Terminal"
     },

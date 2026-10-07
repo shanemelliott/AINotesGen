@@ -197,12 +197,20 @@ function extractEncounters({ byDomain, byUid, byEncounter }, { rules }) {
     if (!ordersByDay.has(d8)) ordersByDay.set(d8, []);
     ordersByDay.get(d8).push(o);
   }
+  // Visits with no orders (e.g. an injury seen in the ED) still need a note.
+  for (const v of visits) {
+    const d8 = day(v.dateTime);
+    if (d8 && !ordersByDay.has(d8) && (v.locationName === 'EMERGENCY DEPARTMENT' || v.reasonName)) ordersByDay.set(d8, []);
+  }
 
   const days = [...ordersByDay.keys()].sort();
   return days.map((date8, i) => {
     const todays = ordersByDay.get(date8);
-    const earliest = todays.reduce((a, b) => (String(b.start) < String(a.start) ? b : a));
     const dayVisits = visits.filter((v) => day(v.dateTime) === date8);
+    const earliest = todays.length
+      ? todays.reduce((a, b) => (String(b.start) < String(a.start) ? b : a))
+      : [...dayVisits].sort((a, b) => String(a.dateTime).localeCompare(String(b.dateTime)))
+        .map((v) => ({ start: v.dateTime, locationName: v.locationName }))[0];
     const dayAppts = appointments.filter((a) => day(a.dateTime) === date8);
 
     const labsToday = [];

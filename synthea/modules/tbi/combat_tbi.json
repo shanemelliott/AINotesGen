@@ -2,9 +2,13 @@
   "name": "Forced combat traumatic brain injury",
   "remarks": [
     "Test-data module for the veteran test population: every patient run with this module gets a traumatic",
-    "brain injury between age 19 and 21. Sets attribute mTBI, which the built-in veteran PTSD module uses",
-    "(about 44% of patients with mTBI go on to PTSD). Only load it (-d) in the run that should produce TBI.",
-    "Code 127295002 maps to ICD-10 S06.9X0A (no ICD-9 map, so pre-2015 onsets use the SNOMED-only path)."
+    "brain injury between age 19 and 21, then two follow-up visits. Sets attribute mTBI, which the built-in",
+    "veteran PTSD module uses (about 44% of patients with mTBI go on to PTSD). Only load it (-d) in the run",
+    "that should produce TBI.",
+    "Codes checked against the VistA loader on dev (CDSP UTIL LOAD PREFLIGHT) on 2026-10-07: 127295002 maps to",
+    "ICD-10 S06.9X0A; headache 25064002 maps to ICD-9 784.0; postconcussion syndrome 40425004 and insomnia",
+    "193462001 map to ICD-10 and ICD-9. Meds 313782 (acetaminophen) and 856783 (amitriptyline 10 MG) resolve to",
+    "drugs; vitals 85354-9, 8867-4, 9279-1, 8331-1, 72514-3 and the metabolic panel LOINC codes map."
   ],
   "states": {
     "Initial": {
@@ -54,6 +58,233 @@
           "display": "Emergency room admission (procedure)"
         }
       ],
+      "direct_transition": "ED_Blood_Pressure"
+    },
+    "ED_Blood_Pressure": {
+      "type": "MultiObservation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "85354-9",
+          "display": "Blood pressure panel with all children optional"
+        }
+      ],
+      "observations": [
+        {
+          "category": "vital-signs",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "8480-6",
+              "display": "Systolic Blood Pressure"
+            }
+          ],
+          "unit": "mm[Hg]",
+          "range": {
+            "low": 126,
+            "high": 148
+          }
+        },
+        {
+          "category": "vital-signs",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "8462-4",
+              "display": "Diastolic Blood Pressure"
+            }
+          ],
+          "unit": "mm[Hg]",
+          "range": {
+            "low": 78,
+            "high": 92
+          }
+        }
+      ],
+      "direct_transition": "ED_Heart_Rate"
+    },
+    "ED_Heart_Rate": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "8867-4",
+          "display": "Heart rate"
+        }
+      ],
+      "unit": "/min",
+      "range": {
+        "low": 88,
+        "high": 108
+      },
+      "direct_transition": "ED_Respiratory_Rate"
+    },
+    "ED_Respiratory_Rate": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "9279-1",
+          "display": "Respiratory rate"
+        }
+      ],
+      "unit": "/min",
+      "range": {
+        "low": 16,
+        "high": 20
+      },
+      "direct_transition": "ED_Temperature"
+    },
+    "ED_Temperature": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "8331-1",
+          "display": "Oral temperature"
+        }
+      ],
+      "unit": "Cel",
+      "range": {
+        "low": 36.5,
+        "high": 37.3
+      },
+      "direct_transition": "ED_Pain"
+    },
+    "ED_Pain": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "72514-3",
+          "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+        }
+      ],
+      "unit": "{score}",
+      "range": {
+        "low": 5,
+        "high": 8
+      },
+      "direct_transition": "ED_Metabolic_Panel"
+    },
+    "ED_Metabolic_Panel": {
+      "type": "DiagnosticReport",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "51990-0",
+          "display": "Basic metabolic panel - Blood"
+        }
+      ],
+      "observations": [
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "2345-7",
+              "display": "Glucose [Mass/volume] in Serum or Plasma"
+            }
+          ],
+          "unit": "mg/dL",
+          "range": {
+            "low": 88,
+            "high": 132
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "6299-2",
+              "display": "Urea nitrogen [Mass/volume] in Blood"
+            }
+          ],
+          "unit": "mg/dL",
+          "range": {
+            "low": 9,
+            "high": 18
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "2160-0",
+              "display": "Creatinine [Mass/volume] in Serum or Plasma"
+            }
+          ],
+          "unit": "mg/dL",
+          "range": {
+            "low": 0.8,
+            "high": 1.2
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "2951-2",
+              "display": "Sodium [Moles/volume] in Serum or Plasma"
+            }
+          ],
+          "unit": "mmol/L",
+          "range": {
+            "low": 136,
+            "high": 143
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "2823-3",
+              "display": "Potassium [Moles/volume] in Serum or Plasma"
+            }
+          ],
+          "unit": "mmol/L",
+          "range": {
+            "low": 3.6,
+            "high": 4.8
+          }
+        },
+        {
+          "category": "laboratory",
+          "codes": [
+            {
+              "system": "LOINC",
+              "code": "2075-0",
+              "display": "Chloride [Moles/volume] in Serum or Plasma"
+            }
+          ],
+          "unit": "mmol/L",
+          "range": {
+            "low": 99,
+            "high": 107
+          }
+        }
+      ],
+      "direct_transition": "Prescribe_Acetaminophen"
+    },
+    "Prescribe_Acetaminophen": {
+      "type": "MedicationOrder",
+      "reason": "mTBI",
+      "codes": [
+        {
+          "system": "RxNorm",
+          "code": "313782",
+          "display": "Acetaminophen 325 MG Oral Tablet"
+        }
+      ],
       "direct_transition": "Head_Injury_Care_Plan"
     },
     "Head_Injury_Care_Plan": {
@@ -76,6 +307,161 @@
       "direct_transition": "End_Trauma_Admission"
     },
     "End_Trauma_Admission": {
+      "type": "EncounterEnd",
+      "direct_transition": "Wait_For_First_Follow_Up"
+    },
+    "Wait_For_First_Follow_Up": {
+      "type": "Delay",
+      "range": {
+        "low": 1,
+        "high": 3,
+        "unit": "weeks"
+      },
+      "direct_transition": "First_Follow_Up"
+    },
+    "First_Follow_Up": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "reason": "mTBI",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "390906007",
+          "display": "Follow-up encounter (procedure)"
+        }
+      ],
+      "direct_transition": "First_Follow_Up_Pain"
+    },
+    "First_Follow_Up_Pain": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "72514-3",
+          "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+        }
+      ],
+      "unit": "{score}",
+      "range": {
+        "low": 3,
+        "high": 6
+      },
+      "direct_transition": "Headache"
+    },
+    "Headache": {
+      "type": "ConditionOnset",
+      "assign_to_attribute": "tbi_headache",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "25064002",
+          "display": "Headache (finding)"
+        }
+      ],
+      "direct_transition": "End_First_Follow_Up"
+    },
+    "End_First_Follow_Up": {
+      "type": "EncounterEnd",
+      "direct_transition": "Wait_For_Second_Follow_Up"
+    },
+    "Wait_For_Second_Follow_Up": {
+      "type": "Delay",
+      "range": {
+        "low": 1,
+        "high": 3,
+        "unit": "months"
+      },
+      "direct_transition": "Second_Follow_Up"
+    },
+    "Second_Follow_Up": {
+      "type": "Encounter",
+      "encounter_class": "ambulatory",
+      "reason": "mTBI",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "390906007",
+          "display": "Follow-up encounter (procedure)"
+        }
+      ],
+      "direct_transition": "Second_Follow_Up_Pain"
+    },
+    "Second_Follow_Up_Pain": {
+      "type": "Observation",
+      "category": "vital-signs",
+      "codes": [
+        {
+          "system": "LOINC",
+          "code": "72514-3",
+          "display": "Pain severity - 0-10 verbal numeric rating [Score] - Reported"
+        }
+      ],
+      "unit": "{score}",
+      "range": {
+        "low": 2,
+        "high": 5
+      },
+      "distributed_transition": [
+        {
+          "transition": "Postconcussion_Syndrome",
+          "distribution": 0.7
+        },
+        {
+          "transition": "Headache_Resolved",
+          "distribution": 0.3
+        }
+      ]
+    },
+    "Postconcussion_Syndrome": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "40425004",
+          "display": "Postconcussion syndrome (disorder)"
+        }
+      ],
+      "direct_transition": "Prescribe_Amitriptyline"
+    },
+    "Prescribe_Amitriptyline": {
+      "type": "MedicationOrder",
+      "reason": "tbi_headache",
+      "codes": [
+        {
+          "system": "RxNorm",
+          "code": "856783",
+          "display": "amitriptyline hydrochloride 10 MG Oral Tablet"
+        }
+      ],
+      "distributed_transition": [
+        {
+          "transition": "Insomnia",
+          "distribution": 0.4
+        },
+        {
+          "transition": "End_Second_Follow_Up",
+          "distribution": 0.6
+        }
+      ]
+    },
+    "Insomnia": {
+      "type": "ConditionOnset",
+      "codes": [
+        {
+          "system": "SNOMED-CT",
+          "code": "193462001",
+          "display": "Insomnia (disorder)"
+        }
+      ],
+      "direct_transition": "End_Second_Follow_Up"
+    },
+    "Headache_Resolved": {
+      "type": "ConditionEnd",
+      "referenced_by_attribute": "tbi_headache",
+      "direct_transition": "End_Second_Follow_Up"
+    },
+    "End_Second_Follow_Up": {
       "type": "EncounterEnd",
       "direct_transition": "Terminal"
     },
