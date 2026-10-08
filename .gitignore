@@ -24,6 +24,7 @@ config.js
 patients.txt
 src/appointments.json
 src/notes.json
+docs/loaded-patients.md
 SynthiaFiles/
 synthea/bin/
 # Logs and output (output/ also covers synthea/output/)

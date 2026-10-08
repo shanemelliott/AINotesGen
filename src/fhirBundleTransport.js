@@ -48,7 +48,7 @@ async function loadBundle(bundleJsonText, options = {}) {
     RPC_NAME,
     [{ namedArray: chunks }],
     RPC_CONTEXT,
-    { timeout: options.timeout || 120000 }
+    { timeout: options.timeout || 600000 }
   );
   const result = parseRpcResult(payload);
   if (result && result.ERROR) {

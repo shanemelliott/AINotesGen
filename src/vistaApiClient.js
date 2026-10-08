@@ -12,6 +12,8 @@ function safeTrimmedString(value, maxLen = 1000) {
 async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
   const jsonResult = options.jsonResult === true;
   const timeout = options.timeout || 30000;
+  // vista-api-x defaults to a 15 s VistA socket timeout unless the body sets one.
+  const serverTimeout = options.timeout ? { timeout: options.timeout } : {};
   const baseUrl = process.env.VISTA_API_BASE_URL;
   const siteId = process.env.VISTA_SITE_ID;
   const apiKey = process.env.VISTA_API_KEY;
@@ -48,6 +50,7 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
         context,
         rpc: rpcName,
         jsonResult,
+        ...serverTimeout,
         parameters: normalizedParameters
       },
       {
@@ -56,7 +59,7 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
           authorization: `Bearer ${token}`,
           'X-OCTO-VistA-API': apiKey
         },
-        timeout
+        timeout: options.timeout ? timeout + 15000 : timeout
       }
     );
   } catch (err) {
