@@ -4,7 +4,7 @@ Goal: take a synthetic (Synthea) patient, load it into VistA, derive historical 
 
 ---
 
-## 0. Current state and load path (2026-10-06)
+## 0. Current state and load path (2026-10-08)
 
 **Decision:** hybrid. The initial load uses the VistA FHIR Data Loader (SYN), with local patches; appends use the
 VistA Data Loader RPCs (`ISI IMPORT *`) where they fit, plus our own SDEC (appointments) and TIU (notes) tools.
@@ -26,10 +26,12 @@ flowchart LR
 
 | Area | Status |
 |---|---|
-| Notes pipeline (Tasks 1-6) | Done; 444 notes for 4 patients plus 23 for DFN 100969 (TORPHY630,LAN153), all signed |
+| Notes pipeline (Tasks 1-6) | Done; 444 notes for 4 VEHU patients, plus 273 for 6 Synthea patients (DFN 100969 to 100974), all signed. Loaded patients are listed in `docs/loaded-patients.md` (gitignored, `node summarize-patients.js`) |
 | Lab values in notes | Fixed 2026-10-05: lab names were missing from the prompt; labs are now rendered from data and a pairing check flags mismatches |
-| Synthea load (OpenSpec `synthea-fhir-rpc-loader`) | RPCs built and working (`LOAD`, `LOG`, `PREFLIGHT`); one full patient loaded; gap analysis done; fixes not yet applied (Task 13) |
-| Specialty / ED encounters | Working: `CDSPENC` plus one `SYNFENC` line (`patches/synfenc-location.txt`) loaded on dev; tested on DFN 100970 (ED, CARDIOLOGY and DENTAL visits landed in their clinics; notes and appointments created and signed) (Task 13) |
+| Synthea load (OpenSpec `synthea-fhir-rpc-loader`, archived) | Working: 7 patients loaded (DFN 100968 to 100974); loader fixes kept in `patches/LOADER-CHANGES.md` and fork branch `synfmed-fixes`; RPC timeout now sent to vista-api-x, so large patients load in one call (Task 13) |
+| Veteran test population (OpenSpec `veteran-test-population`) | Batch 1 generated (16 patients); 4 loaded with signed notes; injury modules and ED notes improved for the next batch (Task 15) |
+| Veteran service data (OpenSpec `veteran-service-data`) | Service connection, rated disabilities, military service, exposures, eligibility, enrollment and MST set on the 4 loaded patients; interactive builder proposed (Task 16) |
+| Specialty / ED encounters | Working: visits land in ED, DENTAL, CARDIOLOGY, SLEEP LAB, HEMATOLOGY etc.; ED and other visit-only days with a reason get notes; ED notes are written as acute visits |
 | Append path | Appointments and notes built; appointments choose the clinic from the visit location (`src/clinic-lookup.json`); meds `ADDRX` written but PARKED (Task 14) |
 | Multiple providers | Not started (Task 12) |
 
@@ -318,7 +320,11 @@ Decision and rationale: [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md)
 - Auto-appointment creation in `ENCTUPD^SYNDHP61` disabled and verified (Task 1.6).
 - Lab map fixes applied 2026-10-06 (8 entries; TOT PROT, TOT. BIL, ALK PHOS, RDW-CV, urine protein corrected; magnesium,
   ferritin, urine blood added). Predicted lab failures for Lan153 fell from 81 to 26 of 378 resources.
-- Veteran flag: `SYNFPAT` patched on dev (2026-10-06) to send `VETERAN`; to be confirmed on the next patient load.
+- Veteran flag: `SYNFPAT` patched on dev (2026-10-06) to send `VETERAN`; confirmed on DFN 100972 (`isVet` 1).
+- 2026-10-07/08: RxNorm translations for oxycodone ER (1049504) and sodium fluoride gel (1535362); `MATCHV1^SYNFMED` fixed for
+  VUIDs with several VA Products (M7 error); `PREFLIGHT` reports an M error per code instead of failing the call;
+  `callRpc` sends `timeout` to vista-api-x (default 15 s cut large loads off). A failed resource can be retried in place
+  with `testall^SYNFMED2` (the loader skips resources already loaded).
 
 **To do, in priority order**
 1. Encounter location by class and type (specialty and ED): DONE on dev 2026-10-06. `CDSPENC.int`
@@ -334,11 +340,12 @@ Decision and rationale: [docs/DECISION-LOAD-PATH.md](docs/DECISION-LOAD-PATH.md)
    to the chewable tablet) and `235389;198043` (mestranol / norethynodrel to mestranol / norethindrone, a substitution).
    The preflight now shows 11 of 11 Lan153 med codes mapped. The lines still need to go in a repo patch set (item 5).
 4. Conditions on pre-1978 dates: confirm the date theory with a post-1978 patient, then patch or accept.
-5. Keep local patches in a repo-tracked patch set with an apply step (a loader reinstall removes them).
+5. Keep local patches in a repo-tracked patch set with an apply step (a loader reinstall removes them). PARTLY DONE:
+   `patches/LOADER-CHANGES.md` lists every change; `SYNFMED` changes are on fork branch `synfmed-fixes`. No apply step yet.
 6. `MED` check in the preflight RPC: DONE. Still open: investigate the 4 failed encounters and the lab panels with no status.
-7. Rank the Synthea files on the server with the preflight check and choose the next patients.
-8. Veteran flag: DONE on dev (`SYNFPAT` now passes `VETERAN`); verify on the next load. Service connection and eligibility
-   are still not set.
+7. Rank the Synthea files on the server with the preflight check and choose the next patients. Superseded by the generated
+   veteran batches (Task 15).
+8. Veteran flag: DONE and verified. Service connection and eligibility are still not set (Task 15 future work).
 
 **Accepted losses** (low priority): vitals gaps, procedures, dental codes, labs with no equivalent test.
 
@@ -400,21 +407,54 @@ The Synthea files we were given start at birth and are not veteran-specific. Fin
   (believed `.361` primary eligibility, `.301` service connected, `.302` service-connected percentage) and how enrollment
   priority is stored (a separate file), and whether the `VETERAN` flag patched on 2026-10-06 shows on a fresh load.
 
-**Status**: Not started.
+**Status**: In progress as OpenSpec `veteran-test-population`: batch 1 (16 patients) generated and checked against the
+profile; 4 loaded with appointments and signed notes. Eligibility and service data (above): done as OpenSpec
+`veteran-service-data` (routine `CDSPVET`, RPCs `CDSP UTIL VET GET/SET`, scripts `vet-get.js` and `vet-profile.js`);
+applied to DFN 100971 to 100974 on 2026-10-08. Guide: `cds-vista-routines/docs/CDSPVET.md`.
+
+### Task 16: Interactive veteran profile builder (proposed, future)
+For engineers who need a specific veteran scenario on any test patient (for example "Vietnam era, Agent Orange, 30% SC,
+MST positive") without hand-editing `output/vet-profile-<dfn>.json` or knowing field numbers and pointer IENs.
+Builds on Task 15's `CDSPVET` and reuses `src/vetProfile.js`, so there is one set of rules.
+
+1. **Read the record first (VPR GET).** Before asking anything, fetch the patient's VPR (`VPR GET PATIENT DATA JSON`) and
+   `CDSP UTIL VET GET`, and show what could support or contradict a profile:
+   - age and sex (era of service; MST odds)
+   - active problems and visit diagnoses with onset dates, marked as candidate rated disabilities (in-service, after
+     service, or before entry and so not service connected)
+   - presumptive conditions for each era (Vietnam: diabetes, ischemic heart disease, prostate cancer, hypertension; Gulf
+     War: chronic sinusitis and other burn-pit conditions)
+   - injuries with dates (TBI, amputation, burn, PTSD), which suggest combat and a service end date
+   - medications and devices that support a rating (for example CPAP for sleep apnea, hearing aids for hearing loss)
+   - health factors and screenings already in the record (military history, MST, PTSD or depression screens)
+   - the veteran service data already set (current summary), so the builder does not overwrite deliberate values silently
+2. **Ask only high-level questions**, prefilled from step 1 and the derived profile: branch and era (menus from
+   `GET --tables`, chosen by name), service dates, combat, exposures, disabilities (search #31 by name, pick a percent),
+   MST status, enrollment.
+3. **Derive the rest automatically:** combined rating, primary eligibility, priority group, Persian Gulf and combat
+   fields (existing `combineRatings` and `profileFields`), so the result is always consistent.
+4. **Save, dry run, confirm, apply:** write the profile file, show the dry run and the summary, apply only after a yes.
+5. **Print the raw request** (the vista-api-x JSON body with the `namedArray` items) for engineers calling the RPC from
+   Postman or their own code.
+
+**Needs:** an optional name filter on the #31 table in `GET^CDSPVET` (user loads it). **Cheaper alternative or first
+step:** scenario templates on top of the derived profile (`vet-profile.js --scenario vietnam-ao|gulf-combat-tbi|nsc`).
+
+**Status**: Proposed, not started.
 
 ---
 
 ## 4. Open Questions
 Answered (2026-10-06): the load path is hybrid (see section 0 and docs/DECISION-LOAD-PATH.md); notes are signed as one
 user today (multiple providers are Task 12); transport is vista-api-x with a PIV token; `o3-mini` is the working model.
+Answered (2026-10-08): appointments go in the clinic of each loaded visit (`src/clinic-lookup.json`); ED visits use
+EMERGENCY DEPARTMENT (426); visits without orders get a note when they are in the ED or have a reason.
 
 Still open:
-1. Appointments: create them in the clinic of each encounter's loaded visit (needs Task 13 item 1) or keep clinic 532?
-2. Which clinics and note titles for specialty and ED encounters (IDs from file #44: ER 70, EMERGENCY DEPARTMENT 426, DENTAL 228, CARDIOLOGY 195)?
-3. Meds: which CPRS RPC sequence renews and discontinues a prescription, and which loaded prescriptions are eligible (Task 14)?
-4. Future encounters (Task 7): appointments only, notes for new visits, or both?
-5. The patient has 141 VistA visits but only 38 order dates. Should visits without orders (for example prenatal visits with a pregnancy test and antenatal care-plan activities) also become encounters with notes?
-6. Should the 444 earlier notes be spot-checked for lab name and value mismatches? Decided not to for now (owner, 2026-10-05).
+1. Meds: which CPRS RPC sequence renews and discontinues a prescription, and which loaded prescriptions are eligible (Task 14)?
+2. Future encounters (Task 7): appointments only, notes for new visits, or both?
+3. Should the 444 earlier notes be spot-checked for lab name and value mismatches? Decided not to for now (owner, 2026-10-05).
+4. Should already-signed ED notes written before the ED prompt fix be replaced (3 known: DFN 100972 2002-10-10, DFN 100973 1987-07-30 and 2003-04-02)?
 
 ## 5. Security Notes
 - The API key stays in `VAOSAI/.env` (or a local `.env` that is git-ignored). Never log or commit it.

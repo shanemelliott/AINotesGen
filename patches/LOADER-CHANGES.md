@@ -16,4 +16,6 @@ A SYN KIDS reinstall replaces the routines and may reset the graphs, so reapply 
 | 2026-10-07 | `SYNFMED` `MATCHV1` | Loops over each VA Product IEN from `VUI2VAP` instead of passing the `^` list to `VAP2MED` | M7 on `^PSNDF(50.68,"2485^2489",0)`: VUID 4003067 (RxNorm 1049221, acetaminophen / oxycodone 325/5) has two VA Products. `ADDDRUG` uses the master-VUID index, so the load itself may not have hit this | Yes | Yes |
 | 2026-10-06 | `loinc-lab-map` graph (data) | 8 LOINC to #60 name entries ([loader-maps.json](loader-maps.json)), applied with `apply-loader-maps.js` | Map names not in #60, or no entry | Yes | No (data, not code) |
 
-Our own routines (`CDSPFHIR`, `CDSPENC`, `CDSPRX`) are tracked in `cds-vista-routines`, not here.
+Our own routines (`CDSPFHIR`, `CDSPENC`, `CDSPRX`, `CDSPVET`) are tracked in `cds-vista-routines`, not here.
+`CDSPVET` (RPCs `CDSP UTIL VET GET` and `CDSP UTIL VET SET`, context `CDSP RPC UTILS`) sets veteran service data after
+load; it is not a loader change and survives a loader reinstall. Guide: `cds-vista-routines/docs/CDSPVET.md`.

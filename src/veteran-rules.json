@@ -1,0 +1,67 @@
+{
+  "_about": "Veteran service profile rules for synthetic test patients (openspec/changes/veteran-service-data). Percentages are plausible test values with the 38 CFR Part 4 diagnostic code they resemble; they are not rating decisions. Pointer IENs are from dev station 500 (logs/vet-get-100972.json).",
+  "periodsOfService": [
+    { "ien": 11, "name": "KOREAN", "from": "1950-06-27", "to": "1955-01-31" },
+    { "ien": 20, "name": "POST-KOREAN", "from": "1955-02-01", "to": "1955-10-31" },
+    { "ien": 27, "name": "VIETNAM ERA", "from": "1955-11-01", "to": "1975-05-07" },
+    { "ien": 21, "name": "POST-VIETNAM", "from": "1975-05-08", "to": "1990-08-01" },
+    { "ien": 121, "name": "PERSIAN GULF WAR", "from": "1990-08-02", "to": null }
+  ],
+  "branches": [
+    { "ien": 1, "name": "ARMY", "weight": 45 },
+    { "ien": 3, "name": "NAVY", "weight": 20 },
+    { "ien": 2, "name": "AIR FORCE", "weight": 18 },
+    { "ien": 4, "name": "MARINE CORPS", "weight": 14 },
+    { "ien": 5, "name": "COAST GUARD", "weight": 3 }
+  ],
+  "service": {
+    "entryDelayYears": [0, 2],
+    "lengthYears": [3, 8],
+    "separationAfterInjuryYears": [0.5, 1.5]
+  },
+  "exposures": {
+    "vietnam": { "periodOfService": "VIETNAM ERA", "serviceShare": 0.6, "inCountryFrom": "1962-01-09", "inCountryTo": "1975-05-07" },
+    "persianGulf": { "from": "1990-08-02", "to": "1991-02-28", "postNineEleventhFrom": "2001-09-11" }
+  },
+  "eligibility": [
+    { "minPercent": 50, "ien": 16, "name": "SERVICE CONNECTED 50% to 100%", "priorityGroup": 1 },
+    { "minPercent": 30, "ien": 15, "name": "SC LESS THAN 50%", "priorityGroup": 2 },
+    { "minPercent": 10, "ien": 15, "name": "SC LESS THAN 50%", "priorityGroup": 3 },
+    { "minPercent": 0, "ien": 10, "name": "NSC", "priorityGroup": 5 }
+  ],
+  "enrollmentStatus": { "ien": 2, "name": "VERIFIED" },
+  "enrollmentEarliest": "1998-10-01",
+  "mst": { "status": "N", "name": "NO" },
+  "dischargeType": { "ien": 1, "name": "HONORABLE" },
+  "agentOrangeLocation": { "code": "V", "name": "VIETNAM" },
+  "eligibilityStatus": { "code": "V", "name": "VERIFIED" },
+  "combatLocations": {
+    "KOREAN": { "ien": 4, "name": "KOREAN" },
+    "VIETNAM ERA": { "ien": 5, "name": "VIETNAM" },
+    "POST-VIETNAM": { "ien": 6, "name": "OTHER" },
+    "PERSIAN GULF WAR": { "ien": 7, "name": "PERSIAN GULF WAR" },
+    "POST-9/11": { "ien": 7, "name": "PERSIAN GULF WAR" }
+  },
+  "disabilities": [
+    { "match": "posttraumatic stress|\\bptsd\\b", "dxCode": 9411, "label": "PTSD", "percent": 50, "group": "mental", "combat": true, "cfr": "38 CFR 4.130 DC 9411" },
+    { "match": "major depressive", "dxCode": 9434, "label": "Major depressive disorder", "percent": 30, "group": "mental", "cfr": "38 CFR 4.130 DC 9434" },
+    { "match": "anxiety|panic", "dxCode": 9400, "label": "Generalized anxiety disorder", "percent": 30, "group": "mental", "cfr": "38 CFR 4.130 DC 9400" },
+    { "match": "brain injury|concussion|intracranial injury", "dxCode": 8045, "label": "Residuals of traumatic brain injury", "percent": 40, "combat": true, "cfr": "38 CFR 4.124a DC 8045" },
+    { "match": "amputation of (lower extremity|leg)|below[- ]knee amputation", "dxCode": 5165, "label": "Amputation of leg below knee", "percent": 40, "combat": true, "cfr": "38 CFR 4.71a DC 5165" },
+    { "match": "full thickness burn|2nd degree burn|third degree burn|^burn injury", "dxCode": 7801, "label": "Burn scars, deep", "percent": 20, "combat": true, "cfr": "38 CFR 4.118 DC 7801" },
+    { "match": "tinnitus", "dxCode": 6260, "label": "Tinnitus", "percent": 10, "cfr": "38 CFR 4.87 DC 6260" },
+    { "match": "hearing loss", "dxCode": 6100, "label": "Hearing loss", "percent": 10, "cfr": "38 CFR 4.85 DC 6100" },
+    { "match": "low back pain|lumbar|lumbosacral|back injury", "dxCode": 5237, "label": "Lumbosacral strain", "percent": 20, "cfr": "38 CFR 4.71a DC 5237" },
+    { "match": "sleep apnea", "dxCode": 6847, "label": "Sleep apnea", "percent": 50, "cfr": "38 CFR 4.97 DC 6847" },
+    { "match": "fibromyalgia", "dxCode": 5025, "label": "Fibromyalgia", "percent": 20, "cfr": "38 CFR 4.71a DC 5025" },
+    { "match": "migraine", "dxCode": 8100, "label": "Migraine", "percent": 30, "cfr": "38 CFR 4.124a DC 8100" },
+    { "match": "osteoarthritis of knee", "dxCode": 5260, "label": "Knee, limitation of flexion", "percent": 10, "cfr": "38 CFR 4.71a DC 5260" }
+  ],
+  "presumptive": [
+    { "periodOfService": "VIETNAM ERA", "requires": "vietnam", "match": "type 2 diabetes", "dxCode": 7913, "label": "Diabetes mellitus type 2 (Agent Orange)", "percent": 20, "cfr": "38 CFR 3.309(e); 4.119 DC 7913" },
+    { "periodOfService": "VIETNAM ERA", "requires": "vietnam", "match": "ischemic heart disease|myocardial infarction", "dxCode": 7005, "label": "Ischemic heart disease (Agent Orange)", "percent": 30, "cfr": "38 CFR 3.309(e); 4.104 DC 7005" },
+    { "periodOfService": "VIETNAM ERA", "requires": "vietnam", "match": "malignant neoplasm of prostate|prostate cancer", "dxCode": 7528, "label": "Prostate cancer (Agent Orange)", "percent": 100, "cfr": "38 CFR 3.309(e); 4.115b DC 7528" },
+    { "periodOfService": "VIETNAM ERA", "requires": "vietnam", "match": "hypertension", "dxCode": 7101, "label": "Hypertension (Agent Orange)", "percent": 10, "cfr": "38 CFR 3.309(e) (PACT Act); 4.104 DC 7101" },
+    { "periodOfService": "PERSIAN GULF WAR", "requires": "persianGulf", "match": "chronic sinusitis", "dxCode": 6510, "label": "Chronic sinusitis (burn pit)", "percent": 10, "cfr": "38 CFR 3.320 (PACT Act); 4.97 DC 6510" }
+  ]
+}

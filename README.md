@@ -72,6 +72,17 @@ re-run; already-processed items are skipped or logged).
    ```
    then re-sign with `node resign-notes.js <tiuIen> <id> [<tiuIen> <id> ...]`.
 
+10. **Veteran service data** (any test patient, not only ones loaded here):
+    ```
+    node vet-get.js --dfn <dfn> --summary                 # what is set now
+    node vet-profile.js --dfn <dfn>                       # derive + dry run, must report 0 error(s)
+    node vet-profile.js --dfn <dfn> --from-file --apply   # write the reviewed profile
+    ```
+    Sets service connection, rated disabilities, military service, exposures,
+    eligibility, enrollment and MST through `CDSP UTIL VET GET/SET` (routine
+    `CDSPVET`, context `CDSP RPC UTILS`). Full guide and RPC reference:
+    `cds-vista-routines/docs/CDSPVET.md`.
+
 ### Monitoring a long-running batch step
 
 Steps 5 and 8 can take a while (12-19s per note for the LLM call). Redirect
