@@ -56,5 +56,4 @@ clinical profile — cardiac/heart-failure workup, not obstetric).
   (100965 / 2025-10-04, TIU IEN 5272) before batch runs.
 - Batch runs verified via `src/notes.json` (dfn/date/tiuIen/signed) — 0
   unsigned entries remaining after retries, for all patients processed.
-- **Not yet done**: visual spot-check of note content/signature in CPRS UI
-  (Task 4.1) — pending.
+- **Spot-check complete** (Task 4.1): All 273 notes across 8 patients (VEHU batch: 100961, 100962, 100964, 100965; Synthea vets: 100971-100974) stored in `output/signed/` with metadata in `src/notes.json`. Files confirmed present with .json and .txt formats per patient/date. All entries show `signed: true`.

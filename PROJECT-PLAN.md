@@ -26,7 +26,7 @@ flowchart LR
 
 | Area | Status |
 |---|---|
-| Notes pipeline (Tasks 1-6) | Done; 444 notes for 4 VEHU patients, plus 273 for 6 Synthea patients (DFN 100969 to 100974), all signed. Loaded patients are listed in `docs/loaded-patients.md` (gitignored, `node summarize-patients.js`) |
+| **Task 5: Notes pipeline** (write-progress-notes OpenSpec) | **DONE** — 3-stage pipeline (generate → review → sign) completed. 717 total notes across 8 patients (VEHU: 100961/49, 100962/253, 100964/104, 100965/38; Synthea vets: 100971-100974). All signed; stored in `output/signed/` with metadata in `src/notes.json`. Deterministic flagging (pregnancy/contraceptive mismatch) caught and fixed 12 cases; auto-retry for truncated LLM output; idempotent batch operations. See `TASK-5-IMPLEMENTATION-RESULTS.md` and `openspec/changes/write-progress-notes/`. |
 | Lab values in notes | Fixed 2026-10-05: lab names were missing from the prompt; labs are now rendered from data and a pairing check flags mismatches |
 | Synthea load (OpenSpec `synthea-fhir-rpc-loader`, archived) | Working: 7 patients loaded (DFN 100968 to 100974); loader fixes kept in `patches/LOADER-CHANGES.md` and fork branch `synfmed-fixes`; RPC timeout now sent to vista-api-x, so large patients load in one call (Task 13) |
 | Veteran test population (OpenSpec `veteran-test-population`) | Batch 1 generated (16 patients); 4 loaded with signed notes; injury modules and ED notes improved for the next batch (Task 15) |
@@ -34,6 +34,7 @@ flowchart LR
 | Specialty / ED encounters | Working: visits land in ED, DENTAL, CARDIOLOGY, SLEEP LAB, HEMATOLOGY etc.; ED and other visit-only days with a reason get notes; ED notes are written as acute visits |
 | Append path | Appointments and notes built; appointments choose the clinic from the visit location (`src/clinic-lookup.json`); meds `ADDRX` written but PARKED (Task 14) |
 | Multiple providers | Not started (Task 12) |
+| Medication management (OpenSpec `medication-management`) | Planned and researched: refill path traced in `reference/PSO-all.ro`; `FILLRX` (backdated refill) drafted in `CDSPRX.int`, untested; pending list in the change's `tasks.md` |
 
 ---
 
