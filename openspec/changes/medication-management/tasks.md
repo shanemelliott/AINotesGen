@@ -57,7 +57,15 @@
 
 ---
 
-### [ ] Task 1.5: Test `FILLRX^CDSPRX` on Kim439 (DFN 100973)
+### [ ] Task 1.6: Why every loaded med gets 1 refill, and why lisinopril is listed many times
+- Observed 2026-10-13: every Rx the loader files has `# OF REFILLS` 1, 30-day supply, quantity 30 (for example Kim439 DFN 100973 and HARRIS,SHEBA DFN 237 loaded Rxs from the loader; `WRITERXPS^SYNFMED` hard-codes refills 1, days 30, qty 30), and Kim439 has 27 separate lisinopril Rxs from 2014 to 2026
+- Read `SYNFMED2` (`importMeds`) and `WRITERXPS^SYNFMED`: how each Synthea `MedicationRequest` maps to one Rx, whether `dispenseRequest` (quantity, days supply, refills) or `dosageInstruction` is ignored, and whether the number of requests per drug comes from Synthea (a new request per refill period) or from the loader
+- Check the Synthea bundle for Kim439 (`synthea/output/batch-1/trimmed/`): count lisinopril `MedicationRequest` resources, their `authoredOn` dates and `dispenseRequest`
+- Decide, and record in `patches/LOADER-CHANGES.md` if the fork changes: take quantity, days supply, refills and sig from the request; or collapse repeated requests for the same drug into one Rx with refills and fills (which is what a real history looks like and what `FILLRX` needs)
+- **Success Criteria**: a short written finding (cause for the 1-refill default, cause for the repeated Rxs, and a recommended fix or a decision to leave it) in this file
+
+### [x] Task 1.5: Test `FILLRX^CDSPRX` on Kim439 (DFN 100973)
+- **Done 2026-10-13**: `node fill-rx.js --dfn 100973 --rx 407290 --date 2025-11-20 --commit` filed refill #1 on lisinopril Rx 100003607; Rx view shows `Filled: 11/20/25 (Window) released 11/20/25`, Last Filled 11/20/25, Refills Remaining 0. The original fill still shows released 10/8/26. Dry runs checked: second fill on the same Rx is refused ("No refills remaining"); a fill on or before the last fill date is refused (`FILLDATE must be after the last fill date`); simvastatin Rx 100003608 (IEN 407291) accepts 2025-11-25 as a dry run (not committed).
 - Draft written 2026-10-09 in `cds-vista-routines/CDSPRX.int` (`FILLRX`, dry run unless `COMMIT=1`); compile on dev and register RPC `CDSP UTIL RX FILL` (tag `FILLRX`, routine `CDSPRX`, return type ARRAY, context `CDSP RPC UTILS`)
 - Existing meds (30-day supply, 1 refill allowed, original fill only), from `100973.json`:
   - Lisinopril Rx 100003607, IEN 407290, issued 2025-10-17, expires 2026-10-18, status active
@@ -66,11 +74,13 @@
 - Note: the original fills of the loaded Rxs show release date 2026-10-08 (the load date), so their release dates are not backdated; decide whether to fix them with the same `FILE^DIE` edit
 - **Success Criteria**: refill appears in VPR with the backdated fill date and release date; refills remaining drops by 1
 
-## Pending (as of 2026-10-09)
+## Pending (as of 2026-10-09; updated 2026-10-13)
 
-- [ ] Compile `CDSPRX` on dev; register RPC `CDSP UTIL RX FILL` (tag `FILLRX`, routine `CDSPRX`, ARRAY, context `CDSP RPC UTILS`; literal params DFN, RXIEN, FILLDATE, RELEASED, COMMIT)
-- [ ] Register `CDSP UTIL ADD RX` (tag `ADDRX`; params DFN, RXNCUI, RXDATE, SIG, QTY, DAYS, REFILLS, PROV, CLINIC); `ADDRX` has never been run
-- [ ] Write `fill-rx.js` (dry run by default, `--commit` to write) and `add-rx.js`; run the Task 1.5 dry run on DFN 100973, Rx IEN 407290
+- [ ] **Before the renew work:** Task 1.6, why every loaded Rx gets 1 refill and why a drug like lisinopril appears as many separate Rxs (read `SYNFMED2` `importMeds`, `WRITERXPS^SYNFMED`, and the Synthea `MedicationRequest` input)
+
+- [x] Compile `CDSPRX` on dev; register RPC `CDSP UTIL RX FILL` (done 2026-10-13; one LIST parameter `PARAMS`)
+- [ ] Confirm `CDSP UTIL ADD RX` is registered and run `ADDRX` once (never run)
+- [x] Write `fill-rx.js`; [ ] write `add-rx.js`
 - [ ] Answer on dev: which date is edited after a backdated dispense; Renew vs Copy for renewals
 - [ ] Read `PSORENW0`, `PSORENW1`, `PSORN52A` in `reference/PSO-all.ro` to see what a renew copies and prompts for (renew creates a new Rx), then draft a `RENEWRX` entry point
 - [ ] Story 1 test: `ADDRX` a new Rx on DFN 100973 (90 days, qty 90, 3 refills, issue date about a year back, RxNorm from the patient's bundle, check with `preflight-vista.js`), then `FILLRX` oldest first with one or two late fills
