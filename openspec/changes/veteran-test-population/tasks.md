@@ -41,6 +41,7 @@
 | Laurence43 (LEGROS616) | 100972 | 46 M | 22 / 22 | Amputation run; veteran flag confirmed |
 | Kim439 (GERHOLD939) | 100973 | 67 M | 93 / 93 | Load timed out at the gateway but completed; led to the timeout fix |
 | Preston275 (KING743) | 100974 | 71 M | 90 / 90 | First run of the ED prompt fix |
+| Odell776 (KONOPELSKI743) | 100975 | 63 M | 130 / 130 | First load with the loader defaults table and merged repeated orders (65 Rxs from 200 requests); 77 backdated refills filed; veteran service data set (Air Force 1982-1986, 40% SC: anxiety 30%, tinnitus 10%, hearing loss 10%; priority group 2); the load returned a gateway 504 but finished in VistA, and no preflight was run |
 
 ### Section 4 log (2026-10-06 to 2026-10-08)
 
