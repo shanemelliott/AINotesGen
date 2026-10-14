@@ -7,6 +7,7 @@ A SYN KIDS reinstall replaces the routines and may reset the graphs, so reapply 
 | Date | Routine or data | Change | Why | Dev | Fork |
 |---|---|---|---|---|---|
 | 2026-10-06 | `SYNFENC` (`wsIntakeEncounters`) | One added line calling `$$LOC^CDSPENC` to pick the clinic by class, type and reason ([synfenc-location.txt](synfenc-location.txt)) | Every encounter landed in GENERAL MEDICINE | Yes | No (depends on CDSPENC, site-specific) |
+| 2026-10-14 | `SYNFENC` (`wsIntakeEncounters`) | One added line calling `TIME^CDSPENC`: an outpatient encounter starting outside 08:00 to 16:59 local is moved to hour 08 + (H mod 8) on the same date, keeping minutes; the end time moves by the same amount; EMER and IMP keep their times ([synfenc-time.txt](synfenc-time.txt)) | Synthea UTC times converted to near-midnight local visits, which became `.24` midnight appointments (task 4.6) | No | No (depends on CDSPENC, site-specific) |
 | 2026-10-06 | `SYNFPAT` | Passes `VETERAN` to the patient import (exact line not recorded) | Loaded patients had `isVet` 0 | Yes | No |
 | 2026-10-06 | `SYNFMED` `RXNBADDATA` | `243670;318272` aspirin 81 MG tablet to chewable tablet | Did not resolve to a drug | Yes | Yes |
 | 2026-10-06 | `SYNFMED` `RXNBADDATA` | `235389;198043` mestranol / norethynodrel to mestranol / norethindrone (substitution) | Not a valid RxNorm SCD in ETS | Yes | Yes |

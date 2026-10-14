@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./src/config');
 const clinicLookup = require('./src/clinic-lookup.json');
-const { createAppointment, defaultOverbook, roundDownToHalfHour } = require('./src/appointmentCreator');
+const { createAppointment, defaultOverbook, appointmentSlot } = require('./src/appointmentCreator');
 
 // Clinic for the encounter's visit location; unknown locations use the lookup default.
 function clinicFor(encounter) {
@@ -63,7 +63,6 @@ async function main() {
 
   for (const encounter of missing) {
     const { date, time } = encounter;
-    const slotTime = roundDownToHalfHour(time);
 
     if (alreadyCreated.has(date)) {
       console.log(`SKIP  ${date}: appointment already created`);
@@ -73,6 +72,7 @@ async function main() {
 
     const overbook = defaultOverbook(date);
     const { clinicName, clinicIen, resourceIen } = clinicFor(encounter);
+    const slotTime = appointmentSlot(time, clinicName);
 
     if (args.dryRun) {
       console.log(`DRY   ${date} @ ${time} -> ${slotTime}: would create at ${clinicName} (${clinicIen}/${resourceIen}, overbook=${overbook})`);

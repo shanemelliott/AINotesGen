@@ -1,0 +1,13 @@
+SYNFENC patch: move outpatient encounters into clinic hours (needs TIME^CDSPENC on the server)
+Routine: SYNFENC, tag wsIntakeEncounters. Reinstalling the SYN KIDS build replaces SYNFENC, so reapply.
+
+Find this line (the last of the end date/time block):
+ . set @eval@("encounters",zi,"vars","hl7endDateTime")=hl7endTime ;
+
+Add this line directly after it:
+ . i $t(TIME^CDSPENC)'="" d TIME^CDSPENC($g(@json@("entry",zi,"resource","class","code")),.fmtime,.hl7time,.fmtimeEnd,.hl7endTime)
+
+STARTDT and ENDDT are set from hl7time and hl7endTime a few lines later, so the visit is filed at
+the moved time. EMER and IMP encounters, and encounters already between 08:00 and 16:59, are not moved.
+Other resources (vitals, labs, orders) keep their own times on the same date.
+On a production account TIME^CDSPENC changes nothing.

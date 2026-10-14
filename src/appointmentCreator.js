@@ -22,6 +22,24 @@ function roundDownToHalfHour(timeStr) {
   return `${String(hour).padStart(2, '0')}:${String(roundedMinute).padStart(2, '0')}`;
 }
 
+// Same rule as TIME^CDSPENC: hours 08-16 stay, any other hour H becomes 08 + (H % 8), same minutes.
+function clinicHourTime(timeStr) {
+  const [hour, minute] = timeStr.split(':').map(Number);
+  const h = hour === 24 ? 0 : hour;
+  if (h >= 8 && h <= 16) return timeStr;
+  return `${String(8 + (h % 8)).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+// Clinic visits move into clinic hours; ED keeps its time but never 00:00, which VistA stores as the
+// previous day at .24 (CPRS shows Dec 30, 1899 and SDEC APPDEL cannot cancel it).
+function appointmentSlot(timeStr, clinicName) {
+  if (clinicName === 'EMERGENCY DEPARTMENT') {
+    const slot = roundDownToHalfHour(timeStr);
+    return slot === '00:00' ? (timeStr === '00:00' ? '00:01' : timeStr) : slot;
+  }
+  return roundDownToHalfHour(clinicHourTime(timeStr));
+}
+
 // Builds VistA-formatted date pieces without timezone drift (no Date object parsing of the input string).
 function buildDateParts(dateStr, timeStr) {
   const [year, month, day] = dateStr.split('-').map(Number);
@@ -116,6 +134,8 @@ module.exports = {
   todayIso,
   defaultOverbook,
   roundDownToHalfHour,
+  clinicHourTime,
+  appointmentSlot,
   buildDateParts,
   buildArsetParams,
   buildAppaddParams,
