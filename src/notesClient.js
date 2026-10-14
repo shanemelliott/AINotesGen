@@ -87,10 +87,11 @@ function filemanFromVprDateTime(vprDateTime) {
 function resolveAppointment(encounter, dfn, date) {
   const linked = encounter?.existing?.appointments?.[0];
   if (linked) {
-    const match = linked.uid.match(/;(\d+)$/);
+    // uid ends "A;<fm datetime>;<clinic>"; use the FM value as-is so midnight stays .24 and matches the visit.
+    const match = linked.uid.match(/A;([\d.]+);(\d+)$/);
     return {
-      clinicIen: match ? match[1] : null,
-      fmDateTime: filemanFromVprDateTime(linked.dateTime),
+      clinicIen: match ? match[2] : null,
+      fmDateTime: match ? match[1] : filemanFromVprDateTime(linked.dateTime),
       source: 'vpr'
     };
   }

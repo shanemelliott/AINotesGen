@@ -28,3 +28,9 @@
 - [ ] 4.3 Key the appointment duplicate check on date and clinic, not date alone
 - [ ] 4.4 Cancel the test appointments left on DFN 100969 (61664 to 61667, 61669, 61670) and the half-written entry from the failed ED walk-in
 - [ ] 4.5 Investigate the 6 encounters that failed to load for DFN 100970
+- [ ] 4.6 **NEXT** Load visits and book appointments at clinic-hour times, never at 00:00 (see "Known issue: midnight appointments" in `docs/APPOINTMENT-RPCS.md`)
+  - [ ] 4.6.1 Loader: when filing an encounter (`SYNFENC`), move the visit time into clinic hours on the same local date (for example 08:00 to 16:30 from the Synthea minute), keeping ED and inpatient times; log it in `patches/LOADER-CHANGES.md`
+  - [ ] 4.6.2 `create-appointments.js`: never book 00:00; if the visit time is outside clinic hours, use a clinic-hour slot on the same date
+  - [ ] 4.6.3 Preflight check: fail if any visit or appointment for the patient is at `.24` or between 00:00 and 05:00 (outside ED)
+  - [ ] 4.6.4 Test on a fresh patient: CPRS cover sheet shows real dates, every note links to its appointment's visit (`logs/check-path.js`)
+  - [ ] 4.6.5 Decide whether to move the existing midnight appointments for DFN 100973 (61), 100974 (3) and 100975 (77); `SDEC APPDEL` cannot cancel them, so this needs a DEV routine
