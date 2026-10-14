@@ -81,7 +81,7 @@ VistA stores 00:00 as the previous day at `.24` (`3261008.24` is 10/09/2026 00:0
 - Cannot be cancelled with `SDEC APPDEL` (`CANCEL^SDEC08` requires 4 time digits).
 - Caused notes to be filed with no visit when the visit string used `.0` instead of `.24`.
 
-Cause: the loader converts Synthea's UTC times to local time (`$$HL7TFM^XLFDT`), and Synthea gives most of a patient's encounters one time of day. For DFN 100973 and 100975 that is about 00:15 and 23:15 Pacific, and `create-appointments.js` rounded 00:15 down to 00:00. Affected: DFN 100973 (61 appointments), 100974 (3) and 100975 (77), booked 2026-10-08 and 2026-10-13. Earlier patients loaded at daytime times.
+Cause: the loader converts Synthea's UTC times to local time (`$$HL7TFM^XLFDT`), and Synthea gives most of a patient's encounters one time of day. For DFN 100973 and 100975 that is about 00:15 and 23:15 Pacific, and `create-appointments.js` rounded 00:15 down to 00:00. A second cause: `buildDateParts` set the end of a 23:xx appointment to 00:00 on the same date, and SDEC then filed it at that midnight (`.24`), so the 23:00 bookings also became midnight appointments (fixed 2026-10-14: the end stays at 23:59). Affected: DFN 100973 (61 appointments), 100974 (3) and 100975 (77), booked 2026-10-08 and 2026-10-13. Earlier patients loaded at daytime times.
 
 Repairs done 2026-10-14: `resolveAppointment()` uses the appointment's own FileMan time, and RPC `CDSP UTIL TIU LINK VISIT` (`CDSPTIUV`, run with [link-note-visits.js](../link-note-visits.js), dry run unless `--commit`) linked every unlinked note to its appointment's visit. The appointment times are unchanged. The fix for new loads is task 4.6 in `openspec/changes/encounter-location-mapping/tasks.md`.
 

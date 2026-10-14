@@ -53,9 +53,10 @@ function buildDateParts(dateStr, timeStr) {
   const startDateTime = `${monthName} ${dayPadded}, ${year}@${hourPadded}:${minutePadded}`;
   const desiredDate = `${monthPadded}/${dayPadded}/${year}`;
 
-  let endHour = hour + 1;
-  if (endHour >= 24) endHour = 0;
-  const endDateTime = `${monthName} ${dayPadded}, ${year}@${String(endHour).padStart(2, '0')}:${minutePadded}`;
+  // An end of 00:00 on the start date made SDEC file 23:xx appointments at midnight (.24); stay on the same day.
+  const endDateTime = hour >= 23
+    ? `${monthName} ${dayPadded}, ${year}@23:59`
+    : `${monthName} ${dayPadded}, ${year}@${String(hour + 1).padStart(2, '0')}:${minutePadded}`;
 
   return { startDateTime, endDateTime, desiredDate };
 }
