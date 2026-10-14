@@ -31,4 +31,15 @@ function reflowText(text, maxChars = 80) {
     .join('\n');
 }
 
-module.exports = { reflowText, wrapLine };
+// TIU stores non-ASCII characters as "?" (LLM output uses Unicode hyphens and quotes).
+function toAscii(text) {
+  return text
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/\u2026/g, '...')
+    .replace(/[\u00A0\u2000-\u200B\u202F]/g, ' ')
+    .replace(/[^\x00-\x7E]/g, '');
+}
+
+module.exports = { reflowText, wrapLine, toAscii };

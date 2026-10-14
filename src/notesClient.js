@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { callRpc } = require('./vistaApiClient');
+const { toAscii } = require('./reflow');
 
 // XWB RPC broker substitution cipher for encrypted params (e.g. e-sig codes),
 // ported from vista-notes/VistaJSLibrary.js (buildEncryptedSigString).
@@ -120,7 +121,7 @@ function buildNoteParams({ dfn, noteTitleIen, locationIen, textLines, visitStrin
     1701: ''
   };
   textLines.forEach((line, i) => {
-    namedArray[`\r"TEXT",${i + 1},0`] = line;
+    namedArray[`\r"TEXT",${i + 1},0`] = toAscii(line);
   });
   return [
     { string: dfn },
