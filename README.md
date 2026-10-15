@@ -80,8 +80,10 @@ re-run; already-processed items are skipped or logged).
     ```
     Sets service connection, rated disabilities, military service, exposures,
     eligibility, enrollment and MST through `CDSP UTIL VET GET/SET` (routine
-    `CDSPVET`, context `CDSP RPC UTILS`). Full guide and RPC reference:
-    `cds-vista-routines/docs/CDSPVET.md`.
+    `CDSPVET`, context `CDSP RPC UTILS`). The patient must also have a valid
+    mailing address (street, city, state, ZIP that exists and matches the state);
+    the dry run reports `A ... MAILING ADDRESS` errors until it is fixed.
+    Full guide and RPC reference: `cds-vista-routines/docs/CDSPVET.md`.
 
 ### Monitoring a long-running batch step
 

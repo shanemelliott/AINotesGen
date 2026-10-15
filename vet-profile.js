@@ -1,8 +1,11 @@
 // Derive a veteran service profile for a loaded patient, review it, and set it in VistA (DEV ONLY).
-// Usage: node vet-profile.js --dfn <dfn> [--derive-only] [--apply] [--from-file]
+// Usage: node vet-profile.js --dfn <dfn> [--derive-only] [--apply] [--from-file] [--address <id|random>]
 //   default      derive, write output/vet-profile-<dfn>.json, dry run through CDSP UTIL VET SET
 //   --apply      write the values (only after reviewing a dry run)
 //   --from-file  use the (possibly hand-edited) output/vet-profile-<dfn>.json instead of deriving
+//   --address    set the mailing address to an entry of src/easter-egg-addresses.json (random = picked by DFN)
+//   When an applied run changes the address, RPC SDEC EDIT PAT PRE-REGISTRATION records the periodic
+//   pre-registration check as C (CONNECTED); --no-prereg skips it.
 // The dry-run report with the old values is saved to logs/vet-dryrun-<dfn>.json (rollback input).
 const fs = require('fs');
 const path = require('path');
@@ -12,7 +15,19 @@ const { parseRpcResult } = require('./src/fhirBundleTransport');
 const { deriveProfile, profileFields, fmDate } = require('./src/vetProfile');
 
 const rules = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'veteran-rules.json'), 'utf8'));
+const eggs = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'easter-egg-addresses.json'), 'utf8')).addresses;
 const list = (v) => (Array.isArray(v) ? v : Object.values(v || {}));
+const ADDRESS_FIELDS = new Set(['.111', '.112', '.113', '.114', '.115', '.116', '.1112', '.1171', '.1172', '.1173']);
+
+// File #2 address fields for an easter egg address; clears lines 2-3 and the bad address indicator.
+function addressFields(id, dfn) {
+  const a = id === 'random' ? eggs[Number(dfn) % eggs.length] : eggs.find((e) => e.id === id);
+  if (!a) throw new Error(`Unknown --address ${id}; ids: random, ${eggs.map((e) => e.id).join(', ')}`);
+  return {
+    egg: a,
+    fields: { '.111': a.street1, '.112': '', '.113': '', '.114': a.city, '.115': String(a.stateIen), '.1112': a.zip, '.121': '' },
+  };
+}
 
 async function vprItems(dfn) {
   const body = await callRpc('VPR GET PATIENT DATA JSON', [{ namedArray: { patientId: dfn } }], 'CDSP RPC CONTEXT',
@@ -72,6 +87,13 @@ async function main() {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, JSON.stringify(profile, null, 2));
   }
+  if (args.includes('--address')) {
+    const { egg, fields } = addressFields(args[args.indexOf('--address') + 1], dfn);
+    profile.address = egg;
+    Object.assign(profile.fields, fields);
+    fs.writeFileSync(outPath, JSON.stringify(profile, null, 2));
+    console.log(`Address: ${egg.name}, ${egg.street1}, ${egg.city}, ${egg.state} ${egg.zip}`);
+  }
   console.log(describe(profile));
   console.log(`\nProfile: ${outPath}`);
   if (args.includes('--derive-only')) return;
@@ -88,6 +110,11 @@ async function main() {
     console.log(`\nDry-run report (old values): ${dryPath}`);
   } else {
     console.log(result.applied ? 'Written.' : `Not written: ${result.writeError || 'errors above'}`);
+    const addressChanged = rows.some((r) => r.status === 'changed' && ADDRESS_FIELDS.has(String(r.field).replace(/^0\./, '.')));
+    if (result.applied && addressChanged && !args.includes('--no-prereg')) {
+      const reply = await callRpc('SDEC EDIT PAT PRE-REGISTRATION', [{ string: String(dfn) }, { string: 'C' }], 'SDECRPC', { timeout: 60000 });
+      console.log(`Pre-registration check (C, CONNECTED): ${String(reply).trim()}`);
+    }
   }
 }
 

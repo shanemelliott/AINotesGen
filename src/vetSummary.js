@@ -77,6 +77,17 @@ function summarize(result) {
   } else {
     add('Enrollment:', result.enrollment?.ien ? 'on file (reload CDSPVET to read it)' : 'NOT ENROLLED');
   }
+
+  const a = result.address;
+  if (a) {
+    const zip = /^\d{9}$/.test(String(a.zip)) ? `${String(a.zip).slice(0, 5)}-${String(a.zip).slice(5)}` : a.zip;
+    const where = [[a.city, a.state].filter(Boolean).join(', '), zip, a.country].filter(Boolean).join(' ');
+    add('Mailing address:', [a.street1, a.street2, a.street3, where].filter(Boolean).join(', ') || 'none');
+    const problems = list(a.problems);
+    add('Address check:', a.valid === true || a.valid === 'true' ? 'VALID' : `INVALID - ${problems.join('; ')}`);
+  } else {
+    add('Address check:', 'not returned (reload CDSPVET)');
+  }
   return lines.join('\n');
 }
 

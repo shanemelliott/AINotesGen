@@ -1,0 +1,30 @@
+{
+  "note": "Public landmark addresses for synthetic test patients (easter eggs). State IENs are file #5 IENs (FIPS codes on VistA). Used by vet-profile.js --address <id|random>.",
+  "addresses": [
+    { "id": "graceland", "name": "Graceland (Elvis Presley)", "street1": "3764 ELVIS PRESLEY BLVD", "city": "MEMPHIS", "state": "TENNESSEE", "stateIen": 47, "zip": "38116" },
+    { "id": "disneyland", "name": "Disneyland", "street1": "1313 DISNEYLAND DR", "city": "ANAHEIM", "state": "CALIFORNIA", "stateIen": 6, "zip": "92802" },
+    { "id": "dollywood", "name": "Dollywood", "street1": "2700 DOLLYWOOD PARKS BLVD", "city": "PIGEON FORGE", "state": "TENNESSEE", "stateIen": 47, "zip": "37863" },
+    { "id": "magic-kingdom", "name": "Walt Disney World, Magic Kingdom", "street1": "1180 SEVEN SEAS DR", "city": "LAKE BUENA VISTA", "state": "FLORIDA", "stateIen": 12, "zip": "32830" },
+    { "id": "grand-ole-opry", "name": "Grand Ole Opry", "street1": "600 OPRY MILLS DR", "city": "NASHVILLE", "state": "TENNESSEE", "stateIen": 47, "zip": "37214" },
+    { "id": "rock-hall", "name": "Rock and Roll Hall of Fame", "street1": "1100 E 9TH ST", "city": "CLEVELAND", "state": "OHIO", "stateIen": 39, "zip": "44114" },
+    { "id": "white-house", "name": "The White House", "street1": "1600 PENNSYLVANIA AVE NW", "city": "WASHINGTON", "state": "DISTRICT OF COLUMBIA", "stateIen": 11, "zip": "20500" },
+    { "id": "va-central-office", "name": "VA Central Office", "street1": "810 VERMONT AVE NW", "city": "WASHINGTON", "state": "DISTRICT OF COLUMBIA", "stateIen": 11, "zip": "20420" },
+    { "id": "arlington-cemetery", "name": "Arlington National Cemetery", "street1": "1 MEMORIAL AVE", "city": "ARLINGTON", "state": "VIRGINIA", "stateIen": 51, "zip": "22211" },
+    { "id": "empire-state", "name": "Empire State Building", "street1": "20 W 34TH ST", "city": "NEW YORK", "state": "NEW YORK", "stateIen": 36, "zip": "10118" },
+    { "id": "space-needle", "name": "Space Needle", "street1": "400 BROAD ST", "city": "SEATTLE", "state": "WASHINGTON", "stateIen": 53, "zip": "98109" },
+    { "id": "fenway-park", "name": "Fenway Park", "street1": "4 JERSEY ST", "city": "BOSTON", "state": "MASSACHUSETTS", "stateIen": 25, "zip": "02215" },
+    { "id": "wrigley-field", "name": "Wrigley Field", "street1": "1060 W ADDISON ST", "city": "CHICAGO", "state": "ILLINOIS", "stateIen": 17, "zip": "60613" },
+    { "id": "willis-tower", "name": "Willis Tower", "street1": "233 S WACKER DR", "city": "CHICAGO", "state": "ILLINOIS", "stateIen": 17, "zip": "60606" },
+    { "id": "lambeau-field", "name": "Lambeau Field", "street1": "1265 LOMBARDI AVE", "city": "GREEN BAY", "state": "WISCONSIN", "stateIen": 55, "zip": "54304" },
+    { "id": "gateway-arch", "name": "Gateway Arch", "street1": "11 N 4TH ST", "city": "ST LOUIS", "state": "MISSOURI", "stateIen": 29, "zip": "63102" },
+    { "id": "alamo", "name": "The Alamo", "street1": "300 ALAMO PLAZA", "city": "SAN ANTONIO", "state": "TEXAS", "stateIen": 48, "zip": "78205" },
+    { "id": "mall-of-america", "name": "Mall of America", "street1": "60 E BROADWAY", "city": "BLOOMINGTON", "state": "MINNESOTA", "stateIen": 27, "zip": "55425" },
+    { "id": "chinese-theatre", "name": "TCL Chinese Theatre", "street1": "6925 HOLLYWOOD BLVD", "city": "LOS ANGELES", "state": "CALIFORNIA", "stateIen": 6, "zip": "90028" },
+    { "id": "griffith-observatory", "name": "Griffith Observatory", "street1": "2800 E OBSERVATORY RD", "city": "LOS ANGELES", "state": "CALIFORNIA", "stateIen": 6, "zip": "90027" },
+    { "id": "mount-rushmore", "name": "Mount Rushmore National Memorial", "street1": "13000 HIGHWAY 244", "city": "KEYSTONE", "state": "SOUTH DAKOTA", "stateIen": 46, "zip": "57751" },
+    { "id": "biltmore", "name": "Biltmore Estate", "street1": "1 LODGE ST", "city": "ASHEVILLE", "state": "NORTH CAROLINA", "stateIen": 37, "zip": "28803" },
+    { "id": "vegas-sign", "name": "Welcome to Fabulous Las Vegas sign", "street1": "5100 S LAS VEGAS BLVD", "city": "LAS VEGAS", "state": "NEVADA", "stateIen": 32, "zip": "89119" },
+    { "id": "mcdonalds-downey", "name": "Oldest operating McDonald's", "street1": "10207 LAKEWOOD BLVD", "city": "DOWNEY", "state": "CALIFORNIA", "stateIen": 6, "zip": "90241" },
+    { "id": "mcdonalds-hq", "name": "McDonald's headquarters", "street1": "110 N CARPENTER ST", "city": "CHICAGO", "state": "ILLINOIS", "stateIen": 17, "zip": "60607" }
+  ]
+}
