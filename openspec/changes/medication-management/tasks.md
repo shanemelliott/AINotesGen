@@ -100,21 +100,34 @@
 - Note: the original fills of the loaded Rxs show release date 2026-10-08 (the load date), so their release dates are not backdated; decide whether to fix them with the same `FILE^DIE` edit
 - **Success Criteria**: refill appears in VPR with the backdated fill date and release date; refills remaining drops by 1
 
-## Pending (as of 2026-10-09; updated 2026-10-13)
+## Pending (as of 2026-10-09; updated 2026-10-15)
 
-- [x] **Before the renew work:** Task 1.6 (done 2026-10-13, finding in the task; decision on loader change vs post-load fix still open)
+Medication work is paused on 2026-10-15 to populate notes on the important test patients. Test patients used so far: 99935791 (critical, no further writes), 100975 (renewals), 100973 (ADDRX test).
 
-- [x] Compile `CDSPRX` on dev; register RPC `CDSP UTIL RX FILL` (done 2026-10-13; one LIST parameter `PARAMS`)
-- [x] `CDSP UTIL ADD RX` registered and `ADDRX` run (2026-10-15, DFN 99935791); it files no structured dosage, so the VPR dose, route and schedule come back blank; `ADDRX` now takes `COPYFROM` and uses `$$DOSING^SYNFMED` (written, not yet tested)
-- [x] Write `fill-rx.js`, `add-rx.js` (2026-10-15), `renew-rx.js` (RPCs ORWDXR RENEW and ORWDX SEND, no order checks; tested on DFN 100975)
-- [ ] Register RPC `CDSP UTIL FINISH RX` (tag `FINORD`, routine `CDSPRX`) and test `finish-rx.js` on a pending order (written 2026-10-15, never run)
-- [ ] Compile `SYNFMED` `DOSING` on dev; check the route and schedule names in `ROUTEKEY`/`SCHEDKEY` against #51.2 and #51.1; run `DOSINGT` on lisinopril, atorvastatin, canagliflozin
-- [ ] Answer on dev: which date is edited after a backdated dispense; Renew vs Copy for renewals
-- [ ] Read `PSORENW0`, `PSORENW1`, `PSORN52A` in `reference/PSO-all.ro` to see what a renew copies and prompts for (renew creates a new Rx), then draft a `RENEWRX` entry point
-- [ ] Story 1 test: `ADDRX` a new Rx on DFN 100973 (90 days, qty 90, 3 refills, issue date about a year back, RxNorm from the patient's bundle, check with `preflight-vista.js`), then `FILLRX` oldest first with one or two late fills
-- [ ] Correct spec requirement 2 in `specs/pharmacy-operations/spec.md`: a renew creates a new Rx, it does not add refills to the old one
-- [ ] Decide whether to backdate the release date of the original fills of loaded Rxs (all show the 2026-10-08 load date)
+### Done 2026-10-15
 
+- [x] `ADDRX` (`CDSP UTIL ADD RX`) registered and run. It now fills structured dosing: with `COPYFROM` it copies dose, units, noun, route, schedule and verb from an existing Rx before filing; without it, it calls `$$DOSING^SYNFMED` (strength from #50 field 901/902, units #50.607, route #51.2, schedule #51.1 from the sig). Tested on DFN 100973: atorvastatin Rx 100003816 shows `20 MG / MG / PO / QDAY` and the sig in the VPR.
+- [x] Free-text sig fixed: `WRITE` (CDSPRX) and `WRITERXPS` (SYNFMED) set `SIGOK` and `SIG(1)` so `PSON52` files SIG1; PR branch `synfmed-rx-sig` (master) has the sig fix alone.
+- [x] `SYNFMED` `DOSING`, `DOSINGT`, `ROUTEKEY`, `SCHEDKEY` compiled on dev; route resolves to #51.2 entry 1 (`ORAL (BY MOUTH)`, the entry the older Rxs use); QDAY and BID resolve in #51.1.
+- [x] Preflight lists meds without full structured dosing (`dosing:ok|partial|check-after-create|reason`); canagliflozin is `partial`.
+- [x] Renew through the CPRS RPCs works: `renew-rx.js` (`ORWDXR RENEW` then `ORWDX SEND`, skipping the `ORWDXC ACCEPT` order check that hangs on `CDS SERVER`). Tested on DFN 100975 (lisinopril 49816 to 49881).
+- [x] Finish of a pending order is done by hand in Outpatient Pharmacy (backdoor): DFN 100975 insulin 49880 and lisinopril 49881 became Rx 100003799A and 100003800A.
+- [x] Fill-in tools committed: `fill-rx.js`, `fill-patient-rx.js`, `fill-plan.js`, `fill-history.js`, `add-rx.js`, `renew-rx.js`, `finish-rx.js`.
+
+### Open: when we revisit medications
+
+- [ ] Backfill structured dosing on existing loaded Rxs that have only free text (every old loader Rx, for example 100973 has about 20 lisinopril Rxs, shows blank dose/route/schedule in the VPR). Same lookup as `$$DOSING`; write a dry-run-first tool and a CDSPRX entry point; also fill the sig (`^PSRX(rx,"SIG1")`) where it is still blank. The order text read by the VPR must change too, not just `^PSRX(rx,6)` (setting node 6 after filing did not change the VPR).
+- [ ] Add dosing rows for non-oral and special meds: `DOSING` only handles oral tablets and capsules (insulin, patches, inhalers, injectables, nitroglycerin spray return `not-oral-solid`). Extend `MEDDEF`, `ROUTEKEY`, `SCHEDKEY` (check TID, QID, QAM, QPM, QHS and the sublingual route names against #51.1 and #51.2: `D LIST^DIC(51.1,,"@;.01")` then `ZW ^TMP("DILIST",$J)`).
+- [ ] Review the preflight output for every new Synthea upload: meds listed under "without full structured dosing" need a `MEDDEF` row or a key.
+- [ ] Test `FINORD` (`CDSP UTIL FINISH RX`, `finish-rx.js`): register the RPC (tag `FINORD`, routine `CDSPRX`, one LIST parameter, context `CDSP RPC CONTEXT`), dry run on a pending order, then one live finish. Never run. It runs `PSOORFI1` with `ACP` set, `PSON52`, `DCORD^PSONEW2`, `EOJ^PSONEW`, label and release. Remote order checks call `CDS SERVER` (HWSC error 186005) and hang on dev; disabling that web server entry would also remove the need to skip `ORWDXC ACCEPT`.
+- [ ] Renew end to end in one script: `renew-rx.js` then `finish-rx.js` (the renewed order stays PENDING until pharmacy finishes it; the backdoor finish sets the first fill date to the next possible refill date, which can be in the future).
+- [ ] Decide on future-dated first fills after a renew (DFN 100975 insulin 10/23/2026, lisinopril 12/28/2026) and on the original fills whose release date is the 2026-10-08 load date.
+- [ ] Story 1 test: `ADDRX` a new Rx on DFN 100973 with an issue date about a year back, then `FILLRX` oldest first with one or two late fills (the 2026-10-15 test used today's date).
+- [ ] Merge repeated Synthea requests (Task 1.8) and check class rows of `MEDDEF` on a real load (a fresh load through `WRITERXPS` with `DOSING` has not been run).
+- [ ] Merge the `synfmed-rx-sig` PR; then merge or rebase `med-defaults-and-merge` so the sig lines are not duplicated.
+- [ ] Ask the AI summary team how their medication table gets Last Filled and Expiration Date (they were blank for Rxs that have both in the VPR), and give `CDSP RPC CONTEXT` to the account `HELZER,BERND` (VistALink error 182005).
+- [ ] Correct spec requirement 2 in `specs/pharmacy-operations/spec.md`: a renew creates a new Rx, it does not add refills to the old one.
+- [ ] Do not write to DFN 99935791 again; its three renewals (407496 to 407498) were created with `ADDRX` before the dosing fix, and their sig and dose were patched by hand in M.
 ## Group 2: Core Implementation (5 tasks)
 
 ### [ ] Task 2.1: Write src/pharmClient.js wrapper
