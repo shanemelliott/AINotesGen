@@ -1,3 +1,21 @@
 {
-  "EMERGENCY DEPARTMENT": 29
+  "_note": "TIU note title IEN (file 8925.1) by visit clinic. Clinics not listed use VISTA_NOTE_TITLE_IEN (PRIMARY CARE VISIT, 16). 55 = GENERIC NOTE TITLE, used where dev has no title for the specialty. See docs/NOTE-TITLES.md.",
+  "EMERGENCY DEPARTMENT": 29,
+  "CARDIOLOGY": 1633,
+  "DERMATOLOGY": 1634,
+  "OPHTHALMOLOGY": 1635,
+  "GASTROENTEROLOGY": 6,
+  "PRIMARY CARE": 16,
+  "DEV PACT MD 4": 16,
+  "GENERAL MEDICINE": 16,
+  "DENTAL": 55,
+  "PULMONARY": 55,
+  "SLEEP LAB": 55,
+  "HEMATOLOGY": 55,
+  "DIABETIC": 55,
+  "HEMODIALYSIS - MIKEB": 55,
+  "AUDIOLOGY": 55,
+  "OCCUPATIONAL THERAPY": 55,
+  "MENTAL HYGIENE": 55,
+  "GERIATRIC": 55
 }

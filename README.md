@@ -49,6 +49,10 @@ re-run; already-processed items are skipped or logged).
    structural issues like lines over 80 chars), and writes each note as a
    `.txt` (plain body, directly editable) + `.json` (metadata sidecar) pair
    to `output/ready/` (clean) or `output/review/` (needs a look).
+   Each note's TIU title comes from the visit clinic (`src/note-titles.json`);
+   clinics without a mapping use `VISTA_NOTE_TITLE_IEN`. Available titles and
+   the mapping are in [docs/NOTE-TITLES.md](docs/NOTE-TITLES.md). A signed
+   note cannot be retitled, so check the mapping before signing.
 
 6. **Review flagged notes**: manually edit files in `output/review/*.txt`
    to fix content issues (e.g. stale pregnancy problems bleeding through)
