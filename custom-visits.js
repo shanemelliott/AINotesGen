@@ -15,6 +15,7 @@ const { flagNote } = require('./src/noteFlags');
 const { noteId, writeNote, existsInDir } = require('./src/noteStore');
 const { filemanDateTime, buildVisitString } = require('./src/notesClient');
 const { createAppointment } = require('./src/appointmentCreator');
+const { noteTitleFor } = require('./src/noteTitles');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const dfn = arg('--dfn');
@@ -80,7 +81,7 @@ async function main() {
       const text = toAscii(reflowText(stripMarkerLine(insertLabBlock(res.content, ctx))));
       const { flagged, reasons } = flagNote(text, ctx);
       writeNote(path.join(__dirname, 'output', 'review'), id, {
-        noteText: text, dfn, date: v.date, visitString, noteTitleIen: config.noteTitleIen(), locationIen: v.clinicIen,
+        noteText: text, dfn, date: v.date, visitString, noteTitleIen: noteTitleFor(v.clinic), locationIen: v.clinicIen,
         duz: config.duz(), fmDateTime: fm, flagged, flagReasons: reasons, generatedAt: new Date().toISOString(),
       });
       console.log(`  NOTE written to output/review/${id}.txt${flagged ? ` (flagged: ${reasons.join('; ')})` : ''}`);

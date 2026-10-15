@@ -9,6 +9,7 @@ const { generateNoteText } = require('./src/noteGenerator');
 const { reflowText } = require('./src/reflow');
 const { resolveAppointment, buildVisitString, filemanDateTime } = require('./src/notesClient');
 const { flagNote } = require('./src/noteFlags');
+const { noteTitleFor } = require('./src/noteTitles');
 const { noteId, writeNote, existsInDir } = require('./src/noteStore');
 
 const REVIEW_DIR = path.join(__dirname, 'output', 'review');
@@ -39,7 +40,6 @@ function loadEncounters(dfn) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const noteTitleIen = config.noteTitleIen();
   const duz = config.duz();
 
   const encounters = loadEncounters(args.dfn);
@@ -84,7 +84,7 @@ async function main() {
         dfn: args.dfn,
         date: encounter.date,
         visitString,
-        noteTitleIen,
+        noteTitleIen: noteTitleFor(encounter.clinic),
         locationIen: clinicIen,
         duz,
         fmDateTime,
