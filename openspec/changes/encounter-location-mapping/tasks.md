@@ -33,4 +33,4 @@
   - [x] 4.6.2 `create-appointments.js`: `appointmentSlot()` books clinic visits in clinic hours (same rule) and never books ED at 00:00; `buildDateParts` keeps a 23:xx appointment's end on the same day (an end of 00:00 made SDEC file it at `.24`)
   - [ ] 4.6.3 Preflight check: fail if any visit or appointment for the patient is at `.24` or between 00:00 and 05:00 (outside ED)
   - [ ] 4.6.4 Test on a fresh patient: CPRS cover sheet shows real dates, every note links to its appointment's visit (`logs/check-path.js`)
-  - [ ] 4.6.5 Decide whether to move the existing midnight appointments for DFN 100973 (61), 100974 (3) and 100975 (77); `SDEC APPDEL` cannot cancel them, so this needs a DEV routine
+  - [ ] 4.6.5 Decide whether to move the existing midnight appointments for DFN 100973 (61), 100974 (3) and 100975 (77); try `SDEC APPDEL` on one first (its time check allows `.24`, untested), then rebook in clinic hours and relink the note; otherwise a DEV routine is needed

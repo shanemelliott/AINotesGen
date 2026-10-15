@@ -78,7 +78,7 @@ For historical ED visits, use `SDEC ARSET` and `SDEC APPADD` with the ED clinic 
 VistA stores 00:00 as the previous day at `.24` (`3261008.24` is 10/09/2026 00:00). Appointments booked at 00:00:
 
 - Show as `Dec 30, 1899@00:00` on the CPRS cover sheet (CPRS cannot convert hour 24). The data is correct: the VPR returns `202610090000` and the AI summary reads the right date.
-- Cannot be cancelled with `SDEC APPDEL` (`CANCEL^SDEC08` requires 4 time digits).
+- `SDEC APPDEL` (`CANCEL^SDEC08`) was thought to reject them, but its time check allows up to 4 digits after the decimal, so `.24` passes. Cancelling a midnight appointment has not been tried.
 - Caused notes to be filed with no visit when the visit string used `.0` instead of `.24`.
 
 Cause: the loader converts Synthea's UTC times to local time (`$$HL7TFM^XLFDT`), and Synthea gives most of a patient's encounters one time of day. For DFN 100973 and 100975 that is about 00:15 and 23:15 Pacific, and `create-appointments.js` rounded 00:15 down to 00:00. A second cause: `buildDateParts` set the end of a 23:xx appointment to 00:00 on the same date, and SDEC then filed it at that midnight (`.24`), so the 23:00 bookings also became midnight appointments (fixed 2026-10-14: the end stays at 23:59). Affected: DFN 100973 (61 appointments), 100974 (3) and 100975 (77), booked 2026-10-08 and 2026-10-13. Earlier patients loaded at daytime times.
