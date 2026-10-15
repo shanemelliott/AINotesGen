@@ -79,6 +79,16 @@ async function main() {
     for (const s of skipped.filter((x) => x.domain === domain)) {
       console.log(`  ${String(s.count).padStart(4)}  ${s.code.padEnd(12)} ${String(s.display).slice(0, 52).padEnd(52)} not needed: ${s.target}`);
     }
+    if (domain === 'meds') {
+      // The VPR dose, route and schedule need structured dosing; list meds the loader can't fill it for.
+      const gaps = rs.filter((r) => OK_STATUS.has(r.status) && /dosing:(?!ok\b)/.test(r.target || ''));
+      if (gaps.length) {
+        console.log(`  meds without full structured dosing (VPR dose/route/schedule blank until SYNFMED DOSING/ROUTEKEY/SCHEDKEY or MEDDEF cover them): ${gaps.length}`);
+        for (const r of gaps.sort((a, b) => b.count - a.count)) {
+          console.log(`  ${String(r.count).padStart(4)}  ${r.code.padEnd(12)} ${String(r.display).slice(0, 52).padEnd(52)} ${(/dosing:(\S+)/.exec(r.target) || [])[1]}`);
+        }
+      }
+    }
   }
 
   report.push(...skipped);

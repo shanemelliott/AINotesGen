@@ -105,8 +105,10 @@
 - [x] **Before the renew work:** Task 1.6 (done 2026-10-13, finding in the task; decision on loader change vs post-load fix still open)
 
 - [x] Compile `CDSPRX` on dev; register RPC `CDSP UTIL RX FILL` (done 2026-10-13; one LIST parameter `PARAMS`)
-- [ ] Confirm `CDSP UTIL ADD RX` is registered and run `ADDRX` once (never run)
-- [x] Write `fill-rx.js`; [ ] write `add-rx.js`
+- [x] `CDSP UTIL ADD RX` registered and `ADDRX` run (2026-10-15, DFN 99935791); it files no structured dosage, so the VPR dose, route and schedule come back blank; `ADDRX` now takes `COPYFROM` and uses `$$DOSING^SYNFMED` (written, not yet tested)
+- [x] Write `fill-rx.js`, `add-rx.js` (2026-10-15), `renew-rx.js` (RPCs ORWDXR RENEW and ORWDX SEND, no order checks; tested on DFN 100975)
+- [ ] Register RPC `CDSP UTIL FINISH RX` (tag `FINORD`, routine `CDSPRX`) and test `finish-rx.js` on a pending order (written 2026-10-15, never run)
+- [ ] Compile `SYNFMED` `DOSING` on dev; check the route and schedule names in `ROUTEKEY`/`SCHEDKEY` against #51.2 and #51.1; run `DOSINGT` on lisinopril, atorvastatin, canagliflozin
 - [ ] Answer on dev: which date is edited after a backdated dispense; Renew vs Copy for renewals
 - [ ] Read `PSORENW0`, `PSORENW1`, `PSORN52A` in `reference/PSO-all.ro` to see what a renew copies and prompts for (renew creates a new Rx), then draft a `RENEWRX` entry point
 - [ ] Story 1 test: `ADDRX` a new Rx on DFN 100973 (90 days, qty 90, 3 refills, issue date about a year back, RxNorm from the patient's bundle, check with `preflight-vista.js`), then `FILLRX` oldest first with one or two late fills
