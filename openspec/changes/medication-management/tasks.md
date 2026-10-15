@@ -125,7 +125,8 @@ Medication work is paused on 2026-10-15 to populate notes on the important test 
 - [ ] Story 1 test: `ADDRX` a new Rx on DFN 100973 with an issue date about a year back, then `FILLRX` oldest first with one or two late fills (the 2026-10-15 test used today's date).
 - [ ] Merge repeated Synthea requests (Task 1.8) and check class rows of `MEDDEF` on a real load (a fresh load through `WRITERXPS` with `DOSING` has not been run).
 - [ ] Merge the `synfmed-rx-sig` PR; then merge or rebase `med-defaults-and-merge` so the sig lines are not duplicated.
-- [ ] Ask the AI summary team how their medication table gets Last Filled and Expiration Date (they were blank for Rxs that have both in the VPR), and give `CDSP RPC CONTEXT` to the account `HELZER,BERND` (VistALink error 182005).
+- [ ] Ask the AI summary team how their medication table gets Last Filled and Expiration Date (they were blank for Rxs that have both in the VPR)
+- [x] `CDSP RPC CONTEXT` given to `HELZER,BERND` (2026-10-15; VistALink error 182005 "does not have access to option CDSP RPC CONTEXT" on `VAFCTFU CONVERT ICN TO DFN`); recheck `D ^XTER` for new 182005 entries after their next run
 - [ ] Correct spec requirement 2 in `specs/pharmacy-operations/spec.md`: a renew creates a new Rx, it does not add refills to the old one.
 - [ ] Do not write to DFN 99935791 again; its three renewals (407496 to 407498) were created with `ADDRX` before the dosing fix, and their sig and dose were patched by hand in M.
 ## Group 2: Core Implementation (5 tasks)
