@@ -443,6 +443,19 @@ step:** scenario templates on top of the derived profile (`vet-profile.js --scen
 
 **Status**: Proposed, not started.
 
+### Task 17: Lighthouse verification (IN PROGRESS, 2026-10-15)
+Lighthouse FHIR sandbox demographics and problems do not read from station 500; they come from mock data, so an important
+patient linked to Lighthouse and the MPI (first: DFN 99935794, ALDIE,STANFORD, ICN 1013947267V661431) must be checked
+against Lighthouse before its VistA record is corrected.
+
+- `lighthouse-verify.js <dfn>` fetches the VPR and the Lighthouse Patient and Condition (problem-list-item) and prints the
+  differences. Auth is the Bruno token (SMART launch, PIV login, one per patient) kept in `.lighthouse-token.json` or passed
+  with `--token`; it is not an Entra JWT. `lighthouse-launch.js` makes the launch value from an ICN. Guide: [docs/LIGHTHOUSE-VERIFY.md](docs/LIGHTHOUSE-VERIFY.md).
+- Next: apply the Lighthouse values to VistA for 99935794 (demographics, address, problems, veteran data), then meds,
+  encounters and notes. Tasks: `openspec/changes/lighthouse-verification/tasks.md`.
+
+**Status**: Tool works (run for 99935794 on 2026-10-15); fixing 99935794 from the findings is next.
+
 ---
 
 ## 4. Open Questions

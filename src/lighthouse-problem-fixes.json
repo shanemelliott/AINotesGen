@@ -1,0 +1,10 @@
+[
+  { "dfn": "99935794", "ien": "1991", "note": "hypertension", "onset": "2023-01-02" },
+  { "dfn": "99935794", "ien": "1992", "note": "diabetes R69 to E11.9", "icdFrom": { "ien": "2026", "code": "E11.9" }, "onset": "2022-11-01" },
+  { "dfn": "99935792", "ien": "1996", "note": "chronic lung disease J98.4 to J44.0", "icdFrom": { "ien": "2025", "code": "J44.0" }, "onset": "2019-10-01" },
+  { "dfn": "99935795", "ien": "1995", "note": "CVA", "onset": "2024-11-11" },
+  { "dfn": "99935796", "ien": "1999", "note": "chronic liver disease K76.9 to K70.11", "icdFrom": { "ien": "2018", "code": "K70.11" }, "onset": "2021-07-11" },
+  { "dfn": "99935797", "ien": "1997", "note": "tobacco user", "onset": "2015-12-01" },
+  { "dfn": "99935798", "ien": "1998", "note": "chronic kidney disease, inactive to active", "onset": "2024-03-01", "status": "A" },
+  { "dfn": "99935791", "ien": "1993", "note": "multi vessel CAD (stent in 2017 now precedes onset)", "onset": "2020-12-21" }
+]

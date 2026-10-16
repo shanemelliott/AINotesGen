@@ -31,10 +31,11 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
   const userDuz = await getDuzForSite(siteId);
 
   const normalizedParameters = (params || []).map((value) => {
-    // Pass through already-wrapped RPC parameter objects (string, namedArray, list) untouched.
+    // Pass through already-wrapped RPC parameter objects (string, namedArray, array, list) untouched.
     if (value && typeof value === 'object' && (
       Object.prototype.hasOwnProperty.call(value, 'string')
       || Object.prototype.hasOwnProperty.call(value, 'namedArray')
+      || Object.prototype.hasOwnProperty.call(value, 'array')
       || Object.prototype.hasOwnProperty.call(value, 'list')
     )) {
       return value;

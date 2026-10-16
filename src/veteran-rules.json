@@ -1,6 +1,7 @@
 {
   "_about": "Veteran service profile rules for synthetic test patients (openspec/changes/veteran-service-data). Percentages are plausible test values with the 38 CFR Part 4 diagnostic code they resemble; they are not rating decisions. Pointer IENs are from dev station 500 (logs/vet-get-100972.json).",
   "periodsOfService": [
+    { "ien": 29, "name": "WORLD WAR II", "from": "1941-12-07", "to": "1946-12-31" },
     { "ien": 11, "name": "KOREAN", "from": "1950-06-27", "to": "1955-01-31" },
     { "ien": 20, "name": "POST-KOREAN", "from": "1955-02-01", "to": "1955-10-31" },
     { "ien": 27, "name": "VIETNAM ERA", "from": "1955-11-01", "to": "1975-05-07" },

@@ -2,7 +2,7 @@
 
 Notes are filed with `TIU CREATE RECORD`, which needs a title IEN from file #8925.1. The title is chosen by the visit's clinic in [src/note-titles.json](../src/note-titles.json) through `noteTitleFor()` in [src/noteTitles.js](../src/noteTitles.js). A clinic that is not listed uses `VISTA_NOTE_TITLE_IEN` from `.env` (16, PRIMARY CARE VISIT). Both `generate-notes.js` and `custom-visits.js` use it.
 
-Checked 2026-10-15 with `node fetch-note-titles.js` (RPC `CDSP GET NOTE TITLES`, context `CDSP RPC CONTEXT`), which returned 207 active titles and wrote them to `logs/note-titles.json`. Run it again after titles are added.
+Checked 2026-10-16 with `node fetch-note-titles.js` (RPC `CDSP GET NOTE TITLES`, context `CDSP RPC CONTEXT`), which returned 217 active titles and wrote them to `logs/note-titles.json`. Run it again after titles are added.
 
 ## Current clinic mapping
 
@@ -14,30 +14,20 @@ Checked 2026-10-15 with `node fetch-note-titles.js` (RPC `CDSP GET NOTE TITLES`,
 | OPHTHALMOLOGY | OPHTHALMOLOGY NOTE | 1635 |
 | GASTROENTEROLOGY | GI CLINIC NOTE | 6 |
 | PRIMARY CARE, DEV PACT MD 4, GENERAL MEDICINE | PRIMARY CARE VISIT | 16 |
-| DENTAL, PULMONARY, SLEEP LAB, HEMATOLOGY, DIABETIC, HEMODIALYSIS - MIKEB, AUDIOLOGY, OCCUPATIONAL THERAPY, MENTAL HYGIENE, GERIATRIC | GENERIC NOTE TITLE | 55 |
+| DENTAL | DENTAL NOTE | 7222 |
+| PULMONARY | PULMONARY NOTE | 7223 |
+| SLEEP LAB | SLEEP MEDICINE NOTE | 7224 |
+| HEMATOLOGY | HEMATOLOGY NOTE | 7225 |
+| HEMODIALYSIS - MIKEB | HEMODIALYSIS NOTE | 7226 |
+| AUDIOLOGY | AUDIOLOGY NOTE | 7228 |
+| OCCUPATIONAL THERAPY | OCCUPATIONAL THERAPY NOTE | 7229 |
+| MENTAL HYGIENE | MENTAL HEALTH NOTE | 7232 |
+| GERIATRIC | GERIATRICS NOTE | 7233 |
+| DIABETIC | DIABETES NOTE | 7234 |
 
-GENERIC NOTE TITLE (class TEST) is used where dev has no title for the specialty. There is no dental visit note title on dev: the only dental titles are `C&P DENTAL AND ORAL` (1306) and `C&P MOUTH, LIPS, AND TONGUE` (1332), which are compensation exam reports. Create a dental title in #8925.1 (for example `DENTAL NOTE` under class MEDICINE, 1256) and change the DENTAL row. The same applies to pulmonary, sleep, hematology, diabetes, dialysis, audiology, occupational therapy, mental health and geriatrics.
+A clinic that is not listed uses `VISTA_NOTE_TITLE_IEN` (16). GENERIC NOTE TITLE (55, class TEST) is no longer used for these clinics. The ten specialty titles were requested on 2026-10-15 and created by 2026-10-16; the IENs above come from `logs/note-titles.json`. Some are in other classes (dental, physical medicine, mental health, geriatrics), not MEDICINE.
 
 Notes already signed keep the title they were filed with. A signed note cannot be retitled.
-
-## Titles to request
-
-Ten specialty clinics currently fall back to GENERIC NOTE TITLE (55). Ask for one title each in file #8925.1, following the existing `<SPECIALTY> NOTE` titles (copy the settings of `CARDIOLOGY NOTE`, IEN 1633: type TITLE, status ACTIVE, class MEDICINE 1256, same user class permissions so the signing user can pick them):
-
-| Title to create | Used for visit clinic |
-|---|---|
-| DENTAL NOTE | DENTAL |
-| PULMONARY NOTE | PULMONARY |
-| SLEEP MEDICINE NOTE | SLEEP LAB |
-| HEMATOLOGY NOTE | HEMATOLOGY |
-| DIABETES NOTE | DIABETIC |
-| HEMODIALYSIS NOTE | HEMODIALYSIS - MIKEB |
-| AUDIOLOGY NOTE | AUDIOLOGY |
-| OCCUPATIONAL THERAPY NOTE | OCCUPATIONAL THERAPY |
-| MENTAL HEALTH NOTE | MENTAL HYGIENE |
-| GERIATRICS NOTE | GERIATRIC |
-
-After they exist, run `node fetch-note-titles.js`, read the new IENs from `logs/note-titles.json`, and change the rows in `src/note-titles.json`. Only new notes use them.
 
 ## Titles for visit notes
 

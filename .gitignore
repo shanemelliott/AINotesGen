@@ -12,6 +12,10 @@ node_modules/
 #codespaces
 *.code-workspace
 
+#patient Data
+docs/sacredFourteen/
+plans/*.json
+
 # Secrets / local config
 .env
 .env.*
@@ -32,3 +36,9 @@ logs/
 *.log
 output/
 reference/
+
+# Lighthouse OAuth token cache
+.lighthouse-token.json
+plans/
+docs/lighthouse-review/
+src/lighthouse-patients.json
