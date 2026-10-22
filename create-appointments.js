@@ -52,7 +52,7 @@ async function main() {
   const missing = encounters.filter((e) => !e.hasAppointment);
   const log = loadAppointmentsLog();
   const alreadyCreated = new Set(
-    log.filter((r) => r.dfn === args.dfn).map((r) => r.date)
+    log.filter((r) => r.dfn === args.dfn).map((r) => `${r.date}|${r.clinicIen}`)
   );
 
   console.log(`Found ${missing.length} encounters missing appointments for DFN ${args.dfn}. dryRun=${args.dryRun}`);
@@ -63,15 +63,15 @@ async function main() {
 
   for (const encounter of missing) {
     const { date, time } = encounter;
+    const { clinicName, clinicIen, resourceIen } = clinicFor(encounter);
 
-    if (alreadyCreated.has(date)) {
-      console.log(`SKIP  ${date}: appointment already created`);
+    if (alreadyCreated.has(`${date}|${clinicIen}`)) {
+      console.log(`SKIP  ${date}: appointment already created at ${clinicName}`);
       skipped.push(date);
       continue;
     }
 
     const overbook = defaultOverbook(date);
-    const { clinicName, clinicIen, resourceIen } = clinicFor(encounter);
     const slotTime = appointmentSlot(time, clinicName);
 
     if (args.dryRun) {

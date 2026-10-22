@@ -77,6 +77,13 @@ function markdown(all) {
       L.push('', '### Answer key', '', `Summary expected for: ${k.summaryFor} (record as of ${k.summaryAsOf}).`, '', '| ID | Severity | Date | Source | What the summary must surface |', '|---|---|---|---|---|');
       for (const i of k.keyItems) L.push(`| ${i.id} | ${i.severity} | ${i.date} | ${i.source} | ${i.finding} |`);
       L.push('', '**Must not overstate (routine):**', ...k.distractors.map((d) => `- ${d}`), '', '**Must not say:**', ...k.shouldNotSay.map((d) => `- ${d}`));
+      if (k.scoring) {
+        L.push('', '### Scoring rules', '', `- **Found:** ${k.scoring.found}`, `- **Partial:** ${k.scoring.partial}`, `- **Missed:** ${k.scoring.missed}`, `- **Accurate:** ${k.scoring.accurate}`, `- **Noise:** ${k.scoring.noise}`, `- **Pass threshold:** ${k.scoring.passThreshold}`);
+        const ruled = k.keyItems.filter((i) => i.scoringRule);
+        if (ruled.length) {
+          L.push('', '| ID | Found | Partial | Missed |', '|---|---|---|---|', ...ruled.map((i) => `| ${i.id} | ${i.scoringRule.found} | ${i.scoringRule.partial} | ${i.scoringRule.missed} |`));
+        }
+      }
       L.push('', '### Scoring (fill in when the summary comes back)', '', '| ID | Found | Accurate | Notes |', '|---|---|---|---|', ...k.keyItems.map((i) => `| ${i.id} | | | |`));
       for (const run of k.runs || []) {
         const by = Object.fromEntries(run.scores.map((s) => [s.id, s]));
