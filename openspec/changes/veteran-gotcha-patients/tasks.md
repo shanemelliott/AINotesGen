@@ -12,6 +12,12 @@ Nothing else in this change can move until these are done on the dev VistA serve
 - [ ] 0.2 Decide and, if yes, add `MEDDEF` rows in `SYNFMED.m` on dev for the dosing gaps in task 2.7a (the user edits the dev copy; draft the rows in the fork branch `med-defaults-and-merge`)
 - [ ] 0.3 Load P1 as the fresh test patient (task 2.3) and run `check-midnight.js <dfn>` and `link-note-visits.js --check`
 - [ ] 0.4 Check `node preflight-vista.js` still answers (PIV prompt appears in the terminal; enter the PIN there)
+- [ ] 0.5 Verify the decision "never import appointments from the Synthea files; create them ourselves with SDEC (`create-appointments.js`)" holds in the pipeline and every import script. The decision is in `docs/DECISION-LOAD-PATH.md` ("Appointments and notes use SDEC and TIU"; `ISI IMPORT APPT` is not used). The concern is that the last import did not skip them. Steps:
+  - 0.5.1 Read the loader entry points and list every call that can write an appointment or visit: `load-synthea.js` (`DEFAULT_SKIP_TYPES` skips only Claim, ExplanationOfBenefit and DocumentReference, so Encounter resources are still sent), `src/fhirBundleTransport.js`, and any script that calls `ISI IMPORT APPT`
+  - 0.5.2 Read the SYN routines in the fork (`SYNFENC` `wsIntakeEncounters`, `SYNDHP*`, `SYNFAPPT` if present, `CDSPENC`) and the dev server copies, and confirm none creates an SDEC or `^SC` appointment (an encounter becomes a visit only). Record the result in `patches/LOADER-CHANGES.md`
+  - 0.5.3 Check the most recent Synthea import on dev: for that patient compare the appointments in the VPR with `src/appointments.json` (any appointment we did not create came from the loader) and count visits with no appointment
+  - 0.5.4 If the loader created appointments, change the SYN routine (or send no Encounter resources) so a load never imports them, add a guard to `load-synthea.js` and the preflight, and write the rule in `docs/DECISION-LOAD-PATH.md`
+  - 0.5.5 Confirm the loader's visits are what we want: it creates a visit per encounter, and `create-appointments.js` then books an appointment for the same day (duplicate visits; see "Duplicate visits" in `docs/DECISION-LOAD-PATH.md`)
 
 ## 1. Decisions from the owner (done 2026-10-22)
 
