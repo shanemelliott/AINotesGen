@@ -97,12 +97,38 @@ The system SHALL write appointment results in JSON format with: dfn, encounter d
 - **WHEN** appointment created successfully
 - **THEN** write to appointments.json: `{dfn: "100965", date: "2025-10-21", requestIEN: "123", appointmentIEN: "456", clinicIEN: "23", resourceIEN: "2", createdAt: "2026-09-29T...Z"}`
 
-### Requirement: Support configurable clinic and resource IENs
-The system SHALL use VISTA_CLINIC_IEN (default 23 = GENERAL MEDICINE) and VISTA_RESOURCE_IEN (default 2) from environment or config; log values at startup.
+### Requirement: Choose the appointment clinic and resource from the visit location
+The system SHALL create each appointment in the clinic named by the encounter's visit location, using that clinic's own SDEC resource, taken from a maintained lookup of clinic name to clinic IEN and resource IEN. A visit location that is not in the lookup SHALL use the configured default clinic.
+
+#### Scenario: Specialty visit
+- **WHEN** an encounter's visit location is CARDIOLOGY
+- **THEN** the appointment is created with CARDIOLOGY's clinic IEN and resource IEN
+
+#### Scenario: Emergency department visit
+- **WHEN** an encounter's visit location is EMERGENCY DEPARTMENT
+- **THEN** the appointment is created in that clinic like any other, dated in the past with overbooking on
+
+#### Scenario: Location not in the lookup
+- **WHEN** an encounter's visit location is GENERAL MEDICINE, or any name not in the lookup
+- **THEN** the appointment is created in the default clinic
+
+#### Scenario: Dry run shows the clinic
+- **WHEN** the appointment script runs with `--dry-run`
+- **THEN** each line names the clinic and its clinic and resource IENs that would be used, and nothing is created
+
+### Requirement: Verify that lookup clinics can take appointments
+The system SHALL provide a read-only check that, for each clinic in the lookup, reports whether the clinic is active, whether its resource IEN matches the server, and how many appointment slots are open in a date window, decoding the availability pattern (0-9 and j-z as 0-26 open slots; A-W and the characters `*$!@#` as overbooks).
+
+#### Scenario: Resource mismatch
+- **WHEN** a lookup entry's resource IEN differs from the server's
+- **THEN** the check reports the mismatch for that clinic
+
+### Requirement: Support configurable default clinic and resource IENs
+The system SHALL use VISTA_CLINIC_IEN (default 23 = GENERAL MEDICINE) and VISTA_RESOURCE_IEN (default 2) from environment or config as the default clinic for visit locations that are not in the clinic lookup; log values at startup.
 
 #### Scenario: Default clinics
-- **WHEN** .env has VISTA_CLINIC_IEN=23 (GENERAL MEDICINE)
-- **THEN** all appointments created in that clinic
+- **WHEN** .env has VISTA_CLINIC_IEN=23 (GENERAL MEDICINE) and an encounter's location is not in the lookup
+- **THEN** that appointment is created in the default clinic
 - **AND** log "Using clinic IEN 23 (GENERAL MEDICINE)"
 
 #### Scenario: Custom clinic

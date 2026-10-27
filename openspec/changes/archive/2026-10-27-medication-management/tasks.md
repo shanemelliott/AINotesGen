@@ -1,3 +1,5 @@
+> Closed 2026-10-27 (archived without finishing the original plan). The planned `pharmClient.js`, `dispense-rx.js` and `add-med.js` were never built; the work was delivered as `add-rx.js`, `renew-rx.js`, `fill-rx.js`, `finish-rx.js`, `fill-plan.js`, `fill-history.js`, `backfill-rx-dosing.js` and the `ADDRX`, `FILLRX`, `FINORD` and `BFDOSE` entries in `CDSPRX`. Loader defaults (Task 1.7), merged requests (Task 1.8), insulin (Task 1.8a) and dosing backfill are done. Still open and moved to the CLI and cleanup change: live test of `FINORD`; renew then finish in one script; decision on future-dated first fills and load-date release dates; the year-old Rx then late fills test; merging the `synfmed-rx-sig` and `med-defaults-and-merge` branches; asking the AI summary team about Last Filled and Expiration Date; reviewing preflight dosing output for each new upload.
+
 # Tasks
 
 ## Group 1: Research & Planning (3 tasks)

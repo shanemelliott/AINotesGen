@@ -7,7 +7,7 @@ Derive a fictional test patient's historical encounters from the order dates in 
 ## Requirements
 
 ### Requirement: One encounter per order or visit date
-The extractor SHALL create exactly one encounter for each distinct calendar date (YYYYMMDD) on which the patient has at least one order or at least one visit. Its date/time SHALL be the earliest order start time on that date, or the earliest visit time when the date has no orders, and its clinic SHALL be the location of the earliest visit that day (the earliest order's location when there is no visit). Encounters SHALL be output in ascending date order, with a sequence number starting at 1.
+The extractor SHALL create exactly one encounter for each distinct calendar date (YYYYMMDD) on which the patient has at least one order or at least one visit. Its date/time SHALL be the earliest order start time on that date, or the earliest visit time when the date has no orders, and its clinic SHALL be the hospital location of the patient's visit on that date: when the date has more than one visit, the earliest, preferring the emergency department when visits share a time; when the date has no visit, the location of the earliest order that day. Encounters SHALL be output in ascending date order, with a sequence number starting at 1.
 
 #### Scenario: Encounters for the test patient
 - **WHEN** the extractor runs against `100965.json`
@@ -20,6 +20,18 @@ The extractor SHALL create exactly one encounter for each distinct calendar date
 #### Scenario: Visit with no orders
 - **WHEN** a date has a visit but no orders (for example a phone contact or a procedure visit)
 - **THEN** an encounter is produced for that date with an empty order list
+
+#### Scenario: Specialty visit
+- **WHEN** the day's visit is at CARDIOLOGY and its orders and labs carry the default location
+- **THEN** the encounter's clinic is CARDIOLOGY
+
+#### Scenario: Emergency and specialty visit at the same time
+- **WHEN** an emergency department visit and a CARDIOLOGY visit share the same time on one date
+- **THEN** the encounter's clinic is EMERGENCY DEPARTMENT
+
+#### Scenario: No visit on the date
+- **WHEN** a date has orders but no visit
+- **THEN** the encounter's clinic is the location of the day's earliest order
 
 #### Scenario: Patient with no orders
 - **WHEN** the input JSON has no order records
