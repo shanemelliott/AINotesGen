@@ -225,6 +225,12 @@ function buildInstructions(ctx) {
     '- Base the note only on the provided data. Do NOT invent lab values, vitals, or medications.',
     '- Use the orders placed today to infer the reason for the visit.',
     `- Plain text only. No markdown (no #, no **, no code fences). Max ${MAX_LINE} characters per line.`,
+    ...(process.env.NOTE_WORDY ? [
+      '- Write a long, detailed note in full sentences: a SUBJECTIVE of at least three paragraphs (history of',
+      '  present illness, relevant past history and medications, social context), a full ASSESSMENT discussion',
+      '  per problem, and a PLAN with the reasoning and follow-up for each item. Elaborate only on the provided',
+      '  data; never add new facts, values, drugs or diagnoses.',
+    ] : []),
     ...edRules,
     '',
     'Clinical context:',

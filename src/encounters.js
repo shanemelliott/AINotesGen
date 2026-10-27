@@ -197,11 +197,10 @@ function extractEncounters({ byDomain, byUid, byEncounter }, { rules }) {
     if (!ordersByDay.has(d8)) ordersByDay.set(d8, []);
     ordersByDay.get(d8).push(o);
   }
-  // Visits with no orders (e.g. an injury seen in the ED, or a booked appointment) still need a note.
-  const apptDays = new Set(appointments.map((a) => day(a.dateTime)));
+  // Every loaded visit day needs a note, even without orders (ED injury, phone contact, procedure, booked appointment).
   for (const v of visits) {
     const d8 = day(v.dateTime);
-    if (d8 && !ordersByDay.has(d8) && (v.locationName === 'EMERGENCY DEPARTMENT' || v.reasonName || apptDays.has(d8))) ordersByDay.set(d8, []);
+    if (d8 && !ordersByDay.has(d8)) ordersByDay.set(d8, []);
   }
 
   const days = [...ordersByDay.keys()].sort();

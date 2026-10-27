@@ -23,6 +23,8 @@ Checked 2026-10-16 with `node fetch-note-titles.js` (RPC `CDSP GET NOTE TITLES`,
 | OCCUPATIONAL THERAPY | OCCUPATIONAL THERAPY NOTE | 7229 |
 | MENTAL HYGIENE | MENTAL HEALTH NOTE | 7232 |
 | GERIATRIC | GERIATRICS NOTE | 7233 |
+| DEV/ORTHO | GENERIC CONSULT NOTE | 1631 |
+| DEV/NEUROLOGY | GENERIC CONSULT NOTE | 1631 |
 | DIABETIC | DIABETES NOTE | 7234 |
 
 A clinic that is not listed uses `VISTA_NOTE_TITLE_IEN` (16). GENERIC NOTE TITLE (55, class TEST) is no longer used for these clinics. The ten specialty titles were requested on 2026-10-15 and created by 2026-10-16; the IENs above come from `logs/note-titles.json`. Some are in other classes (dental, physical medicine, mental health, geriatrics), not MEDICINE.

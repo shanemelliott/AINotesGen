@@ -6,5 +6,12 @@
   { "map": "loinc-lab-map", "key": "5804-0", "value": "URINE PROTEIN", "note": "was TOT PROT (serum); #60 IEN 149" },
   { "map": "loinc-lab-map", "key": "19123-9", "value": "MAGNESIUM", "note": "no map entry; #60 IEN 201" },
   { "map": "loinc-lab-map", "key": "2276-4", "value": "FERRITIN", "note": "no map entry; #60 IEN 113" },
-  { "map": "loinc-lab-map", "key": "5794-3", "value": "URINE BLOOD", "note": "no map entry; #60 IEN 1158" }
+  { "map": "loinc-lab-map", "key": "5794-3", "value": "URINE BLOOD", "note": "no map entry; #60 IEN 1158" },
+  { "map": "loinc-lab-map", "key": "33914-3", "value": "EGFR (CKD-EPI)", "note": "unmapped on dev; #60 IEN 5145" },
+  { "map": "loinc-lab-map", "key": "6301-6", "value": "INR", "note": "unmapped on dev; #60 IEN 5110" },
+  { "map": "loinc-lab-map", "key": "3016-3", "value": "TSH", "note": "was THYROTROPIN (not in #60); #60 IEN 110" },
+  { "map": "loinc-lab-map", "key": "770-8", "value": "SEGS", "note": "was NEUTROPHILS % (not in #60); #60 IEN 11" },
+  { "map": "loinc-lab-map", "key": "29771-3", "value": "OCCULT BLOOD", "note": "FIT; no map entry; #60 IEN 1359" },
+  { "map": "loinc-lab-map", "key": "62238-1", "value": "EGFR (CKD-EPI)", "note": "CKD-EPI eGFR; dev's SYNFLAB/SYNQLDM skip 33914-3 outright; #60 IEN 5145" },
+  { "map": "loinc-lab-map", "key": "5964-2", "value": "PROTIME", "note": "PT in Blood, gives sample BLOOD (PROTIME's only collection sample); #60 IEN 467" }
 ]

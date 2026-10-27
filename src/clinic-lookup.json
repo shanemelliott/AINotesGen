@@ -10,6 +10,9 @@
     "HEMATOLOGY": { "clinicIen": 229, "resourceIen": 54 },
     "DIABETIC": { "clinicIen": 285, "resourceIen": 71 },
     "HEMODIALYSIS - MIKEB": { "clinicIen": 257, "resourceIen": 85 },
-    "EMERGENCY DEPARTMENT": { "clinicIen": 426, "resourceIen": 76 }
+    "EMERGENCY DEPARTMENT": { "clinicIen": 426, "resourceIen": 76 },
+    "DEV/ORTHO": { "clinicIen": 435, "resourceIen": 88 },
+    "DERMATOLOGY": { "clinicIen": 62, "resourceIen": 30 },
+    "DEV/NEUROLOGY": { "clinicIen": 537, "resourceIen": 190 }
   }
 }
