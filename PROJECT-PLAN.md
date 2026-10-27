@@ -470,6 +470,10 @@ Still open:
 3. Should the 444 earlier notes be spot-checked for lab name and value mismatches? Decided not to for now (owner, 2026-10-05).
 4. Should already-signed ED notes written before the ED prompt fix be replaced (3 known: DFN 100972 2002-10-10, DFN 100973 1987-07-30 and 2003-04-02)?
 
+Answer-key test patients (planted findings and scoring keys): process, name rule and known issues are in
+docs/ANSWER-KEY-PATIENTS.md. Closed without a fix (2026-10-27): a wrong title on one signed ortho note, and invented
+trend sentences in wordy-mode notes (both cosmetic; details in that file).
+
 ## 5. Security Notes
 - The API key stays in `VAOSAI/.env` (or a local `.env` that is git-ignored). Never log or commit it.
 - The data is synthetic (Synthea/VEHU), but still send only the minimum needed fields to the LLM. Leave out SSN, address, and telecom.

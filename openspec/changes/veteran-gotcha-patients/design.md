@@ -32,7 +32,7 @@ the medication-management renew, finish and merge items.
    `link-note-visits.js --check`.
 4. Meds: `add-rx.js`, `fill-plan.js` (dry run unless `--commit`).
 5. Planted events sit after the last PCP visit so a summary for a new PCP visit has to find them.
-6. `plans/dfn<dfn>-answerkey.json` is written by hand; `sacred-manifest.js --dfn <dfn>`
+6. `plans/dfn<dfn>-answerkey.json` is written by hand; `build-answer-key-files.js --dfn <dfn>`
    writes the manifest. `plans/` and `docs/sacredFourteen/` are git-ignored.
 7. Each AI run (summary and MCP chatbot) is scored per key item and stored under the key's `runs`.
 
@@ -73,5 +73,5 @@ must not contradict what the bundle already holds (for example a diagnosis or dr
 8. Meds: `add-rx.js`, `fill-plan.js` with the planned refill gaps.
 9. Notes: `fetch-vpr.js`, `custom-visits.js --book` and `--generate`, review, `approve-note.js`,
    `sign-notes.js --all --sign`, `link-note-visits.js --check`.
-10. Key: write `plans/dfn<dfn>-answerkey.json`, run `sacred-manifest.js --dfn <dfn>`.
+10. Key: write `plans/dfn<dfn>-answerkey.json`, run `build-answer-key-files.js --dfn <dfn>`.
 11. Score both AI runs and store them under `runs`.

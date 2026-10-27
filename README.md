@@ -133,6 +133,9 @@ Get-Content generate-<dfn>.log -Wait -Tail 20    # live tail (Ctrl+C to stop wat
   Signature Code" — a transient VistA-side issue, not something in our
   control. `signNote()` retries automatically (2 extra attempts); for
   failures that persist after a full run, use `resign-notes.js`.
+- **Answer-key test patients** (planted findings plus a scoring key) have their own
+  process, name rule and known issues in
+  [docs/ANSWER-KEY-PATIENTS.md](docs/ANSWER-KEY-PATIENTS.md).
 - **Never commit patient data.** `.gitignore` excludes `[0-9]*.json` (VPR
   dumps), `patients.txt`, `output/` (generated notes), and `*.log`. Verify
   with `git status --short` before committing — only code, docs, and
