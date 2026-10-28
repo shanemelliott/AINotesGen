@@ -1,9 +1,9 @@
 // Fill structured dosing and the sig on Rxs loaded without them via RPC CDSP UTIL RX DOSING BACKFILL (DEV ONLY). Dry run unless --commit.
-// Usage: node backfill-rx-dosing.js --dfn <dfn> [--rx <rx ien>] [--resig] [--commit]
+// Usage: node patient.js backfill-rx-dosing --dfn <dfn> [--rx <rx ien>] [--resig] [--commit]
 //   --rx     one prescription IEN in file #52; default is every Rx of the patient
 //   --resig  replace the sig with the MEDDEF table sig even when it is already set (use with --rx)
-require('./src/config'); // loads .env
-const { backfill } = require('./src/rxBackfill');
+require('../../src/config'); // loads .env
+const { backfill } = require('../../src/rxBackfill');
 
 function arg(args, name) {
   const i = args.indexOf(name);
@@ -16,7 +16,7 @@ async function main() {
   const rx = arg(args, '--rx');
   const commit = args.includes('--commit');
   if (!/^\d+$/.test(dfn || '') || (rx !== undefined && !/^\d+$/.test(rx))) {
-    console.error('Usage: node backfill-rx-dosing.js --dfn <dfn> [--rx <rx ien>] [--resig] [--commit]');
+    console.error('Usage: node patient.js backfill-rx-dosing --dfn <dfn> [--rx <rx ien>] [--resig] [--commit]');
     process.exit(1);
   }
 

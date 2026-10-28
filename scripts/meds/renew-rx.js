@@ -1,10 +1,10 @@
 // Renew an outpatient prescription the way CPRS does (ORWDXR RENEW), then sign it (ORWDX SEND).
 // Skips ORWDXC ACCEPT, the order check call that hangs on dev. Prints the plan unless --commit is given.
-// Usage: node renew-rx.js --dfn <dfn> --order <order IEN of the Rx to renew> [--prov 983] [--loc 532] [--commit]
-require('./src/config');
-const config = require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
-const { buildEncryptedSigString } = require('./src/notesClient');
+// Usage: node patient.js renew-rx --dfn <dfn> --order <order IEN of the Rx to renew> [--prov 983] [--loc 532] [--commit]
+require('../../src/config');
+const config = require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
+const { buildEncryptedSigString } = require('../../src/notesClient');
 
 const args = process.argv.slice(2);
 const arg = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
@@ -14,7 +14,7 @@ const prov = arg('--prov', '983');
 const loc = arg('--loc', '532');
 const commit = args.includes('--commit');
 if (!/^\d+$/.test(dfn || '') || !/^\d+$/.test(order || '')) {
-  console.error('Usage: node renew-rx.js --dfn <dfn> --order <order IEN> [--prov 983] [--loc 532] [--commit]');
+  console.error('Usage: node patient.js renew-rx --dfn <dfn> --order <order IEN> [--prov 983] [--loc 532] [--commit]');
   process.exit(1);
 }
 

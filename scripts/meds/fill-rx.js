@@ -1,9 +1,9 @@
 // File a (backdated) refill on an existing Rx via RPC CDSP UTIL RX FILL (DEV ONLY). Dry run unless --commit.
-// Usage: node fill-rx.js --dfn <dfn> --rx <rx ien> --date YYYY-MM-DD [--released "YYYY-MM-DD[ HH:MM]"] [--commit]
+// Usage: node patient.js fill-rx --dfn <dfn> --rx <rx ien> --date YYYY-MM-DD [--released "YYYY-MM-DD[ HH:MM]"] [--commit]
 //   --rx        prescription IEN in file #52 (the number before ";O" in a VPR med localId, not the Rx number)
 //   --released  release date/time; defaults to the fill date
-require('./src/config'); // loads .env
-const { toFileMan, fileRefill, RPC_NAME } = require('./src/rxFill');
+require('../../src/config'); // loads .env
+const { toFileMan, fileRefill, RPC_NAME } = require('../../src/rxFill');
 
 function arg(args, name) {
   const i = args.indexOf(name);
@@ -18,7 +18,7 @@ async function main() {
   const released = arg(args, '--released');
   const commit = args.includes('--commit');
   if (!/^\d+$/.test(dfn || '') || !/^\d+$/.test(rx || '') || !toFileMan(date) || (released && !toFileMan(released))) {
-    console.error('Usage: node fill-rx.js --dfn <dfn> --rx <rx ien> --date YYYY-MM-DD [--released "YYYY-MM-DD[ HH:MM]"] [--commit]');
+    console.error('Usage: node patient.js fill-rx --dfn <dfn> --rx <rx ien> --date YYYY-MM-DD [--released "YYYY-MM-DD[ HH:MM]"] [--commit]');
     process.exit(1);
   }
 

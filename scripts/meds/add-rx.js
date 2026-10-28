@@ -1,18 +1,18 @@
 // Add a new released outpatient Rx (used to renew an expired one) via RPC CDSP UTIL ADD RX (DEV ONLY).
 // The RPC has no dry run, so this script only prints the request unless --commit is given.
-// Usage: node add-rx.js --dfn <dfn> --rxncui <RxNorm SCD> [--sig "<text>"] [--qty N] [--days N] [--refills N]
+// Usage: node patient.js add-rx --dfn <dfn> --rxncui <RxNorm SCD> [--sig "<text>"] [--qty N] [--days N] [--refills N]
 //                       [--date YYYY-MM-DD] [--prov <DUZ>] [--clinic <hospital location IEN>] [--commit]
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
-const { toFileMan } = require('./src/rxFill');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
+const { toFileMan } = require('../../src/rxFill');
 
 const args = process.argv.slice(2);
 const arg = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
 const dfn = arg('--dfn');
 const rxncui = arg('--rxncui');
 if (!/^\d+$/.test(dfn || '') || !/^\d+$/.test(rxncui || '')) {
-  console.error('Usage: node add-rx.js --dfn <dfn> --rxncui <RxNorm SCD> [--sig "<text>"] [--qty N] [--days N] [--refills N] [--date YYYY-MM-DD] [--prov <DUZ>] [--clinic <IEN>] [--commit]');
+  console.error('Usage: node patient.js add-rx --dfn <dfn> --rxncui <RxNorm SCD> [--sig "<text>"] [--qty N] [--days N] [--refills N] [--date YYYY-MM-DD] [--prov <DUZ>] [--clinic <IEN>] [--commit]');
   process.exit(1);
 }
 

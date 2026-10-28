@@ -1,11 +1,12 @@
 // Run the dosing backfill over many patients and print one summary line each (DEV ONLY). Dry run unless --commit.
-// Usage: node backfill-all-rx.js [--dfns 100973,100975] [--commit] [--verbose]
+// Usage: node patient.js backfill-all-rx [--dfns 100973,100975] [--commit] [--verbose]
 //   --dfns     comma list of DFNs; default is every <dfn>.json in this folder except 237 and 99935791
 //   --verbose  also print each Rx that would change
-require('./src/config'); // loads .env
+const { ROOT } = require('../../src/paths');
+require('../../src/config'); // loads .env
 const fs = require('fs');
 const path = require('path');
-const { backfill } = require('./src/rxBackfill');
+const { backfill } = require('../../src/rxBackfill');
 
 const EXCLUDE = new Set(['237', '99935791']);
 
@@ -15,7 +16,7 @@ function arg(args, name) {
 }
 
 function defaultDfns() {
-  return fs.readdirSync(__dirname)
+  return fs.readdirSync(ROOT)
     .map((f) => /^(\d+)\.json$/.exec(f))
     .filter(Boolean)
     .map((m) => m[1])
@@ -30,7 +31,7 @@ async function main() {
   const list = arg(args, '--dfns');
   const dfns = list ? list.split(',').map((s) => s.trim()).filter(Boolean) : defaultDfns();
   if (!dfns.length || dfns.some((d) => !/^\d+$/.test(d))) {
-    console.error('Usage: node backfill-all-rx.js [--dfns 100973,100975] [--commit] [--verbose]');
+    console.error('Usage: node patient.js backfill-all-rx [--dfns 100973,100975] [--commit] [--verbose]');
     process.exit(1);
   }
 

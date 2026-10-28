@@ -1,10 +1,10 @@
 // Refill every active Rx of a patient that still has refills (DEV ONLY). Dry run unless --commit.
 // Each refill is dated last fill + days supply + a small deterministic lateness, and skipped if that date is after today.
-// Usage: node fill-patient-rx.js --dfn <dfn> [--late-max <days>] [--commit]
+// Usage: node patient.js fill-patient-rx --dfn <dfn> [--late-max <days>] [--commit]
 //   --late-max  most days a fill can be late (default 5; each Rx gets IEN % (late-max + 1) days)
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { fileRefill } = require('./src/rxFill');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { fileRefill } = require('../../src/rxFill');
 
 function arg(args, name) {
   const i = args.indexOf(name);
@@ -21,7 +21,7 @@ async function main() {
   const lateMax = args.includes('--late-max') ? Number(arg(args, '--late-max')) : 5;
   const commit = args.includes('--commit');
   if (!/^\d+$/.test(dfn || '') || !Number.isInteger(lateMax) || lateMax < 0) {
-    console.error('Usage: node fill-patient-rx.js --dfn <dfn> [--late-max <days>] [--commit]');
+    console.error('Usage: node patient.js fill-patient-rx --dfn <dfn> [--late-max <days>] [--commit]');
     process.exit(1);
   }
 

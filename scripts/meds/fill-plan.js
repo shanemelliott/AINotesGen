@@ -1,11 +1,11 @@
 // File the refills listed in a plan file (DEV ONLY). Dry run unless --commit.
-// Usage: node fill-plan.js --plan <plan.json> [--commit]
+// Usage: node patient.js fill-plan --plan <plan.json> [--commit]
 // Plan: { "dfn": "237", "fills": [ { "rx": <rx ien>, "date": "YYYY-MM-DD", "released": "YYYY-MM-DD[ HH:MM]" }, ... ] }
 // Fills for one Rx are filed oldest first; after a failure the later fills for that Rx are skipped.
 // A dry run checks each fill against the record as it is now, so later fills for the same Rx always show refill #1.
 const fs = require('fs');
-require('./src/config'); // loads .env
-const { toFileMan, fileRefill } = require('./src/rxFill');
+require('../../src/config'); // loads .env
+const { toFileMan, fileRefill } = require('../../src/rxFill');
 
 function arg(args, name) {
   const i = args.indexOf(name);
@@ -17,7 +17,7 @@ async function main() {
   const planPath = arg(args, '--plan');
   const commit = args.includes('--commit');
   if (!planPath || !fs.existsSync(planPath)) {
-    console.error('Usage: node fill-plan.js --plan <plan.json> [--commit]');
+    console.error('Usage: node patient.js fill-plan --plan <plan.json> [--commit]');
     process.exit(1);
   }
   const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
