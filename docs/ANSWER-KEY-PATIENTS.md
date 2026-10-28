@@ -13,7 +13,7 @@ How to build a synthetic veteran test patient with planted findings ("gotchas") 
 
 1. **Trim** the Synthea bundle (`trim-synthea`).
 2. **Preflight** the bundle (`preflight-synthea`, `preflight-vista`). Meds listed without full structured dosing may need `MEDDEF` rows (see `docs/MED-DEFAULTS-PROPOSAL.md`); review that list for every new upload.
-3. **Load** (`load-synthea`).
+3. **Load** (`load-synthea`), then check problem statuses with `node patient.js reactivate-problems --dfn <dfn>` (dry run). It lists problems filed INACTIVE with no resolved date; reactivate them (`--ien`, `--apply`) unless the key needs them inactive, and record any intended oddity in the source key's `chartNotes`.
 4. **Rename** with the middle initial A (`set-name`).
 5. **Veteran data** and a valid address (`vet-profile --from-file --apply`, check with `vet-get`).
 6. **Appointments** (`create-appointments`), then `fetch-vpr` and `check-midnight`. Visits must sit in clinic hours.
