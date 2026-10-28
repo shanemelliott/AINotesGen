@@ -48,3 +48,8 @@
 - [x] 6.2 Log the patch in `patches/LOADER-CHANGES.md` (done: new row in the table)
 - [x] 6.3 Verify with a loaded test patient that an active condition shows active in the VPR (done 2026-10-28 with upstream `SYNFPRB.m` and `SYNDHP61.m` (commit `86e0085`) on dev and a fresh Synthea load: the bundle had 93 conditions, 20 active with no abatement and 73 resolved; dev filed 77 problems (16 load errors), 15 ACTIVE with no resolved date and 62 INACTIVE each with a resolved date after or equal to onset, none before; both the ICD-mapped (ICD-9 and ICD-10) and the unmapped SNOMED problems came out right. The fork branch `fix-problem-active-status` is superseded by the upstream fix and will not go up as a PR)
 - [x] 6.4 Reactivate the problems the loader filed INACTIVE by mistake on already loaded patients with `node patient.js reactivate-problems --dfn <dfn>[,<dfn>] [--ien <ien>] [--apply]` (done 2026-10-28: 10 problems reactivated and verified on the four newest patients; the six diabetes entries on P1 and P2 were left inactive on purpose because their answer keys depend on it, recorded in each key's `chartNotes`)
+
+## 7. Later
+
+- [ ] 7.1 Send the upstream PR to Sam and George from the fork branch `synfmed-fixes` (one commit in `SYNFMED.m`: multi-product VUID loop in `MATCHV1`, `VAP2MED` guards the ND node with `$G`, four RxNorm CUIs in `RXNBADDATA`; no dependency on `cds-vista-routines`). Use the talk to decide the rest: `med-defaults-and-merge` (needed by `CDSPRX` and `CDSPFHIR` for `DOSING`, `MEDDEF` and `ROUTESCH`) and `synfmed-rx-sig` (overlaps it); this reopens 5.5
+
