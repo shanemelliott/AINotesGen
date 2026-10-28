@@ -44,6 +44,6 @@
 
 ## 6. Carried over: loader fix
 
-- [ ] 6.1 Patch the loader so an active condition stays ACTIVE through the full-ICD path (the forced inactive when an abatement date is present, near line 217 of the problem loader)
-- [ ] 6.2 Log the patch in `patches/LOADER-CHANGES.md`
+- [x] 6.1 Patch the loader so an active condition stays ACTIVE through the full-ICD path (the forced inactive when an abatement date is present, near line 217 of the problem loader) (done 2026-10-28 in the fork branch `fix-problem-active-status`: the cause was a case mismatch, `"active"` from the bundle compared with `"Active"`, not the full-ICD path or the abatement rule; `SYNFPRB.m` only)
+- [x] 6.2 Log the patch in `patches/LOADER-CHANGES.md` (done: new row in the table)
 - [ ] 6.3 Verify with a loaded test patient that an active condition shows active in the VPR
