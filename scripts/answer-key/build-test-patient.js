@@ -1,7 +1,7 @@
 // Builds a fully synthetic Synthea-style FHIR transaction bundle for a 76-year-old male with persistent
 // atrial fibrillation (cardioversion), CKD with anemia, hypertension, hyperlipidemia, prediabetes,
 // atopic dermatitis and a positive FIT under GI work-up. Used to test AI summarization.
-// Usage: node build-test-patient.js [template-bundle.json] [out.json]
+// Usage: node patient.js build-test-patient [template-bundle.json] [out.json]
 // The template bundle only supplies the Patient shape and the (synthetic) clinic/practitioner references.
 const fs = require('fs');
 const path = require('path');
@@ -448,7 +448,7 @@ console.log(OUT, JSON.stringify(counts));
 // Supplement plan for import-labs-vitals.js: results the SYN loader cannot file on dev, sent by VistA name.
 // eGFR: the loader leaves a hidden entry at the CMP time ("Duplicate Lab Test"), so it is filed 1 minute later.
 // FIT: #95.3 gives sample "STOOL = FECAL", OCCULT BLOOD only accepts STOOL. SpO2: SYNFVIT has no 59408-5 entry.
-// Set "dfn" after the load, then: node import-labs-vitals.js --plan <file> [--apply]
+// Set "dfn" after the load, then: node patient.js import-labs-vitals --plan <file> [--apply]
 const SUPPLEMENT = {
   '62238-1': (o) => ({ kind: 'labs', shift: 1, test: 'EGFR (CKD-EPI)', sample: 'SERUM', value: String(o.valueQuantity.value) }),
   '29771-3': () => ({ kind: 'labs', test: 'OCCULT BLOOD', sample: 'STOOL', value: 'POSITIVE' }),

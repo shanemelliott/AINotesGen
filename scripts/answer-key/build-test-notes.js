@@ -4,20 +4,21 @@
 // eGFR values from different methods that are never reconciled, abnormal labs nobody comments on, medication
 // fill and stop events scattered across notes, checkbox findings with no clear answer, and screening
 // questionnaires copied word for word. Lab, vital, problem and medication blocks come from the VPR (<dfn>.json).
-// Usage: node build-test-notes.js --dfn <dfn> [--date YYYY-MM-DD] [--book]
+// Usage: node patient.js build-test-notes --dfn <dfn> [--date YYYY-MM-DD] [--book]
 //   writes output/ready/<dfn>-<date>-<key>.txt + .json; --book books an appointment for each note
-// Then: node sign-notes.js <ids> --sign, then node link-note-visits.js --dfn <dfn> --commit
+// Then: node patient.js sign-notes <ids> --sign, then node patient.js link-note-visits --dfn <dfn> --commit
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('./src/config');
-const { writeNote } = require('./src/noteStore');
-const { filemanDateTime, buildVisitString } = require('./src/notesClient');
+const config = require('../../src/config');
+const { writeNote } = require('../../src/noteStore');
+const { filemanDateTime, buildVisitString } = require('../../src/notesClient');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const DFN = arg('--dfn');
 const DATE = arg('--date') || '2026-10-19';
-if (!DFN) { console.error('Usage: node build-test-notes.js --dfn <dfn> [--date YYYY-MM-DD] [--book]'); process.exit(1); }
-const vpr = JSON.parse(fs.readFileSync(path.join(__dirname, `${DFN}.json`), 'utf8'));
+if (!DFN) { console.error('Usage: node patient.js build-test-notes --dfn <dfn> [--date YYYY-MM-DD] [--book]'); process.exit(1); }
+const vpr = JSON.parse(fs.readFileSync(path.join(ROOT, `${DFN}.json`), 'utf8'));
 const items = (vpr.payload ? vpr.payload.data : vpr.data).items;
 const of = (domain) => items.filter((i) => String(i.uid || '').startsWith(`urn:va:${domain}:`));
 
@@ -677,8 +678,8 @@ const NOTES = [
 
 async function main() {
   const book = process.argv.includes('--book');
-  const createAppointment = book ? require('./src/appointmentCreator').createAppointment : null;
-  const dir = path.join(__dirname, 'output', 'ready');
+  const createAppointment = book ? require('../../src/appointmentCreator').createAppointment : null;
+  const dir = path.join(ROOT, 'output', 'ready');
   for (const n of NOTES) {
     const id = `${DFN}-${DATE}-${n.key}`;
     const fm = filemanDateTime(DATE, n.time);

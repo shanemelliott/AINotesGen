@@ -1,13 +1,14 @@
 // Build docs/TestPatientsWithAnswers/<label>-<first>-<last>.json and .md (one pair per patient): what was added to each patient and the answer key for the AI summary.
-// Usage: node build-answer-key-files.js --dfn <dfn> [--dfn <dfn> ...] [--label p2]
+// Usage: node patient.js build-answer-key-files --dfn <dfn> [--dfn <dfn> ...] [--label p2]
 // Inputs: plans/dfn<dfn>-visits.json, plans/dfn<dfn>-labs-vitals.json, plans/dfn<dfn>-answerkey.json, logs/import-<dfn>.json,
 // docs/lighthouse-review/dfn-<dfn>.json, and the patient's VPR (to see what is booked, noted or already there).
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
 
-const DIR = path.join(__dirname, 'docs', 'TestPatientsWithAnswers');
+const DIR = path.join(ROOT, 'docs', 'TestPatientsWithAnswers');
 // File base name: <label>-<first>-<last>, for example p2-first-last. --label <x> overrides the default (one --dfn only).
 // Default labels by DFN come from docs/TestPatientsWithAnswers/labels.json (git-ignored), for example {"123456": "p3"}.
 const LABELS = (() => { try { return JSON.parse(fs.readFileSync(path.join(DIR, 'labels.json'), 'utf8')); } catch (e) { return {}; } })();
@@ -21,7 +22,7 @@ const dom = (i) => i.uid.split(':')[2];
 const day = (v) => { const s = String(v || '').replace(/\D/g, ''); return s.length >= 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : ''; };
 const readJson = (f, d) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : d);
 const loadIcn = (dfn) => {
-  const dir = path.join(__dirname, 'logs');
+  const dir = path.join(ROOT, 'logs');
   for (const f of fs.readdirSync(dir).filter((n) => /^load-.*\.result\.json$/.test(n))) {
     const r = readJson(path.join(dir, f), {});
     if (String(r.dfn) === String(dfn) && r.icn) return r.icn;
@@ -30,11 +31,11 @@ const loadIcn = (dfn) => {
 };
 
 async function entry(dfn) {
-  const visitsPlan = readJson(path.join(__dirname, 'plans', `dfn${dfn}-visits.json`), { visits: [] });
-  const lv = readJson(path.join(__dirname, 'plans', `dfn${dfn}-labs-vitals.json`), { vitals: [], labs: [], panels: [] });
-  const key = readJson(path.join(__dirname, 'plans', `dfn${dfn}-answerkey.json`), null);
-  const imp = readJson(path.join(__dirname, 'logs', `import-${dfn}.json`), []);
-  const review = readJson(path.join(__dirname, 'docs', 'lighthouse-review', `dfn-${dfn}.json`), null);
+  const visitsPlan = readJson(path.join(ROOT, 'plans', `dfn${dfn}-visits.json`), { visits: [] });
+  const lv = readJson(path.join(ROOT, 'plans', `dfn${dfn}-labs-vitals.json`), { vitals: [], labs: [], panels: [] });
+  const key = readJson(path.join(ROOT, 'plans', `dfn${dfn}-answerkey.json`), null);
+  const imp = readJson(path.join(ROOT, 'logs', `import-${dfn}.json`), []);
+  const review = readJson(path.join(ROOT, 'docs', 'lighthouse-review', `dfn-${dfn}.json`), null);
   const roster = review ? review.roster : {};
   const body = await callRpc('VPR GET PATIENT DATA JSON', [{ namedArray: { patientId: dfn } }], 'CDSP RPC CONTEXT', { jsonResult: true, timeout: 120000, raw: true });
   const items = (body.payload && body.payload.data && body.payload.data.items) || [];
@@ -132,7 +133,7 @@ module.exports = { writePatient, slug };
 if (require.main === module) (async () => {
   const dfns = arg('--dfn');
   const label = arg('--label')[0];
-  if (!dfns.length || (label && dfns.length > 1)) throw new Error('Usage: node build-answer-key-files.js --dfn <dfn> [--dfn <dfn>] [--label p2]  (--label with one --dfn)');
+  if (!dfns.length || (label && dfns.length > 1)) throw new Error('Usage: node patient.js build-answer-key-files --dfn <dfn> [--dfn <dfn>] [--label p2]  (--label with one --dfn)');
   fs.mkdirSync(DIR, { recursive: true });
   for (const d of dfns) console.log(`Wrote docs/TestPatientsWithAnswers/${writePatient(await entry(d), label)}.json and .md`);
 })().catch((e) => { console.error(`FAIL ${e.message}`); process.exit(1); });
