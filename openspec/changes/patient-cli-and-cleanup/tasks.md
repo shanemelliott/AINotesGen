@@ -35,9 +35,9 @@
 ## 5. Carried over: medications
 
 - [ ] 5.1 Register `CDSP UTIL FINISH RX` (tag `FINORD`) and run `finish-rx` as a dry run, then one live finish on a test patient other than the protected one
-- [ ] 5.2 Run `renew-rx` then `finish-rx` end to end in one script and record the result
+- [ ] 5.2 Run `renew-rx` then `finish-rx` end to end in one script and record the result (progress 2026-10-28: renew step done on the 5.4 test Rx, new pending order 51005 signed; waiting on the finish step, which needs the `CDSP UTIL FINISH RX` registration from 5.1)
 - [ ] 5.3 Decide on future-dated first fills after a renew and on release dates that equal the load date
-- [ ] 5.4 Story 1 test: add an Rx with an issue date about a year back, then fill oldest first with one or two late fills
+- [x] 5.4 Story 1 test: add an Rx with an issue date about a year back, then fill oldest first with one or two late fills (done 2026-10-28 on a test patient: metformin 500 MG Rx issued 2025-10-29 with 3 refills of 90 days, then fills on 2026-01-30 (3 days late), 2026-05-10 (10 days late) and 2026-08-25 (a long gap); VPR shows 4 fill dates, route PO, schedule BID, 0 refills left)
 - [ ] 5.5 Merge the `synfmed-rx-sig` and `med-defaults-and-merge` loader fork branches so the sig lines are not duplicated
 - [ ] 5.6 Ask the AI summary team how their medication table gets Last Filled and Expiration Date
 - [x] 5.7 Add a step to review the preflight "without full structured dosing" list for each new Synthea upload (in the skill or the doc) (done: in the skill and in `docs/ANSWER-KEY-PATIENTS.md` step 2)
