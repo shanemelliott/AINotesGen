@@ -1,9 +1,9 @@
 // Smoke test for SDES2 CREATE WALKIN APPT (context SDESRPC). WRITES a walk-in appointment and check-in.
-// Usage: node test-walkin.js [--dfn 100969] [--clinic 426] [--date 1978-10-06] [--time 10:00] [--type REGULAR] [--length 60]
-require('./src/config'); // loads .env
+// Usage: node patient.js test-walkin [--dfn 100969] [--clinic 426] [--date 1978-10-06] [--time 10:00] [--type REGULAR] [--length 60]
+require('../../src/config'); // loads .env
 const crypto = require('crypto');
-const { callRpc } = require('./src/vistaApiClient');
-const { getDuzForSite } = require('./src/tokenService');
+const { callRpc } = require('../../src/vistaApiClient');
+const { getDuzForSite } = require('../../src/tokenService');
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(name);

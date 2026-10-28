@@ -1,27 +1,28 @@
 // Book appointments and generate notes for hand-specified visits (plans/dfn<dfn>-visits.json), for patients
 // whose visits do not come from Synthea orders. DEV ONLY. Dry run unless --book.
-// Usage: node custom-visits.js --dfn <dfn> --plan plans/dfn<dfn>-visits.json [--book] [--generate] [--date YYYY-MM-DD]
+// Usage: node patient.js custom-visits --dfn <dfn> --plan plans/dfn<dfn>-visits.json [--book] [--generate] [--date YYYY-MM-DD]
 //   --book      create the appointments (SDEC ARSET + APPADD) for visits without existingAppointment
 //   --generate  call the LLM and write each note to output/review/<dfn>-<date>.txt (+ .json) for review
-// Then: node approve-note.js <id>, node sign-notes.js <id> --sign, node link-note-visits.js --dfn <dfn> --commit
+// Then: node patient.js approve-note <id>, node patient.js sign-notes <id> --sign, node patient.js link-note-visits --dfn <dfn> --commit
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('./src/config');
-const { loadPatient, callCandidate, stripMarkerLine } = require('./test-ai');
-const { loadApiKey, DEFAULT_MODEL } = require('./src/noteGenerator');
-const { insertLabBlock } = require('./src/labBlock');
-const { reflowText, toAscii } = require('./src/reflow');
-const { flagNote } = require('./src/noteFlags');
-const { noteId, writeNote, existsInDir } = require('./src/noteStore');
-const { filemanDateTime, buildVisitString } = require('./src/notesClient');
-const { createAppointment } = require('./src/appointmentCreator');
-const { noteTitleFor } = require('./src/noteTitles');
+const config = require('../../src/config');
+const { loadPatient, callCandidate, stripMarkerLine } = require('../notes/test-ai');
+const { loadApiKey, DEFAULT_MODEL } = require('../../src/noteGenerator');
+const { insertLabBlock } = require('../../src/labBlock');
+const { reflowText, toAscii } = require('../../src/reflow');
+const { flagNote } = require('../../src/noteFlags');
+const { noteId, writeNote, existsInDir } = require('../../src/noteStore');
+const { filemanDateTime, buildVisitString } = require('../../src/notesClient');
+const { createAppointment } = require('../../src/appointmentCreator');
+const { noteTitleFor } = require('../../src/noteTitles');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const dfn = arg('--dfn');
 const planPath = arg('--plan');
 if (!/^\d+$/.test(dfn || '') || !planPath) {
-  console.error('Usage: node custom-visits.js --dfn <dfn> --plan <plan.json> [--book] [--generate]');
+  console.error('Usage: node patient.js custom-visits --dfn <dfn> --plan <plan.json> [--book] [--generate]');
   process.exit(1);
 }
 const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
@@ -86,7 +87,7 @@ async function main() {
     }
 
     if (apiKey) {
-      if (existsInDir(path.join(__dirname, 'output', 'review'), id) || existsInDir(path.join(__dirname, 'output', 'ready'), id) || existsInDir(path.join(__dirname, 'output', 'signed'), id)) {
+      if (existsInDir(path.join(ROOT, 'output', 'review'), id) || existsInDir(path.join(ROOT, 'output', 'ready'), id) || existsInDir(path.join(ROOT, 'output', 'signed'), id)) {
         console.log('  SKIP note already exists');
         continue;
       }
@@ -100,7 +101,7 @@ async function main() {
       if (res.outcome !== 'ok') { console.log(`  FAIL ${res.outcome} ${res.detail || ''}`); continue; }
       const text = toAscii(reflowText(stripMarkerLine(insertLabBlock(res.content, ctx))));
       const { flagged, reasons } = flagNote(text, ctx);
-      writeNote(path.join(__dirname, 'output', 'review'), id, {
+      writeNote(path.join(ROOT, 'output', 'review'), id, {
         noteText: text, dfn, date: v.date, visitString, noteTitleIen: noteTitleFor(v.clinic), locationIen: v.clinicIen,
         duz: config.duz(), fmDateTime: fm, flagged, flagReasons: reasons, generatedAt: new Date().toISOString(),
       });

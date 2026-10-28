@@ -1,12 +1,13 @@
 // Look up SDES clinic info (resource IEN, provider, stop code) for hospital locations in logs/file44-locations.json.
-// Usage: node fetch-clinics.js [ien ...]   (no args = every location with a stop code except DEV/ test clinics)
+// Usage: node patient.js fetch-clinics [ien ...]   (no args = every location with a stop code except DEV/ test clinics)
 // Writes logs/clinics.json and prints the clinics that have an SDEC resource.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
 
-const locations = JSON.parse(fs.readFileSync(path.join(__dirname, 'logs', 'file44-locations.json'), 'utf8'));
+const locations = JSON.parse(fs.readFileSync(path.join(ROOT, 'logs', 'file44-locations.json'), 'utf8'));
 
 async function lookup(ien) {
   const p = await callRpc('SDES GET CLINIC INFO2', [{ string: String(ien) }], 'SDECRPC', { jsonResult: true });
@@ -41,7 +42,7 @@ async function main() {
     }
   }
 
-  fs.writeFileSync(path.join(__dirname, 'logs', 'clinics.json'), JSON.stringify(out, null, 2));
+  fs.writeFileSync(path.join(ROOT, 'logs', 'clinics.json'), JSON.stringify(out, null, 2));
   const usable = out.filter((c) => c.resourceIen && c.status === 'ACTIVE');
   console.log(`${out.length} looked up, ${usable.length} active with a resource, ${out.filter((c) => c.error).length} errors`);
   for (const c of usable) {

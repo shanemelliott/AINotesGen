@@ -1,10 +1,11 @@
 // Batch-create appointments for encounters missing them (reads output/encounters-{dfn}.json).
-// Usage: node create-appointments.js [--dfn 100965] [--dry-run]
+// Usage: node patient.js create-appointments [--dfn 100965] [--dry-run]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('./src/config');
-const clinicLookup = require('./src/clinic-lookup.json');
-const { createAppointment, defaultOverbook, appointmentSlot } = require('./src/appointmentCreator');
+const config = require('../../src/config');
+const clinicLookup = require('../../src/clinic-lookup.json');
+const { createAppointment, defaultOverbook, appointmentSlot } = require('../../src/appointmentCreator');
 
 // Clinic for the encounter's visit location; unknown locations use the lookup default.
 function clinicFor(encounter) {
@@ -12,7 +13,7 @@ function clinicFor(encounter) {
   return { clinicName: name, ...clinicLookup.clinics[name] };
 }
 
-const APPOINTMENTS_LOG_PATH = path.join(__dirname, 'src', 'appointments.json');
+const APPOINTMENTS_LOG_PATH = path.join(ROOT, 'src', 'appointments.json');
 
 function parseArgs(argv) {
   const args = { dfn: '100965', dryRun: false };
@@ -25,7 +26,7 @@ function parseArgs(argv) {
 }
 
 function loadEncounters(dfn) {
-  const encountersPath = path.join(__dirname, 'output', `encounters-${dfn}.json`);
+  const encountersPath = path.join(ROOT, 'output', `encounters-${dfn}.json`);
   if (!fs.existsSync(encountersPath)) {
     throw new Error(`Encounters file not found: ${encountersPath}`);
   }

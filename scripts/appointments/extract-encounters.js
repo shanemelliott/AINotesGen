@@ -3,13 +3,13 @@
 
 const fs = require('fs');
 const path = require('path');
-const { indexVpr, extractEncounters, findIdentifierLeaks } = require('./src/encounters');
+const { indexVpr, extractEncounters, findIdentifierLeaks } = require('../../src/encounters');
 
-const ROOT = __dirname;
+const { ROOT } = require('../../src/paths');
 const OUTPUT_DIR = path.join(ROOT, 'output');
 const RULES_FILE = path.join(ROOT, 'src', 'problem-rules.json');
 
-const USAGE = `Usage: node extract-encounters.js [--dfn <dfn>] [--summary]
+const USAGE = `Usage: node patient.js extract-encounters [--dfn <dfn>] [--summary]
 
   --dfn <dfn>   Process only <dfn>.json (default: every [0-9]*.json in the repo root)
   --summary     Print one line per encounter

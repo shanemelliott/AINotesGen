@@ -1,8 +1,8 @@
 // Check each clinic in src/clinic-lookup.json can take appointments: active, has a resource, and availability slots in a date window.
-// Usage: node verify-clinics.js [--from YYYY-MM-DD] [--to YYYY-MM-DD]   (default: today to +14 days)
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const lookup = require('./src/clinic-lookup.json');
+// Usage: node patient.js verify-clinics [--from YYYY-MM-DD] [--to YYYY-MM-DD]   (default: today to +14 days)
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const lookup = require('../../src/clinic-lookup.json');
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(name);

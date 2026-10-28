@@ -1,9 +1,9 @@
 // Smoke test: create one past appointment via SDEC ARSET + SDEC APPADD.
-// Usage: node test-create-appointment.js [--dfn 100965] [--date 2025-10-21] [--time 10:00] [--dry-run] [--overbook|--no-overbook]
-const config = require('./src/config');
+// Usage: node patient.js test-create-appointment [--dfn 100965] [--date 2025-10-21] [--time 10:00] [--dry-run] [--overbook|--no-overbook]
+const config = require('../../src/config');
 const {
   defaultOverbook, roundDownToHalfHour, buildDateParts, buildArsetParams, createAppointment
-} = require('./src/appointmentCreator');
+} = require('../../src/appointmentCreator');
 
 function parseArgs(argv) {
   const args = { dfn: '100965', date: '2025-10-21', time: '10:00', dryRun: false, overbook: null, roundTime: false };
