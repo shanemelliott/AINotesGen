@@ -3,7 +3,7 @@
 // Candidates: problems in <dfn>.json (run fetch-vpr first) that are INACTIVE, not removed and have no resolved date.
 // The SYNFPRB clinical status bug filed every mapped condition as inactive; a real resolution has a resolved date.
 // Sets status A through ORQQPL EDIT LOAD and ORQQPL EDIT SAVE like problem-edit. Results: logs/reactivate-problems.json.
-const { ROOT } = require('../../src/paths');
+const { ROOT, VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 require('../../src/config');
@@ -28,7 +28,7 @@ async function load(ien) {
 }
 
 function candidates(dfn) {
-  const file = path.join(ROOT, `${dfn}.json`);
+  const file = path.join(VPR_DIR, `${dfn}.json`);
   if (!fs.existsSync(file)) throw new Error(`${dfn}.json not found; run fetch-vpr ${dfn} first`);
   const items = JSON.parse(fs.readFileSync(file, 'utf8')).payload.data.items;
   return items.filter((i) => /:problem:/.test(i.uid) && i.statusName === 'INACTIVE' && !i.removed && !i.resolved);

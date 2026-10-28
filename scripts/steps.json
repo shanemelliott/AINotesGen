@@ -67,7 +67,7 @@
   {
     "name": "fetch-vpr",
     "group": "patient",
-    "description": "Fetch a patient's full VPR JSON via vista-api-x and save as <dfn>.json (same shape the pipeline already reads via test-ai.js loadPatient()).",
+    "description": "Fetch a patient's full VPR JSON via vista-api-x and save as vpr/<dfn>.json (same shape the pipeline already reads via test-ai.js loadPatient()).",
     "pipeline": 70,
     "preview": null,
     "dfnPositional": true
@@ -179,7 +179,7 @@
   {
     "name": "extract-encounters",
     "group": "appointments",
-    "description": "Derive one encounter per order or visit date from <dfn>.json and write output/encounters-<dfn>.json.",
+    "description": "Derive one encounter per order or visit date from vpr/<dfn>.json and write output/encounters-<dfn>.json.",
     "pipeline": 80,
     "preview": null
   },

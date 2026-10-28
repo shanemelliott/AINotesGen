@@ -1,8 +1,8 @@
 // Run the dosing backfill over many patients and print one summary line each (DEV ONLY). Dry run unless --commit.
 // Usage: node patient.js backfill-all-rx [--dfns 100973,100975] [--commit] [--verbose]
-//   --dfns     comma list of DFNs; default is every <dfn>.json in this folder except 237 and 99935791
+//   --dfns     comma list of DFNs; default is every <dfn>.json in vpr/ except 237 and 99935791
 //   --verbose  also print each Rx that would change
-const { ROOT } = require('../../src/paths');
+const { VPR_DIR } = require('../../src/paths');
 require('../../src/config'); // loads .env
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +16,7 @@ function arg(args, name) {
 }
 
 function defaultDfns() {
-  return fs.readdirSync(ROOT)
+  return (fs.existsSync(VPR_DIR) ? fs.readdirSync(VPR_DIR) : [])
     .map((f) => /^(\d+)\.json$/.exec(f))
     .filter(Boolean)
     .map((m) => m[1])

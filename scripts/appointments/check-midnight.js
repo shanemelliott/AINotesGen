@@ -2,7 +2,7 @@
 // Preflight for a loaded patient: fail if any visit or appointment sits at 00:00 to 04:59 outside the ED (VistA files 00:00 as ".24").
 // Usage: node patient.js check-midnight <dfn>   (reads <dfn>.json from fetch-vpr.js; exit 1 when any are found)
 
-const { ROOT } = require('../../src/paths');
+const { VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 const { indexVpr, day, isoDate, hhmm } = require('../../src/encounters');
@@ -13,7 +13,7 @@ if (!/^\d+$/.test(dfn || '')) {
   process.exit(2);
 }
 
-const file = path.join(ROOT, `${dfn}.json`);
+const file = path.join(VPR_DIR, `${dfn}.json`);
 if (!fs.existsSync(file)) {
   console.error(`Patient file not found: ${dfn}.json (run fetch-vpr.js ${dfn} first)`);
   process.exit(2);

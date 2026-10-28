@@ -7,7 +7,7 @@
 // Usage: node patient.js build-test-notes --dfn <dfn> [--date YYYY-MM-DD] [--book]
 //   writes output/ready/<dfn>-<date>-<key>.txt + .json; --book books an appointment for each note
 // Then: node patient.js sign-notes <ids> --sign, then node patient.js link-note-visits --dfn <dfn> --commit
-const { ROOT } = require('../../src/paths');
+const { ROOT, VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 const config = require('../../src/config');
@@ -18,7 +18,7 @@ const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf
 const DFN = arg('--dfn');
 const DATE = arg('--date') || '2026-10-19';
 if (!DFN) { console.error('Usage: node patient.js build-test-notes --dfn <dfn> [--date YYYY-MM-DD] [--book]'); process.exit(1); }
-const vpr = JSON.parse(fs.readFileSync(path.join(ROOT, `${DFN}.json`), 'utf8'));
+const vpr = JSON.parse(fs.readFileSync(path.join(VPR_DIR, `${DFN}.json`), 'utf8'));
 const items = (vpr.payload ? vpr.payload.data : vpr.data).items;
 const of = (domain) => items.filter((i) => String(i.uid || '').startsWith(`urn:va:${domain}:`));
 

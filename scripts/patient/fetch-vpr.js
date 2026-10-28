@@ -1,7 +1,7 @@
 // Fetch a patient's full VPR JSON via vista-api-x and save as <dfn>.json
 // (same shape the pipeline already reads via test-ai.js loadPatient()).
 // Usage: node patient.js fetch-vpr <dfn> [<dfn> ...]
-const { ROOT } = require('../../src/paths');
+const { VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 require('../../src/config'); // loads .env (VISTA_API_BASE_URL, VISTA_SITE_ID, VISTA_API_KEY)
@@ -15,7 +15,8 @@ async function fetchVpr(dfn) {
     { jsonResult: true, timeout: 60000, raw: true }
   );
 
-  const outPath = path.join(ROOT, `${dfn}.json`);
+  fs.mkdirSync(VPR_DIR, { recursive: true });
+  const outPath = path.join(VPR_DIR, `${dfn}.json`);
   fs.writeFileSync(outPath, JSON.stringify(body, null, 2));
   const itemCount = body?.payload?.data?.items?.length ?? 'unknown';
   console.log(`OK  ${dfn}.json (${itemCount} items)`);

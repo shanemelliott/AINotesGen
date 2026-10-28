@@ -37,7 +37,7 @@ re-run; already-processed items are skipped or logged).
 
 1. **Fetch VPR data**: `node patient.js fetch-vpr <dfn> [<dfn> ...]`
    Downloads the patient's full VPR JSON via vista-api-x (`VPR GET PATIENT
-   DATA JSON`, context `CDSP RPC CONTEXT`) and saves it to `<dfn>.json`.
+   DATA JSON`, context `CDSP RPC CONTEXT`) and saves it to `vpr/<dfn>.json` (git-ignored).
 
 2. **Extract encounters**: `node patient.js extract-encounters --dfn <dfn> [--summary]`
    Groups orders by date into `output/encounters-<dfn>.json`. Use

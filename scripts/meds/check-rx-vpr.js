@@ -1,6 +1,6 @@
 // Show what the saved VPR JSON (<dfn>.json from fetch-vpr.js) holds for one Rx.
 // Usage: node patient.js check-rx-vpr <dfn> <rx ien>
-const { ROOT } = require('../../src/paths');
+const { VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,7 +10,7 @@ if (!/^\d+$/.test(dfn || '') || !/^\d+$/.test(rx || '')) {
   process.exit(1);
 }
 
-const body = JSON.parse(fs.readFileSync(path.join(ROOT, `${dfn}.json`), 'utf8'));
+const body = JSON.parse(fs.readFileSync(path.join(VPR_DIR, `${dfn}.json`), 'utf8'));
 const items = body?.payload?.data?.items ?? [];
 const meds = items.filter((i) => String(i.localId || '').startsWith(`${rx};`));
 if (!meds.length) {

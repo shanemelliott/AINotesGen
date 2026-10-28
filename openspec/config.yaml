@@ -14,7 +14,7 @@ context: |
 
   Inputs:
   - patients.txt: target patient names + DFNs (100961, 100962, 100964, 100965).
-  - <dfn>.json: vista-api-x rpc/invoke response containing VPR JSON. Records are in
+  - vpr/<dfn>.json: vista-api-x rpc/invoke response containing VPR JSON. Records are in
     payload.data.items[]; domain is the 3rd segment of uid (urn:va:<domain>:84F0:<dfn>:<id>).
     Domains: order, lab, problem, med, vital, visit, appointment, immunization, cpt, pov,
     factor, treatment, patient. VPR dates are YYYYMMDDHHmm numbers.

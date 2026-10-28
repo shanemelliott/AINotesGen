@@ -5,13 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const { indexVpr, extractEncounters, findIdentifierLeaks } = require('../../src/encounters');
 
-const { ROOT } = require('../../src/paths');
+const { ROOT, VPR_DIR } = require('../../src/paths');
 const OUTPUT_DIR = path.join(ROOT, 'output');
 const RULES_FILE = path.join(ROOT, 'src', 'problem-rules.json');
 
 const USAGE = `Usage: node patient.js extract-encounters [--dfn <dfn>] [--summary]
 
-  --dfn <dfn>   Process only <dfn>.json (default: every [0-9]*.json in the repo root)
+  --dfn <dfn>   Process only <dfn>.json (default: every [0-9]*.json in vpr/)
   --summary     Print one line per encounter
   --help        Show this help`;
 
@@ -43,7 +43,7 @@ function summaryLine(e) {
 }
 
 function processDfn(dfn, rules, { summary }) {
-  const file = path.join(ROOT, `${dfn}.json`);
+  const file = path.join(VPR_DIR, `${dfn}.json`);
   if (!fs.existsSync(file)) throw new Error(`Patient file not found: ${dfn}.json`);
   const items = JSON.parse(fs.readFileSync(file, 'utf8'))?.payload?.data?.items;
   if (!Array.isArray(items)) throw new Error(`${dfn}.json has no payload.data.items array`);
@@ -71,8 +71,8 @@ function main() {
   const rules = JSON.parse(fs.readFileSync(RULES_FILE, 'utf8'));
   const dfns = args.dfn
     ? [args.dfn]
-    : fs.readdirSync(ROOT).filter((f) => /^\d+\.json$/.test(f)).map((f) => f.replace('.json', '')).sort();
-  if (dfns.length === 0) throw new Error('No [0-9]*.json patient files found in the repo root.');
+    : (fs.existsSync(VPR_DIR) ? fs.readdirSync(VPR_DIR) : []).filter((f) => /^\d+\.json$/.test(f)).map((f) => f.replace('.json', '')).sort();
+  if (dfns.length === 0) throw new Error('No [0-9]*.json patient files found in vpr/.');
 
   for (const dfn of dfns) processDfn(dfn, rules, args);
 }

@@ -2,7 +2,7 @@
 // Smoke test: can the VA Azure OpenAI endpoint write a synthetic progress note
 // from one encounter in the patient VPR JSON? See openspec/changes/ai-note-smoke-test.
 
-const { ROOT } = require('../../src/paths');
+const { ROOT, VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -75,7 +75,7 @@ function ageOn(dob8, d8) {
 // ---------- patient data ----------
 
 function loadPatient(dfn) {
-  const file = path.join(ROOT, `${dfn}.json`);
+  const file = path.join(VPR_DIR, `${dfn}.json`);
   if (!fs.existsSync(file)) fail(`Patient file not found: ${dfn}.json`);
   const vpr = JSON.parse(fs.readFileSync(file, 'utf8'));
   const items = vpr?.payload?.data?.items;
