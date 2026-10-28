@@ -4,21 +4,24 @@
     "group": "patient",
     "description": "Trim Synthea FHIR bundles so the record starts at military entry (18th birthday).",
     "pipeline": 10,
-    "preview": null
+    "preview": null,
+    "perPatient": false
   },
   {
     "name": "preflight-synthea",
     "group": "patient",
     "description": "Offline inventory of the codes a Synthea bundle will send to the SYN loader (Task 1.7, layer 1).",
     "pipeline": 20,
-    "preview": null
+    "preview": null,
+    "perPatient": false
   },
   {
     "name": "preflight-vista",
     "group": "patient",
     "description": "Read-only \"what will fail\" report for a Synthea bundle (Task 1.7, layer 2).",
     "pipeline": 30,
-    "preview": null
+    "preview": null,
+    "perPatient": false
   },
   {
     "name": "load-synthea",
@@ -29,7 +32,8 @@
       "if": [
         "--dry-run"
       ]
-    }
+    },
+    "perPatient": false
   },
   {
     "name": "set-name",
@@ -63,9 +67,10 @@
   {
     "name": "fetch-vpr",
     "group": "patient",
-    "description": "Fetch a patient's full VPR JSON via vista-api-x and save as <dfn>.json",
+    "description": "Fetch a patient's full VPR JSON via vista-api-x and save as <dfn>.json (same shape the pipeline already reads via test-ai.js loadPatient()).",
     "pipeline": 70,
-    "preview": null
+    "preview": null,
+    "dfnPositional": true
   },
   {
     "name": "fetch-load-log",
@@ -77,7 +82,7 @@
   {
     "name": "import-labs-vitals",
     "group": "patient",
-    "description": "Insert labs and vitals into VistA with the Data Loader import RPCs (ISI IMPORT VITALS, ISI IMPORT LAB,",
+    "description": "Insert labs and vitals into VistA with the Data Loader import RPCs (ISI IMPORT VITALS, ISI IMPORT LAB, ISI IMPORT LAB PANEL), the same calls TPMS makes.",
     "pipeline": 120,
     "preview": {
       "unless": [
@@ -88,7 +93,7 @@
   {
     "name": "history-plan",
     "group": "patient",
-    "description": "Build a 3-year visit plan for a patient (DEV ONLY, read only): PCP about every 6 months with none in the last 6",
+    "description": "Build a 3-year visit plan for a patient (DEV ONLY, read only): PCP about every 6 months with none in the last 6 months, random ED visits, specialty visits that follow...",
     "pipeline": null,
     "preview": null
   },
@@ -149,7 +154,7 @@
   {
     "name": "summarize-patients",
     "group": "patient",
-    "description": "Writes docs/loaded-patients.md (gitignored): one entry per Synthea patient loaded into dev VistA,",
+    "description": "Writes docs/loaded-patients.md (gitignored): one entry per Synthea patient loaded into dev VistA, with counts of meds, labs, notes and visits and a one-line clinical...",
     "pipeline": null,
     "preview": null
   },
@@ -183,12 +188,13 @@
     "group": "appointments",
     "description": "Fail if a visit or appointment sits between 00:00 and 04:59 outside the emergency department.",
     "pipeline": 100,
-    "preview": null
+    "preview": null,
+    "dfnPositional": true
   },
   {
     "name": "custom-visits",
     "group": "appointments",
-    "description": "Book appointments and generate notes for hand-specified visits (plans/dfn<dfn>-visits.json), for patients",
+    "description": "Book appointments and generate notes for hand-specified visits (plans/dfn<dfn>-visits.json), for patients whose visits do not come from Synthea orders.",
     "pipeline": 110,
     "preview": {
       "unless": [
@@ -243,7 +249,7 @@
   {
     "name": "generate-notes",
     "group": "notes",
-    "description": "Generate AI notes for all encounters of a patient, flag questionable ones,",
+    "description": "Generate AI notes for all encounters of a patient, flag questionable ones, and write to output/review/ (needs human review) or output/ready/ (clean).",
     "pipeline": 150,
     "preview": {
       "if": [
@@ -261,7 +267,7 @@
   {
     "name": "sign-notes",
     "group": "notes",
-    "description": "Batch create (+ optionally sign) every note in output/ready/, archive to",
+    "description": "Batch create (+ optionally sign) every note in output/ready/, archive to output/signed/, and log to src/notes.json.",
     "pipeline": 170,
     "preview": {
       "if": [
@@ -279,7 +285,7 @@
   {
     "name": "link-note-visits",
     "group": "notes",
-    "description": "Link a patient's notes that have no visit to their appointment's visit via RPC",
+    "description": "Link a patient's notes that have no visit to their appointment's visit via RPC CDSP UTIL TIU LINK VISIT (CDSPTIUV, DEV ONLY), then check each note with ORWPCE PCE4NOTE.",
     "pipeline": 180,
     "preview": {
       "unless": [
@@ -297,7 +303,7 @@
   {
     "name": "test-write-note",
     "group": "notes",
-    "description": "Smoke test: generate a note via Task 3's AI pipeline and write it to VistA",
+    "description": "Smoke test: generate a note via Task 3's AI pipeline and write it to VistA via TIU CREATE RECORD.",
     "pipeline": null,
     "preview": {
       "if": [
@@ -397,7 +403,8 @@
     "group": "meds",
     "description": "Show what the saved VPR JSON (<dfn>.json from fetch-vpr.js) holds for one Rx.",
     "pipeline": null,
-    "preview": null
+    "preview": null,
+    "dfnPositional": true
   },
   {
     "name": "backfill-rx-dosing",
@@ -424,14 +431,14 @@
   {
     "name": "build-answer-key-files",
     "group": "answer-key",
-    "description": "Build docs/TestPatientsWithAnswers/<label>-<first>-<last>.json and .md (one pair per patient): what was added to each patient and the answer key for the AI summ",
+    "description": "Build docs/TestPatientsWithAnswers/<label>-<first>-<last>.json and .md (one pair per patient): what was added to each patient and the answer key for the AI summary.",
     "pipeline": 190,
     "preview": null
   },
   {
     "name": "build-test-patient",
     "group": "answer-key",
-    "description": "Builds a fully synthetic Synthea-style FHIR transaction bundle for a 76-year-old male with persistent",
+    "description": "Builds a fully synthetic Synthea-style FHIR transaction bundle for a 76-year-old male with persistent atrial fibrillation (cardioversion), CKD with anemia,...",
     "pipeline": null,
     "preview": null
   },
@@ -452,7 +459,8 @@
     "group": "lighthouse",
     "description": "Review roster patients against Lighthouse (read-only) and save each result for the final report.",
     "pipeline": null,
-    "preview": null
+    "preview": null,
+    "dfnPositional": true
   },
   {
     "name": "lighthouse-request",
@@ -489,7 +497,7 @@
   {
     "name": "lighthouse-preregistration",
     "group": "lighthouse",
-    "description": "Last step of the roster review: record the pre-registration check as C (CONNECTED), so VistA does not ask for a",
+    "description": "Last step of the roster review: record the pre-registration check as C (CONNECTED), so VistA does not ask for a demographics update check for a year.",
     "pipeline": null,
     "preview": null
   },

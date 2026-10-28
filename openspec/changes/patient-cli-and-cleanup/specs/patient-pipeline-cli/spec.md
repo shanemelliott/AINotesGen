@@ -39,7 +39,7 @@ The system SHALL run the named step with all remaining arguments passed through 
 ---
 
 ### Requirement: Record completed steps per patient
-The system SHALL, after a step that was given `--dfn` exits 0, add a record to that patient's status file under `plans/` holding the step name, the time, and whether the run was a preview. A run SHALL count as a preview when it has a `--dry-run` flag, or when the step is commit-gated and `--commit` is absent. A failed run SHALL NOT be recorded as done. The status file SHALL hold only the DFN, step names, timestamps, exit codes and preview flags.
+The system SHALL, after a step exits and the run is tied to a patient, add a record to that patient's status file under `plans/` holding the step name, the time, and whether the run was a preview. A run is tied to a patient by an entry-point option `--patient <dfn>` given before the step name, or by the step's own `--dfn <dfn>` argument, or by the DFN given as the first number for steps registered as taking it positionally. A run SHALL count as a preview when it has a `--dry-run` flag, or when the step's registry entry names a preview rule that applies (a confirm flag such as `--commit`, `--apply`, `--book` or `--generate` is required and absent, or a preview flag is present). A failed run SHALL NOT be recorded as done. The status file SHALL hold only the DFN, step names, timestamps, exit codes and preview timestamps.
 
 #### Scenario: Successful committed step
 - **WHEN** a step runs with `--dfn <dfn>` and exits 0 without being a preview
@@ -54,8 +54,12 @@ The system SHALL, after a step that was given `--dfn` exits 0, add a record to t
 - **THEN** the status file records no completion for it
 
 #### Scenario: Step without a patient
-- **WHEN** a step runs with no `--dfn`
+- **WHEN** a step runs with no patient tied to it
 - **THEN** no status file is written
+
+#### Scenario: Step that has no DFN argument
+- **WHEN** a step such as note signing runs as `node patient.js --patient <dfn> <step> --all`
+- **THEN** the run is recorded for that patient and `--patient <dfn>` is not passed to the step
 
 ---
 
@@ -73,6 +77,10 @@ The system SHALL provide a `status --dfn <dfn>` command that prints the pipeline
 #### Scenario: Steps outside the pipeline
 - **WHEN** a step is a one-off tool (for example a backfill or a Lighthouse check)
 - **THEN** it can be run through the entry point but does not appear in the ordered pipeline
+
+#### Scenario: Steps before a DFN exists
+- **WHEN** a pipeline step runs before the patient has a DFN (trimming, preflight, loading)
+- **THEN** `status` lists it as not tracked and does not name it as the next step
 
 ## Notes
 

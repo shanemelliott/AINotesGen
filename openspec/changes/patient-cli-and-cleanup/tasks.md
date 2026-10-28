@@ -2,29 +2,29 @@
 
 ## 1. Foundation
 
-- [ ] 1.1 Add `src/paths.js` exporting `ROOT` (repo root) and use it for the scripts' data paths
-- [ ] 1.2 Write the codemod that rewrites `./src/` to `../../src/` and `__dirname` to `ROOT` in a moved script, with a dry-run diff mode
-- [ ] 1.3 Create `scripts/steps.json` with every script's name, group, one-line description (from its header comment), pipeline order or none, and commit-gated flag
-- [ ] 1.4 Verify the commit-gated flag of each step against its usage comment and write down any script with neither a `--dry-run` nor a `--commit` flag
+- [x] 1.1 Add `src/paths.js` exporting `ROOT` (repo root) and use it for the scripts' data paths
+- [x] 1.2 Write the codemod that rewrites `./src/` to `../../src/` and `__dirname` to `ROOT` in a moved script, with a dry-run diff mode (done: one-off script kept outside the repo, not committed)
+- [x] 1.3 Create `scripts/steps.json` with every script's name, group, one-line description (from its header comment), pipeline order or none, and commit-gated flag
+- [x] 1.4 Verify the commit-gated flag of each step against its usage comment and write down any script with neither a `--dry-run` nor a `--commit` flag (done: three kinds of gate found: `--commit`, `--apply` and `--dry-run`; custom-visits and build-test-notes also gate on `--book`/`--generate`)
 
 ## 2. Move the scripts (one commit per group)
 
-- [ ] 2.1 Move the patient group (`git mv`), run the codemod, `node --check`, dry-run `fetch-vpr` and `preflight-vista`
-- [ ] 2.2 Move the appointments group, `node --check`, dry-run `create-appointments` and run `check-midnight` on one patient
-- [ ] 2.3 Move the notes group, `node --check`, dry-run `generate-notes` and `link-note-visits --check`
-- [ ] 2.4 Move the meds group, `node --check`, dry-run `backfill-rx-dosing` and `fill-rx`
-- [ ] 2.5 Move the answer-key group (including the two untracked builders), `node --check`, regenerate one answer-key pair and compare it with the old output
-- [ ] 2.6 Move the lighthouse group, `node --check`
-- [ ] 2.7 Move `TASK-5-IMPLEMENTATION-RESULTS.md` into `docs/`
-- [ ] 2.8 Grep `scripts/` for leftover `./src/` and bare `__dirname` data paths; confirm the root holds only `patient.js`, data files, docs and config
+- [x] 2.1 Move the patient group (`git mv`), run the codemod, `node --check`, dry-run `fetch-vpr` and `preflight-vista`
+- [x] 2.2 Move the appointments group, `node --check`, dry-run `create-appointments` and run `check-midnight` on one patient
+- [x] 2.3 Move the notes group, `node --check`, dry-run `generate-notes` and `link-note-visits --check`
+- [x] 2.4 Move the meds group, `node --check`, dry-run `backfill-rx-dosing` and `fill-rx`
+- [x] 2.5 Move the answer-key group (including the two untracked builders), `node --check`, regenerate one answer-key pair and compare it with the old output
+- [x] 2.6 Move the lighthouse group, `node --check`
+- [x] 2.7 Move `TASK-5-IMPLEMENTATION-RESULTS.md` into `docs/`
+- [x] 2.8 Grep `scripts/` for leftover `./src/` and bare `__dirname` data paths; confirm the root holds only `patient.js`, data files, docs and config
 
 ## 3. Entry point
 
-- [ ] 3.1 Write `patient.js` `list` (including the unregistered-script report)
-- [ ] 3.2 Write `patient.js <step>` pass-through: spawn, inherited output, same exit code, closest-name error for unknown steps
-- [ ] 3.3 Write the status file update after a child exits (done, preview, failed) for runs that have `--dfn`
-- [ ] 3.4 Write `patient.js status --dfn <dfn>` with ordered steps and the next step
-- [ ] 3.5 Check each scenario in the `patient-pipeline-cli` spec by hand on one test patient, with a preview run and a committed run of a harmless step
+- [x] 3.1 Write `patient.js` `list` (including the unregistered-script report)
+- [x] 3.2 Write `patient.js <step>` pass-through: spawn, inherited output, same exit code, closest-name error for unknown steps
+- [x] 3.3 Write the status file update after a child exits (done, preview, failed) for runs that have `--dfn`
+- [x] 3.4 Write `patient.js status --dfn <dfn>` with ordered steps and the next step
+- [x] 3.5 Check each scenario in the `patient-pipeline-cli` spec by hand on one test patient, with a preview run and a committed run of a harmless step (done: list, unknown step, pass-through exit codes, committed, preview, failed and no-patient runs, and status checked on a test patient; test status files removed)
 
 ## 4. Docs and skill
 
