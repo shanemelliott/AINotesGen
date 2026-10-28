@@ -17,21 +17,34 @@ cp .env.sample .env   # fill in VistA/OpenAI config values
 
 See `.env.sample` for required configuration (Vista-API-X, PIV auth via `sts-token/`, clinic/resource IENs, note title IEN).
 
+## Layout and the entry point
+
+Scripts live in `scripts/<group>/` (`patient`, `appointments`, `notes`, `meds`, `answer-key`, `lighthouse`); shared code is in `src/`; the repo root keeps only the entry point, data files and docs. Run everything through one command:
+
+```
+node patient.js list                         # every step, pipeline steps first and in order
+node patient.js <step> [args]                # run a step exactly as its script runs (same args, output, exit code)
+node patient.js status --dfn <dfn>           # which pipeline steps are done for a patient, and the next one
+node patient.js --patient <dfn> <step> ...   # tie a run to a patient when the step has no --dfn (for example sign-notes --all)
+```
+
+Each finished run is recorded in `plans/dfn<dfn>-status.json` (git-ignored); previews (`--dry-run`, or a step run without its `--commit`/`--apply`) are shown as preview only, not done. The step list and preview rules are in `scripts/steps.json`. A script can still be run directly (`node scripts/<group>/<step>.js`).
+
 ## Pipeline
 
 Per patient DFN, run these steps in order. Each step is idempotent (safe to
 re-run; already-processed items are skipped or logged).
 
-1. **Fetch VPR data**: `node fetch-vpr.js <dfn> [<dfn> ...]`
+1. **Fetch VPR data**: `node patient.js fetch-vpr <dfn> [<dfn> ...]`
    Downloads the patient's full VPR JSON via vista-api-x (`VPR GET PATIENT
    DATA JSON`, context `CDSP RPC CONTEXT`) and saves it to `<dfn>.json`.
 
-2. **Extract encounters**: `node extract-encounters.js --dfn <dfn> [--summary]`
+2. **Extract encounters**: `node patient.js extract-encounters --dfn <dfn> [--summary]`
    Groups orders by date into `output/encounters-<dfn>.json`. Use
    `--summary` to preview one line per encounter (orders/labs/meds/problems
    counts, whether an appointment already exists).
 
-3. **Create missing appointments**: `node create-appointments.js --dfn <dfn> [--dry-run]`
+3. **Create missing appointments**: `node patient.js create-appointments --dfn <dfn> [--dry-run]`
    Creates a past VistA appointment for every encounter date that doesn't
    already have one (via SDEC ARSET/APPADD). Logs to `src/appointments.json`.
    For the RPCs, clinic and resource IENs, and walk-ins, see [docs/APPOINTMENT-RPCS.md](docs/APPOINTMENT-RPCS.md).
@@ -43,7 +56,7 @@ re-run; already-processed items are skipped or logged).
    duplicate encounter instead of linking to the appointment. Re-fetching
    after appointment creation keeps `encounters-<dfn>.json` authoritative.
 
-5. **Generate notes**: `node generate-notes.js --dfn <dfn> [--dry-run]`
+5. **Generate notes**: `node patient.js generate-notes --dfn <dfn> [--dry-run]`
    Calls the LLM for every encounter, auto-flags questionable notes
    (pregnancy/contraceptive mismatch, ungrounded assessment items,
    structural issues like lines over 80 chars), and writes each note as a
@@ -59,10 +72,10 @@ re-run; already-processed items are skipped or logged).
    or reformat overlong lines. A `.vscode/settings.json` with
    `"editor.rulers": [80]` helps eyeball the 80-char TIU line limit.
 
-7. **Approve**: `node approve-note.js --all` (or a specific id)
+7. **Approve**: `node patient.js approve-note --all` (or a specific id)
    Moves reviewed notes from `output/review/` to `output/ready/`.
 
-8. **Create + sign in VistA**: `node sign-notes.js --all --sign [--dry-run]`
+8. **Create + sign in VistA**: `node patient.js sign-notes --all --sign [--dry-run]`
    Creates each note via `TIU CREATE RECORD`, signs it via `TIU SIGN
    RECORD` (e-sig code is encrypted client-side per the XWB broker cipher),
    archives to `output/signed/`, and logs `{dfn, date, tiuIen, signed}` to
@@ -74,13 +87,13 @@ re-run; already-processed items are skipped or logged).
    ```
    node -e "require('./src/notes.json').filter(r => !r.signed).forEach(r => console.log(r.date, r.tiuIen))"
    ```
-   then re-sign with `node resign-notes.js <tiuIen> <id> [<tiuIen> <id> ...]`.
+   then re-sign with `node patient.js resign-notes <tiuIen> <id> [<tiuIen> <id> ...]`.
 
 10. **Veteran service data** (any test patient, not only ones loaded here):
     ```
-    node vet-get.js --dfn <dfn> --summary                 # what is set now
-    node vet-profile.js --dfn <dfn>                       # derive + dry run, must report 0 error(s)
-    node vet-profile.js --dfn <dfn> --from-file --apply   # write the reviewed profile
+    node patient.js vet-get --dfn <dfn> --summary                 # what is set now
+    node patient.js vet-profile --dfn <dfn>                       # derive + dry run, must report 0 error(s)
+    node patient.js vet-profile --dfn <dfn> --from-file --apply   # write the reviewed profile
     ```
     Sets service connection, rated disabilities, military service, exposures,
     eligibility, enrollment and MST through `CDSP UTIL VET GET/SET` (routine
@@ -96,7 +109,7 @@ output to a log file and tail it, rather than piping through
 `Select-Object` (which buffers everything until the command finishes):
 
 ```powershell
-node generate-notes.js --dfn <dfn> *> generate-<dfn>.log
+node patient.js generate-notes --dfn <dfn> *> generate-<dfn>.log
 ```
 
 In another terminal, check progress:

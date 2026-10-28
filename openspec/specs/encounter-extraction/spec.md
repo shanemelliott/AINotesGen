@@ -135,7 +135,7 @@ The output MUST NOT contain the patient's name, SSN, ICN, addresses, or telecoms
 The extractor SHALL accept `--dfn <dfn>` for a single patient. With no `--dfn`, it SHALL process every `[0-9]*.json` file in the repo root. It SHALL write `output/encounters-<dfn>.json`, containing the DFN, an extraction timestamp, the encounter count, and the encounters. With `--summary` it SHALL print one line per encounter with: sequence, date, clinic, number of orders, number of labs, number of new meds, number of problems, and whether an appointment exists.
 
 #### Scenario: Single patient run
-- **WHEN** `node extract-encounters.js --dfn 100965` runs
+- **WHEN** `node patient.js extract-encounters --dfn 100965` runs
 - **THEN** `output/encounters-100965.json` is written and a count of encounters is printed
 
 #### Scenario: Missing patient file

@@ -139,7 +139,7 @@ The system SHALL use VISTA_CLINIC_IEN (default 23 = GENERAL MEDICINE) and VISTA_
 The system SHALL include a smoke test (`test-create-appointment.js`) that creates one appointment for a specific historical date (2025-10-21, DFN 100965) to verify ARSET/APPADD flow before batch processing.
 
 #### Scenario: Smoke test succeeds
-- **WHEN** running `node test-create-appointment.js --dfn 100965 --date 2025-10-21`
+- **WHEN** running `node patient.js test-create-appointment --dfn 100965 --date 2025-10-21`
 - **THEN** call SDEC ARSET with date 10/21/2025
 - **AND** call SDEC APPADD with requestIEN returned from ARSET
 - **AND** print HTTP status, requestIEN, appointmentIEN, and latency

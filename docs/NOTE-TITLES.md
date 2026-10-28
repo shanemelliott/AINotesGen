@@ -2,7 +2,7 @@
 
 Notes are filed with `TIU CREATE RECORD`, which needs a title IEN from file #8925.1. The title is chosen by the visit's clinic in [src/note-titles.json](../src/note-titles.json) through `noteTitleFor()` in [src/noteTitles.js](../src/noteTitles.js). A clinic that is not listed uses `VISTA_NOTE_TITLE_IEN` from `.env` (16, PRIMARY CARE VISIT). Both `generate-notes.js` and `custom-visits.js` use it.
 
-Checked 2026-10-16 with `node fetch-note-titles.js` (RPC `CDSP GET NOTE TITLES`, context `CDSP RPC CONTEXT`), which returned 217 active titles and wrote them to `logs/note-titles.json`. Run it again after titles are added.
+Checked 2026-10-16 with `node patient.js fetch-note-titles` (RPC `CDSP GET NOTE TITLES`, context `CDSP RPC CONTEXT`), which returned 217 active titles and wrote them to `logs/note-titles.json`. Run it again after titles are added.
 
 ## Current clinic mapping
 

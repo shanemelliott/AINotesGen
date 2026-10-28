@@ -5,23 +5,25 @@ How to build a synthetic veteran test patient with planted findings ("gotchas") 
 ## Rules
 
 - **Name rule.** New patients get the middle initial A, for example `LAST790,FIRST742 A`. The Synthea digits stay in the name. The initial A marks a patient we created; the older Lighthouse-verified patients never get it.
-- **Setting a name.** Use `node set-name.js --dfn <dfn> --name "LAST790,FIRST742 A" --apply`. It calls the RPC `CDSP UTIL VET SET NAME` (routine `CDSPVET` in cds-vista-routines), which files the name internally and keeps the digits. FileMan's own `.01` entry strips digits, so never rename through FileMan.
-- **Appointments are never imported.** `create-appointments.js` books every visit through SDEC (see `docs/DECISION-LOAD-PATH.md`).
+- **Setting a name.** Use `node patient.js set-name --dfn <dfn> --name "LAST790,FIRST742 A" --apply`. It calls the RPC `CDSP UTIL VET SET NAME` (routine `CDSPVET` in cds-vista-routines), which files the name internally and keeps the digits. FileMan's own `.01` entry strips digits, so never rename through FileMan.
+- **Appointments are never imported.** `create-appointments` books every visit through SDEC (see `docs/DECISION-LOAD-PATH.md`).
 - **No patient data in tracked files.** No names, DFNs, ICNs or planted details in anything that is committed.
 
 ## Steps per patient
 
-1. **Trim** the Synthea bundle (`trim-synthea.js`).
-2. **Preflight** the bundle (`preflight-synthea.js`, `preflight-vista.js`). Meds listed without full structured dosing may need `MEDDEF` rows (see `docs/MED-DEFAULTS-PROPOSAL.md`).
-3. **Load** (`load-synthea.js`).
-4. **Rename** with the middle initial A (`set-name.js`).
-5. **Veteran data** and a valid address (`vet-profile.js --from-file --apply`, check with `vet-get.js`).
-6. **Appointments** (`create-appointments.js`), then `fetch-vpr.js` and `check-midnight.js`. Visits must sit in clinic hours.
-7. **Plan the planted events** in `plans/dfn<dfn>-visits.json` and `plans/dfn<dfn>-labs-vitals.json`; book the visits with `custom-visits.js`, import labs and vitals with `import-labs-vitals.js`.
-8. **Medications and fills** (`add-rx.js`, `fill-rx.js`, `check-rx-vpr.js`). Schedule II drugs get no refills and need pharmacist verification.
-9. **Notes.** Generate (`NOTE_WORDY=1`, `generate-notes.js`). Rewrite every planted note by hand: generated text invents history and drops score values. Then approve (`approve-note.js`), sign (`sign-notes.js`) and link to visits (`link-note-visits.js --check`).
-10. **Key and files.** Write the source key `plans/dfn<dfn>-answerkey.json`, then `node build-answer-key-files.js --dfn <dfn> --label <label>`.
+1. **Trim** the Synthea bundle (`trim-synthea`).
+2. **Preflight** the bundle (`preflight-synthea`, `preflight-vista`). Meds listed without full structured dosing may need `MEDDEF` rows (see `docs/MED-DEFAULTS-PROPOSAL.md`); review that list for every new upload.
+3. **Load** (`load-synthea`).
+4. **Rename** with the middle initial A (`set-name`).
+5. **Veteran data** and a valid address (`vet-profile --from-file --apply`, check with `vet-get`).
+6. **Appointments** (`create-appointments`), then `fetch-vpr` and `check-midnight`. Visits must sit in clinic hours.
+7. **Plan the planted events** in `plans/dfn<dfn>-visits.json` and `plans/dfn<dfn>-labs-vitals.json`; book the visits with `custom-visits`, import labs and vitals with `import-labs-vitals`.
+8. **Medications and fills** (`add-rx`, `fill-rx`, `check-rx-vpr`, `backfill-rx-dosing`). Schedule II drugs get no refills and need pharmacist verification.
+9. **Notes.** Generate (`NOTE_WORDY=1`, `generate-notes`). Rewrite every planted note by hand: generated text invents history and drops score values. Then approve (`approve-note`), sign (`sign-notes`) and link to visits (`link-note-visits`).
+10. **Key and files.** Write the source key `plans/dfn<dfn>-answerkey.json`, then `node patient.js build-answer-key-files --dfn <dfn> --label <label>`.
 11. **Score** the AI summary app and the chatbot with `docs/TestPatientsWithAnswers/SUMMARY-SCORING-GUIDE.md`, add the runs to the source key and regenerate.
+
+Every name above is a step of `node patient.js` (`node patient.js list` shows them).
 
 ## Key structure
 
@@ -42,7 +44,7 @@ Item families:
 
 - Source keys and plans: `plans/` (git-ignored).
 - Generated key and history pair per patient: `docs/TestPatientsWithAnswers/<label>-<first>-<last>.json` and `.md`. The generated pair is overwritten on each run, so edit the source key.
-- Pipeline status for the current patients: `openspec/changes/veteran-gotcha-patients/tasks.md`.
+- Pipeline status for a patient: `node patient.js status --dfn <dfn>` (see the README for the entry point; run steps as `node patient.js <step> ...` or `node patient.js --patient <dfn> <step> ...`).
 
 ## Known issues (not planned for a fix)
 

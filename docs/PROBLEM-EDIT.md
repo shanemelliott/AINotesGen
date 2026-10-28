@@ -7,9 +7,9 @@ audit history and the lexicon links stay intact. Dry run unless `--apply`. Writt
 ## Run
 
 ```powershell
-node problem-edit.js                    # dry run for every entry in src/lighthouse-problem-fixes.json
-node problem-edit.js --dfn 99935794     # one patient
-node problem-edit.js --apply            # write
+node patient.js problem-edit                    # dry run for every entry in src/lighthouse-problem-fixes.json
+node patient.js problem-edit --dfn 99935794     # one patient
+node patient.js problem-edit --apply            # write
 ```
 
 The dry run prints each field as `old -> new`. After a write, the script reads the problem back and reports

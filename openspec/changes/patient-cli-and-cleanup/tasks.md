@@ -28,9 +28,9 @@
 
 ## 4. Docs and skill
 
-- [ ] 4.1 Update README, PROJECT-PLAN and `docs/*.md` to the new script paths and the entry point
-- [ ] 4.2 Update `docs/ANSWER-KEY-PATIENTS.md` step list with the CLI step names
-- [ ] 4.3 Write the `answer-key-patient` skill (judgment steps, rules found, scoring prompt pointer)
+- [x] 4.1 Update README, PROJECT-PLAN and `docs/*.md` to the new script paths and the entry point (done: `node <script>.js` commands in README, docs and main specs now read `node patient.js <step>`; archived changes left as history)
+- [x] 4.2 Update `docs/ANSWER-KEY-PATIENTS.md` step list with the CLI step names
+- [x] 4.3 Write the `answer-key-patient` skill (judgment steps, rules found, scoring prompt pointer)
 
 ## 5. Carried over: medications
 
@@ -40,7 +40,7 @@
 - [ ] 5.4 Story 1 test: add an Rx with an issue date about a year back, then fill oldest first with one or two late fills
 - [ ] 5.5 Merge the `synfmed-rx-sig` and `med-defaults-and-merge` loader fork branches so the sig lines are not duplicated
 - [ ] 5.6 Ask the AI summary team how their medication table gets Last Filled and Expiration Date
-- [ ] 5.7 Add a step to review the preflight "without full structured dosing" list for each new Synthea upload (in the skill or the doc)
+- [x] 5.7 Add a step to review the preflight "without full structured dosing" list for each new Synthea upload (in the skill or the doc) (done: in the skill and in `docs/ANSWER-KEY-PATIENTS.md` step 2)
 
 ## 6. Carried over: loader fix
 

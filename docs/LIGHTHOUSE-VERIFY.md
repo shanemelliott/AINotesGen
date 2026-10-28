@@ -8,10 +8,10 @@ so the two can differ. Read-only on both sides.
 ## Run
 
 ```powershell
-node lighthouse-verify.js 99935794                # one patient (by any DFN in the roster)
-node lighthouse-verify.js --all                   # every roster patient
-node lighthouse-verify.js --all --vista-only      # VistA part only, no Lighthouse call
-node lighthouse-verify.js 99935794 --token <t>    # token for one patient from Bruno
+node patient.js lighthouse-verify 99935794                # one patient (by any DFN in the roster)
+node patient.js lighthouse-verify --all                   # every roster patient
+node patient.js lighthouse-verify --all --vista-only      # VistA part only, no Lighthouse call
+node patient.js lighthouse-verify 99935794 --token <t>    # token for one patient from Bruno
 ```
 
 A patient with no valid token still gets its VistA part saved; its Lighthouse part says "no valid token".
@@ -26,7 +26,7 @@ and problems found in both, VistA only, Lighthouse only; ICD-10 ranges such as E
 ## Authentication
 
 The token is the Lighthouse access token Bruno gets from the collection `Lighthouse - 1` (SMART launch, PIV login), not an
-Entra JWT. It is tied to one patient through the `launch` value (`node lighthouse-launch.js <icn>` makes it), so each
+Entra JWT. It is tied to one patient through the `launch` value (`node patient.js lighthouse-launch <icn>` makes it), so each
 patient needs its own token, and it lasts about an hour.
 
 The script does not log in itself: the registered redirect (the AVS page) fails with "No state found" for any login not
