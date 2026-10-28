@@ -1,15 +1,16 @@
 // Review roster patients against Lighthouse (read-only) and save each result for the final report.
-// Usage: node lighthouse-verify.js <dfn> [<dfn> ...] [--token <access_token>]
-//        node lighthouse-verify.js --all [--vista-only]
+// Usage: node patient.js lighthouse-verify <dfn> [<dfn> ...] [--token <access_token>]
+//        node patient.js lighthouse-verify --all [--vista-only]
 // Tokens come from --token (one patient only), LIGHTHOUSE_TOKEN, or .lighthouse-token.json keyed by ICN.
 // Output: docs/lighthouse-review/dfn-<primary dfn>.json per patient. A patient with no token still gets its VistA part.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const roster = require('./src/lighthouse-patients.json');
-const { review } = require('./src/lighthouseReview');
+require('../../src/config');
+const roster = require('../../src/lighthouse-patients.json');
+const { review } = require('../../src/lighthouseReview');
 
-const OUT_DIR = path.join(__dirname, 'docs', 'lighthouse-review');
+const OUT_DIR = path.join(ROOT, 'docs', 'lighthouse-review');
 
 function parseArgs(argv) {
   const a = { dfns: [], all: false, vistaOnly: false, token: process.env.LIGHTHOUSE_TOKEN || null };
@@ -20,7 +21,7 @@ function parseArgs(argv) {
     else if (/^\d+$/.test(argv[i])) a.dfns.push(argv[i]);
     else throw new Error(`Unknown argument: ${argv[i]}`);
   }
-  if (!a.all && !a.dfns.length) throw new Error('Usage: node lighthouse-verify.js <dfn> [<dfn> ...] | --all  [--token <t>] [--vista-only]');
+  if (!a.all && !a.dfns.length) throw new Error('Usage: node patient.js lighthouse-verify <dfn> [<dfn> ...] | --all  [--token <t>] [--vista-only]');
   return a;
 }
 

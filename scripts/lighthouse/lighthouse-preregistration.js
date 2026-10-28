@@ -1,13 +1,14 @@
 // Last step of the roster review: record the pre-registration check as C (CONNECTED), so VistA does not ask for a
 // demographics update check for a year. Run it after every other change. DEV ONLY.
-// Usage: node lighthouse-preregistration.js [--dfn <dfn> ...]   (default: every roster patient found in VistA)
+// Usage: node patient.js lighthouse-preregistration [--dfn <dfn> ...]   (default: every roster patient found in VistA)
 // Results: docs/lighthouse-review/preregistration.json
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
 
-const DIR = path.join(__dirname, 'docs', 'lighthouse-review');
+const DIR = path.join(ROOT, 'docs', 'lighthouse-review');
 
 (async () => {
   const args = process.argv.slice(2);

@@ -1,8 +1,9 @@
 // Print the problem list comparison per patient from docs/lighthouse-review/dfn-*.json (read-only).
-// Usage: node lighthouse-problems.js [--md]
+// Usage: node patient.js lighthouse-problems [--md]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const DIR = path.join(__dirname, 'docs', 'lighthouse-review');
+const DIR = path.join(ROOT, 'docs', 'lighthouse-review');
 const date = (s) => String(s || '').replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3').slice(0, 10);
 
 for (const f of fs.readdirSync(DIR).filter((x) => /^dfn-\d+\.json$/.test(x))) {

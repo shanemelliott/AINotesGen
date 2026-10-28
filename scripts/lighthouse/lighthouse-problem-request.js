@@ -1,12 +1,13 @@
 // Build the problem-list part of the Lighthouse data request: active VistA problems Lighthouse does not hold.
-// Usage: node lighthouse-problem-request.js   (writes docs/lighthouse-review/lighthouse-problem-request-items.json)
+// Usage: node patient.js lighthouse-problem-request   (writes docs/lighthouse-review/lighthouse-problem-request-items.json)
 // Onset comes from ORQQPL PROBLEM LIST (FileMan date, may be month-only); the VPR onset misreads "4/15" as a day.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
 
-const DIR = path.join(__dirname, 'docs', 'lighthouse-review');
+const DIR = path.join(ROOT, 'docs', 'lighthouse-review');
 // VistA problems that are the same condition as a Lighthouse one (code or date differs), by DFN and SNOMED code.
 const SAME_CONDITION = { 99935794: ['111552007'], 99935792: ['413839001'], 99935796: ['328383001'], 99935798: ['709044004'] };
 const NOT_CLINICAL = /education|depth of general/i;

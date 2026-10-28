@@ -1,9 +1,10 @@
 // Render docs/lighthouse-review/lighthouse-request-items.json as a data request to the Lighthouse sandbox team.
-// Usage: node lighthouse-request.js   (writes docs/LIGHTHOUSE-DATA-REQUEST.md)
+// Usage: node patient.js lighthouse-request   (writes docs/LIGHTHOUSE-DATA-REQUEST.md)
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 
-const items = JSON.parse(fs.readFileSync(path.join(__dirname, 'docs', 'lighthouse-review', 'lighthouse-request-items.json'), 'utf8'));
+const items = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'lighthouse-review', 'lighthouse-request-items.json'), 'utf8'));
 const LABEL = { address: 'Address', birthDate: 'Birth date', gender: 'Gender', phone: 'Phone', maritalStatus: 'Marital status' };
 
 const out = [
@@ -22,7 +23,7 @@ const out = [
 for (const p of items) {
   for (const r of p.requests) out.push(`| ${p.name} | ${p.icn} | ${p.dfn} | ${LABEL[r.field] || r.field} | ${r.problem} | ${r.suggested} |`);
 }
-const problemFile = path.join(__dirname, 'docs', 'lighthouse-review', 'lighthouse-problem-request-items.json');
+const problemFile = path.join(ROOT, 'docs', 'lighthouse-review', 'lighthouse-problem-request-items.json');
 const problems = fs.existsSync(problemFile) ? JSON.parse(fs.readFileSync(problemFile, 'utf8')) : [];
 if (problems.length) {
   out.push('', '## Problem list (Condition, problem-list-item)', '',
@@ -30,5 +31,5 @@ if (problems.length) {
     '| Patient | ICN | VistA DFN (500) | Problem | ICD | SNOMED CT | Onset |', '|---|---|---|---|---|---|---|');
   for (const p of problems) for (const x of p.problems) out.push(`| ${p.name} | ${p.icn} | ${p.dfn} | ${x.text} | ${x.icd} | ${x.snomed} | ${x.onset} |`);
 }
-fs.writeFileSync(path.join(__dirname, 'docs', 'LIGHTHOUSE-DATA-REQUEST.md'), out.join('\n'));
+fs.writeFileSync(path.join(ROOT, 'docs', 'LIGHTHOUSE-DATA-REQUEST.md'), out.join('\n'));
 console.log(`Wrote docs/LIGHTHOUSE-DATA-REQUEST.md (${items.reduce((n, p) => n + p.requests.length, 0)} demographic items, ${problems.reduce((n, p) => n + p.problems.length, 0)} problems)`);

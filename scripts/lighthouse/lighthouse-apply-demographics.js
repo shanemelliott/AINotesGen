@@ -1,18 +1,19 @@
 // Make VistA demographics follow Lighthouse (DEV ONLY): address, birth date, sex. Dry run unless --apply.
-// Usage: node lighthouse-apply-demographics.js [--dfn <dfn> ...] [--all] [--apply]
+// Usage: node patient.js lighthouse-apply-demographics [--dfn <dfn> ...] [--all] [--apply]
 // Reads docs/lighthouse-review/dfn-*.json (from lighthouse-verify.js). Writes through CDSP UTIL VET SET (F lines).
 // Rules: Lighthouse address if it has street, city, state and a ZIP VistA accepts; otherwise an easter egg address
 // (src/easter-egg-addresses.json, picked by DFN). Birth date and sex are copied from Lighthouse when it has them.
 // Data Lighthouse lacks or cannot hold goes to docs/lighthouse-review/lighthouse-request-items.json.
 // All roster patients are written, including DFN 99935791 (owner approved 2026-10-15). Results: docs/lighthouse-review/vista-changes.json.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
 
-const DIR = path.join(__dirname, 'docs', 'lighthouse-review');
-const eggs = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'easter-egg-addresses.json'), 'utf8')).addresses;
+const DIR = path.join(ROOT, 'docs', 'lighthouse-review');
+const eggs = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'easter-egg-addresses.json'), 'utf8')).addresses;
 const list = (v) => (Array.isArray(v) ? v : Object.values(v || {}));
 // File #5 IEN is the state FIPS code on VistA.
 const FIPS = { AL: 1, AK: 2, AZ: 4, AR: 5, CA: 6, CO: 8, CT: 9, DE: 10, DC: 11, FL: 12, GA: 13, HI: 15, ID: 16, IL: 17, IN: 18, IA: 19,
@@ -81,7 +82,7 @@ async function main() {
   const apply = args.includes('--apply');
   const dfns = [];
   for (let i = 0; i < args.length; i++) if (args[i] === '--dfn') dfns.push(args[++i]);
-  if (!args.includes('--all') && !dfns.length) throw new Error('Usage: node lighthouse-apply-demographics.js (--all | --dfn <dfn> ...) [--apply]');
+  if (!args.includes('--all') && !dfns.length) throw new Error('Usage: node patient.js lighthouse-apply-demographics (--all | --dfn <dfn> ...) [--apply]');
 
   const out = {};
   const requestItems = [];
