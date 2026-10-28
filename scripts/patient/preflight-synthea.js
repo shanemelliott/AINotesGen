@@ -1,5 +1,6 @@
 // Offline inventory of the codes a Synthea bundle will send to the SYN loader (Task 1.7, layer 1).
-// Usage: node preflight-synthea.js <bundle.json> [--keep-all] [--top N]
+// Usage: node patient.js preflight-synthea <bundle.json> [--keep-all] [--top N]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 
@@ -72,7 +73,7 @@ function main() {
   const top = topIdx >= 0 ? Number(args[topIdx + 1]) : 8;
   const file = args.find((a, i) => !a.startsWith('--') && (topIdx < 0 || i !== topIdx + 1));
   if (!file) {
-    console.error('Usage: node preflight-synthea.js <bundle.json> [--keep-all] [--top N]');
+    console.error('Usage: node patient.js preflight-synthea <bundle.json> [--keep-all] [--top N]');
     process.exit(1);
   }
 
@@ -92,7 +93,7 @@ function main() {
     if (list.length > top) console.log(`        ... ${list.length - top} more`);
   }
 
-  const outDir = path.join(__dirname, 'logs');
+  const outDir = path.join(ROOT, 'logs');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `preflight-${path.basename(file, '.json')}.json`);
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));

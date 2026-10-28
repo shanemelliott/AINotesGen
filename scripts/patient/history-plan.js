@@ -1,20 +1,21 @@
 // Build a 3-year visit plan for a patient (DEV ONLY, read only): PCP about every 6 months with none in the last 6
 // months, random ED visits, specialty visits that follow the problem list. Output is a custom-visits.js plan.
-// Usage: node history-plan.js --dfn <dfn> [--today YYYY-MM-DD] [--out plans/dfn<dfn>-visits.json]
-// Then review the plan and run: node custom-visits.js --dfn <dfn> --plan <plan> [--book] [--generate]
+// Usage: node patient.js history-plan --dfn <dfn> [--today YYYY-MM-DD] [--out plans/dfn<dfn>-visits.json]
+// Then review the plan and run: node patient.js custom-visits --dfn <dfn> --plan <plan> [--book] [--generate]
 // Dates and picks are deterministic per DFN. Days that already have a visit or appointment are skipped.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
-const { rng, seedFor } = require('./src/vetProfile');
-const lookup = require('./src/clinic-lookup.json');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
+const { rng, seedFor } = require('../../src/vetProfile');
+const lookup = require('../../src/clinic-lookup.json');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const dfn = arg('--dfn');
-if (!/^\d+$/.test(dfn || '')) { console.error('Usage: node history-plan.js --dfn <dfn> [--today YYYY-MM-DD] [--out file]'); process.exit(1); }
+if (!/^\d+$/.test(dfn || '')) { console.error('Usage: node patient.js history-plan --dfn <dfn> [--today YYYY-MM-DD] [--out file]'); process.exit(1); }
 const today = arg('--today') || new Date().toISOString().slice(0, 10);
-const out = arg('--out') || path.join(__dirname, 'plans', `dfn${dfn}-visits.json`);
+const out = arg('--out') || path.join(ROOT, 'plans', `dfn${dfn}-visits.json`);
 
 const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const weekday = (iso) => new Date(`${iso}T00:00:00Z`).getUTCDay();
@@ -130,7 +131,7 @@ async function main() {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify({ dfn, generated: `history-plan.js ${today}`, visits, ...(extraLabs ? { extraLabs } : {}) }, null, 2));
   const counts = visits.reduce((m, v) => ({ ...m, [v.clinic]: (m[v.clinic] || 0) + 1 }), {});
-  console.log(`Plan for DFN ${dfn}: ${visits.length} visits ${JSON.stringify(counts)} -> ${path.relative(__dirname, out)}`);
+  console.log(`Plan for DFN ${dfn}: ${visits.length} visits ${JSON.stringify(counts)} -> ${path.relative(ROOT, out)}`);
   for (const v of visits) console.log(`  ${v.date} ${v.time} ${v.clinic.padEnd(22)} ${v.visitDiagnoses[0].icd.padEnd(9)} ${v.presenting[0]}`);
 }
 

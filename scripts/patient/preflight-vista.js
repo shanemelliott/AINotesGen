@@ -1,11 +1,12 @@
 // Read-only "what will fail" report for a Synthea bundle (Task 1.7, layer 2).
-// Usage: node preflight-vista.js <bundle.json | logs/preflight-*.json>
+// Usage: node patient.js preflight-vista <bundle.json | logs/preflight-*.json>
 // Calls RPC CDSP UTIL LOAD PREFLIGHT, which only looks mappings up and writes nothing.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
 
 const RPC_NAME = 'CDSP UTIL LOAD PREFLIGHT';
 const RPC_CONTEXT = 'CDSP RPC UTILS';
@@ -29,7 +30,7 @@ function loadInventory(file) {
 async function main() {
   const file = process.argv[2];
   if (!file) {
-    console.error('Usage: node preflight-vista.js <logs/preflight-*.json>');
+    console.error('Usage: node patient.js preflight-vista <logs/preflight-*.json>');
     process.exit(1);
   }
   const inv = loadInventory(file);
@@ -93,7 +94,7 @@ async function main() {
 
   report.push(...skipped);
 
-  const outPath = path.join(__dirname, 'logs', `preflight-report-${path.basename(inv.name || file, '.json')}.json`);
+  const outPath = path.join(ROOT, 'logs', `preflight-report-${path.basename(inv.name || file, '.json')}.json`);
   fs.writeFileSync(outPath, JSON.stringify(report, null, 2));
   console.log(`\nFull report: ${outPath}`);
 }

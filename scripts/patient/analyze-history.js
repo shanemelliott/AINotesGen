@@ -1,10 +1,11 @@
 // Read-only history coverage analysis for the roster patients: visits, notes, vitals and labs over the last 3 years.
-// Usage: node analyze-history.js [--today YYYY-MM-DD]   (writes docs/lighthouse-review/history-analysis.json)
+// Usage: node patient.js analyze-history [--today YYYY-MM-DD]   (writes docs/lighthouse-review/history-analysis.json)
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
-const roster = require('./src/lighthouse-patients.json');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
+const roster = require('../../src/lighthouse-patients.json');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const today = arg('--today') || new Date().toISOString().slice(0, 10);
@@ -64,5 +65,5 @@ const LABS = { A1C: /A1C/i, CHOL: /^CHOLESTEROL|CHOL(ESTEROL)?$/i, LDL: /LDL/i, 
     };
     console.log(`${dfn} ${e.name}: visits3y ${JSON.stringify(out[dfn].visits3y)} buckets ${buckets.join('/')} last6mo ${out[dfn].visitsLast6mo} notes3y ${out[dfn].notes3y} vitals3y ${vitals.length} labs3y ${labs.length}`);
   }
-  fs.writeFileSync(path.join(__dirname, 'docs', 'lighthouse-review', 'history-analysis.json'), JSON.stringify({ today, from3y, out }, null, 2));
+  fs.writeFileSync(path.join(ROOT, 'docs', 'lighthouse-review', 'history-analysis.json'), JSON.stringify({ today, from3y, out }, null, 2));
 })().catch((e) => { console.error(`FAIL ${e.message}`); process.exit(1); });

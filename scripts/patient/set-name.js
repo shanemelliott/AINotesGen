@@ -1,8 +1,8 @@
 // Set a patient's name as given (digits kept) via RPC CDSP UTIL VET SET NAME (DEV ONLY). Dry run unless --apply.
-// Usage: node set-name.js --dfn <dfn> --name "LAST790,FIRST742 A" [--apply]
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
+// Usage: node patient.js set-name --dfn <dfn> --name "LAST790,FIRST742 A" [--apply]
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
 
 async function main() {
   const args = process.argv.slice(2);
@@ -11,7 +11,7 @@ async function main() {
   const name = get('--name');
   const apply = args.includes('--apply');
   if (!/^\d+$/.test(dfn || '') || !name) {
-    console.error('Usage: node set-name.js --dfn <dfn> --name "LAST,FIRST M" [--apply]');
+    console.error('Usage: node patient.js set-name --dfn <dfn> --name "LAST,FIRST M" [--apply]');
     process.exit(1);
   }
   const payload = await callRpc('CDSP UTIL VET SET NAME', [{ string: dfn }, { string: name }, { string: apply ? '1' : '0' }], 'CDSP RPC UTILS', { timeout: 60000 });

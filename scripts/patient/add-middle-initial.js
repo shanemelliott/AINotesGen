@@ -1,5 +1,5 @@
 // Set the middle initial of the Patient name in Synthea FHIR bundles (answer-key patients use A).
-// Usage: node add-middle-initial.js <bundle.json|folder> --names First1,First2 [--out folder] [--initial A] [--dry-run]
+// Usage: node patient.js add-middle-initial <bundle.json|folder> --names First1,First2 [--out folder] [--initial A] [--dry-run]
 //   Sets given[1] to the initial on every name entry (official and maiden), replacing a Synthea middle name.
 //   Only bundles whose first given name is listed in --names are changed; any other bundle is skipped.
 //   Run it on the trimmed bundles. Writes <out>/<same file name>; default out is synthea/output/trimmed.
@@ -32,7 +32,7 @@ function main() {
   const flagValues = new Set([outIdx, inIdx].filter((i) => i >= 0).map((i) => i + 1));
   const input = args.find((a, i) => !a.startsWith('--') && !flagValues.has(i));
   if (!input || !/^[A-Z]$/.test(initial)) {
-    console.error('Usage: node add-middle-initial.js <bundle.json|folder> [--out folder] [--initial A] [--dry-run]');
+    console.error('Usage: node patient.js add-middle-initial <bundle.json|folder> [--out folder] [--initial A] [--dry-run]');
     process.exit(1);
   }
   const files = fs.statSync(input).isDirectory()

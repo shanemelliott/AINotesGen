@@ -1,0 +1,503 @@
+[
+  {
+    "name": "trim-synthea",
+    "group": "patient",
+    "description": "Trim Synthea FHIR bundles so the record starts at military entry (18th birthday).",
+    "pipeline": 10,
+    "preview": null
+  },
+  {
+    "name": "preflight-synthea",
+    "group": "patient",
+    "description": "Offline inventory of the codes a Synthea bundle will send to the SYN loader (Task 1.7, layer 1).",
+    "pipeline": 20,
+    "preview": null
+  },
+  {
+    "name": "preflight-vista",
+    "group": "patient",
+    "description": "Read-only \"what will fail\" report for a Synthea bundle (Task 1.7, layer 2).",
+    "pipeline": 30,
+    "preview": null
+  },
+  {
+    "name": "load-synthea",
+    "group": "patient",
+    "description": "Load a Synthea FHIR bundle into VistA via RPC CDSP UTIL LOAD FHIR (DEV ONLY).",
+    "pipeline": 40,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "set-name",
+    "group": "patient",
+    "description": "Set a patient's name as given (digits kept) via RPC CDSP UTIL VET SET NAME (DEV ONLY).",
+    "pipeline": 50,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "vet-profile",
+    "group": "patient",
+    "description": "Derive a veteran service profile for a loaded patient, review it, and set it in VistA (DEV ONLY).",
+    "pipeline": 60,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "vet-get",
+    "group": "patient",
+    "description": "Read a patient's veteran service data via RPC CDSP UTIL VET GET (read only, DEV ONLY).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "fetch-vpr",
+    "group": "patient",
+    "description": "Fetch a patient's full VPR JSON via vista-api-x and save as <dfn>.json",
+    "pipeline": 70,
+    "preview": null
+  },
+  {
+    "name": "fetch-load-log",
+    "group": "patient",
+    "description": "Fetch the Synthea load log for a patient via RPC CDSP UTIL LOAD LOG (DEV ONLY).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "import-labs-vitals",
+    "group": "patient",
+    "description": "Insert labs and vitals into VistA with the Data Loader import RPCs (ISI IMPORT VITALS, ISI IMPORT LAB,",
+    "pipeline": 120,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "history-plan",
+    "group": "patient",
+    "description": "Build a 3-year visit plan for a patient (DEV ONLY, read only): PCP about every 6 months with none in the last 6",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "history-labs-plan",
+    "group": "patient",
+    "description": "Build the labs and vitals import plan that matches a visit plan (DEV ONLY, read only).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "add-middle-initial",
+    "group": "patient",
+    "description": "Set the middle initial of the Patient name in Synthea FHIR bundles (answer-key patients use A).",
+    "pipeline": null,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "apply-loader-maps",
+    "group": "patient",
+    "description": "Apply or preview loader map fixes from patches/loader-maps.json via RPC CDSP UTIL MAP SET (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "problem-edit",
+    "group": "patient",
+    "description": "Align VistA problems with Lighthouse through the CPRS problem list RPCs (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "generate-batch",
+    "group": "patient",
+    "description": "Generate the veteran test batch with Synthea, then trim every bundle to start at age 18.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "check-batch",
+    "group": "patient",
+    "description": "Check a generated veteran batch against the population profile (openspec/changes/veteran-test-population).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "summarize-patients",
+    "group": "patient",
+    "description": "Writes docs/loaded-patients.md (gitignored): one entry per Synthea patient loaded into dev VistA,",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "analyze-history",
+    "group": "patient",
+    "description": "Read-only history coverage analysis for the roster patients: visits, notes, vitals and labs over the last 3 years.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "extract-encounters",
+    "group": "appointments",
+    "description": "Derive one encounter per order or visit date from <dfn>.json and write output/encounters-<dfn>.json.",
+    "pipeline": 80,
+    "preview": null
+  },
+  {
+    "name": "create-appointments",
+    "group": "appointments",
+    "description": "Batch-create appointments for encounters missing them (reads output/encounters-{dfn}.json).",
+    "pipeline": 90,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "check-midnight",
+    "group": "appointments",
+    "description": "Fail if a visit or appointment sits between 00:00 and 04:59 outside the emergency department.",
+    "pipeline": 100,
+    "preview": null
+  },
+  {
+    "name": "custom-visits",
+    "group": "appointments",
+    "description": "Book appointments and generate notes for hand-specified visits (plans/dfn<dfn>-visits.json), for patients",
+    "pipeline": 110,
+    "preview": {
+      "unless": [
+        "--book",
+        "--generate"
+      ]
+    }
+  },
+  {
+    "name": "cancel-appointment",
+    "group": "appointments",
+    "description": "Cancel an appointment by its SDEC APPOINTMENT IEN (RPC SDEC APPDEL, cancelled by clinic).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "fetch-clinics",
+    "group": "appointments",
+    "description": "Look up SDES clinic info (resource IEN, provider, stop code) for hospital locations in logs/file44-locations.json.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "verify-clinics",
+    "group": "appointments",
+    "description": "Check each clinic in src/clinic-lookup.json can take appointments: active, has a resource, and availability slots in a date window.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "test-create-appointment",
+    "group": "appointments",
+    "description": "Smoke test: create one past appointment via SDEC ARSET + SDEC APPADD.",
+    "pipeline": null,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "test-walkin",
+    "group": "appointments",
+    "description": "Smoke test for SDES2 CREATE WALKIN APPT (context SDESRPC).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "generate-notes",
+    "group": "notes",
+    "description": "Generate AI notes for all encounters of a patient, flag questionable ones,",
+    "pipeline": 150,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "approve-note",
+    "group": "notes",
+    "description": "Move reviewed note file(s) from output/review/ to output/ready/.",
+    "pipeline": 160,
+    "preview": null
+  },
+  {
+    "name": "sign-notes",
+    "group": "notes",
+    "description": "Batch create (+ optionally sign) every note in output/ready/, archive to",
+    "pipeline": 170,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "resign-notes",
+    "group": "notes",
+    "description": "Re-sign notes that were created but failed to sign (e.g.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "link-note-visits",
+    "group": "notes",
+    "description": "Link a patient's notes that have no visit to their appointment's visit via RPC",
+    "pipeline": 180,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "review-pcp-notes",
+    "group": "notes",
+    "description": "Read-only: extract the existing notes at PCP visits for the roster patients so they can be read and checked.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "test-write-note",
+    "group": "notes",
+    "description": "Smoke test: generate a note via Task 3's AI pipeline and write it to VistA",
+    "pipeline": null,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
+    "name": "test-ai",
+    "group": "notes",
+    "description": "AI note generation helpers and a manual test run (also used by the note scripts).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "fetch-note-titles",
+    "group": "notes",
+    "description": "List selectable TIU note titles via RPC CDSP GET NOTE TITLES and show those matching a pattern.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "add-rx",
+    "group": "meds",
+    "description": "Add a new released outpatient Rx (used to renew an expired one) via RPC CDSP UTIL ADD RX (DEV ONLY).",
+    "pipeline": 130,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "renew-rx",
+    "group": "meds",
+    "description": "Renew an outpatient prescription the way CPRS does (ORWDXR RENEW), then sign it (ORWDX SEND).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "finish-rx",
+    "group": "meds",
+    "description": "Finish a pending outpatient order via RPC CDSP UTIL FINISH RX (CDSPRX FINORD, DEV ONLY), like Outpatient Pharmacy's Finish.",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "fill-rx",
+    "group": "meds",
+    "description": "File a (backdated) refill on an existing Rx via RPC CDSP UTIL RX FILL (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "fill-patient-rx",
+    "group": "meds",
+    "description": "Refill every active Rx of a patient that still has refills (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "fill-plan",
+    "group": "meds",
+    "description": "File the refills listed in a plan file (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "fill-history",
+    "group": "meds",
+    "description": "Build a refill history plan for a patient's Rxs that still have refills (DEV ONLY, read only).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "check-rx-vpr",
+    "group": "meds",
+    "description": "Show what the saved VPR JSON (<dfn>.json from fetch-vpr.js) holds for one Rx.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "backfill-rx-dosing",
+    "group": "meds",
+    "description": "Fill structured dosing and the sig on Rxs loaded without them via RPC CDSP UTIL RX DOSING BACKFILL (DEV ONLY).",
+    "pipeline": 140,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "backfill-all-rx",
+    "group": "meds",
+    "description": "Run the dosing backfill over many patients and print one summary line each (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "build-answer-key-files",
+    "group": "answer-key",
+    "description": "Build docs/TestPatientsWithAnswers/<label>-<first>-<last>.json and .md (one pair per patient): what was added to each patient and the answer key for the AI summ",
+    "pipeline": 190,
+    "preview": null
+  },
+  {
+    "name": "build-test-patient",
+    "group": "answer-key",
+    "description": "Builds a fully synthetic Synthea-style FHIR transaction bundle for a 76-year-old male with persistent",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "build-test-notes",
+    "group": "answer-key",
+    "description": "Long synthetic specialty notes for the AI summary test patient made by build-test-patient.js (DEV ONLY).",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit",
+        "--book"
+      ]
+    }
+  },
+  {
+    "name": "lighthouse-verify",
+    "group": "lighthouse",
+    "description": "Review roster patients against Lighthouse (read-only) and save each result for the final report.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "lighthouse-request",
+    "group": "lighthouse",
+    "description": "Render docs/lighthouse-review/lighthouse-request-items.json as a data request to the Lighthouse sandbox team.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "lighthouse-problem-request",
+    "group": "lighthouse",
+    "description": "Build the problem-list part of the Lighthouse data request: active VistA problems Lighthouse does not hold.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "lighthouse-problems",
+    "group": "lighthouse",
+    "description": "Print the problem list comparison per patient from docs/lighthouse-review/dfn-*.json (read-only).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "lighthouse-apply-demographics",
+    "group": "lighthouse",
+    "description": "Make VistA demographics follow Lighthouse (DEV ONLY): address, birth date, sex.",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
+    "name": "lighthouse-preregistration",
+    "group": "lighthouse",
+    "description": "Last step of the roster review: record the pre-registration check as C (CONNECTED), so VistA does not ask for a",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "lighthouse-launch",
+    "group": "lighthouse",
+    "description": "Lighthouse SMART launch token <-> ICN.",
+    "pipeline": null,
+    "preview": null
+  }
+]

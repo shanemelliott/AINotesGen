@@ -1,5 +1,5 @@
 // Trim Synthea FHIR bundles so the record starts at military entry (18th birthday).
-// Usage: node trim-synthea.js <bundle.json|folder> [--out folder] [--childhood redate|drop]
+// Usage: node patient.js trim-synthea <bundle.json|folder> [--out folder] [--childhood redate|drop]
 //   Drops every resource dated before the patient's 18th birthday. Conditions and medications still
 //   active at 18 are re-dated to the 18th birthday (default) or dropped (--childhood drop).
 //   References to dropped resources are removed. Writes <out>/<same file name>; default out is synthea/output/trimmed.
@@ -103,7 +103,7 @@ function main() {
   const flagValues = new Set([outIdx, chIdx].filter((i) => i >= 0).map((i) => i + 1));
   const input = args.find((a, i) => !a.startsWith('--') && !flagValues.has(i));
   if (!input || !['redate', 'drop'].includes(childhood)) {
-    console.error('Usage: node trim-synthea.js <bundle.json|folder> [--out folder] [--childhood redate|drop]');
+    console.error('Usage: node patient.js trim-synthea <bundle.json|folder> [--out folder] [--childhood redate|drop]');
     process.exit(1);
   }
   const files = fs.statSync(input).isDirectory()

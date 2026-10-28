@@ -1,9 +1,10 @@
 // Load a Synthea FHIR bundle into VistA via RPC CDSP UTIL LOAD FHIR (DEV ONLY).
-// Usage: node load-synthea.js <bundle.json> [--dry-run] [--chunk-size N] [--skip-types A,B | --keep-all] [--per-type N]
+// Usage: node patient.js load-synthea <bundle.json> [--dry-run] [--chunk-size N] [--skip-types A,B | --keep-all] [--per-type N]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { chunkBundleJson, loadBundle, DEFAULT_CHUNK_SIZE } = require('./src/fhirBundleTransport');
+require('../../src/config'); // loads .env
+const { chunkBundleJson, loadBundle, DEFAULT_CHUNK_SIZE } = require('../../src/fhirBundleTransport');
 
 // No SYN loader exists for these; they only add size (billing, base64 C-CDA notes).
 const DEFAULT_SKIP_TYPES = ['Claim', 'ExplanationOfBenefit', 'DocumentReference'];
@@ -28,7 +29,7 @@ async function main() {
   else if (skipIdx >= 0) skipTypes = (valueAfter(args, '--skip-types') || '').split(',').filter(Boolean);
 
   if (!file || !Number.isInteger(chunkSize) || chunkSize < 1) {
-    console.error('Usage: node load-synthea.js <bundle.json> [--dry-run] [--chunk-size N] [--skip-types A,B | --keep-all] [--per-type N]');
+    console.error('Usage: node patient.js load-synthea <bundle.json> [--dry-run] [--chunk-size N] [--skip-types A,B | --keep-all] [--per-type N]');
     process.exit(1);
   }
 
@@ -75,7 +76,7 @@ async function main() {
   }
 
   const result = await loadBundle(text, { chunkSize });
-  const outDir = path.join(__dirname, 'logs');
+  const outDir = path.join(ROOT, 'logs');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `load-${path.basename(file, '.json')}.result.json`);
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));

@@ -1,15 +1,15 @@
 // Writes docs/loaded-patients.md (gitignored): one entry per Synthea patient loaded into dev VistA,
 // with counts of meds, labs, notes and visits and a one-line clinical summary.
-// Usage: node summarize-patients.js [<dfn> ...]   (default: every DFN with a logs/load-*.result.json or note)
+// Usage: node patient.js summarize-patients [<dfn> ...]   (default: every DFN with a logs/load-*.result.json or note)
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { categorizeProblem, day, isoDate, ageOn } = require('./src/encounters');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
-const vetSummary = require('./src/vetSummary');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { categorizeProblem, day, isoDate, ageOn } = require('../../src/encounters');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
+const vetSummary = require('../../src/vetSummary');
 
-const ROOT = __dirname;
+const { ROOT } = require('../../src/paths');
 const OUT = path.join(ROOT, 'docs', 'loaded-patients.md');
 const rules = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'problem-rules.json'), 'utf8'));
 const readJson = (f, fallback) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : fallback);
@@ -118,7 +118,7 @@ async function main() {
     '# Loaded patients (dev VistA, station 500)',
     '',
     `Synthea patients loaded with the SYN loader. Generated ${new Date().toISOString().slice(0, 10)} by`,
-    '`node summarize-patients.js` from live VPR data, `src/notes.json` and `src/appointments.json`.',
+    '`node patient.js summarize-patients` from live VPR data, `src/notes.json` and `src/appointments.json`.',
     'This file holds synthetic patient details and is gitignored.',
     '',
   ].join('\n');

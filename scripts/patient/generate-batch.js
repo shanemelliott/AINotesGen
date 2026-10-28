@@ -1,5 +1,5 @@
 // Generate the veteran test batch with Synthea, then trim every bundle to start at age 18.
-// Usage: node generate-batch.js [--batch synthea/batches/batch-1.json] [--only runId,runId] [--skip-trim]
+// Usage: node patient.js generate-batch [--batch synthea/batches/batch-1.json] [--only runId,runId] [--skip-trim]
 // Reads the run table from the batch file, writes raw bundles to synthea/output/<batch>/raw/<run>/,
 // trimmed bundles to synthea/output/<batch>/trimmed/, and records java version, jar hash and the exact
 // command lines back into the batch file under "generated" so the batch can be regenerated.
@@ -51,7 +51,7 @@ if (!args.includes('--skip-trim')) {
   for (const run of batch.runs) {
     const dir = path.join(outRoot, 'raw', run.id, 'fhir');
     if (!fs.existsSync(dir)) continue;
-    const t = spawnSync('node', ['trim-synthea.js', dir, '--out', trimmed], { encoding: 'utf8' });
+    const t = spawnSync('node', [path.join(__dirname, 'trim-synthea.js'), dir, '--out', trimmed], { encoding: 'utf8' });
     process.stdout.write(t.stdout);
   }
 }

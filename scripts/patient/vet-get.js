@@ -1,12 +1,13 @@
 // Read a patient's veteran service data via RPC CDSP UTIL VET GET (read only, DEV ONLY).
-// Usage: node vet-get.js --dfn <dfn> [--summary] [--tables]
+// Usage: node patient.js vet-get --dfn <dfn> [--summary] [--tables]
 //   --summary  print a readable summary (like Patient Inquiry) instead of every field
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
-const { summarize } = require('./src/vetSummary');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
+const { summarize } = require('../../src/vetSummary');
 
 const RPC_NAME = 'CDSP UTIL VET GET';
 const RPC_CONTEXT = 'CDSP RPC UTILS';
@@ -17,7 +18,7 @@ async function main() {
   const dfn = args.includes('--dfn') ? args[args.indexOf('--dfn') + 1] : undefined;
   const tables = args.includes('--tables');
   if (!/^\d+$/.test(dfn || '')) {
-    console.error('Usage: node vet-get.js --dfn <dfn> [--summary] [--tables]');
+    console.error('Usage: node patient.js vet-get --dfn <dfn> [--summary] [--tables]');
     process.exit(1);
   }
 
@@ -25,7 +26,7 @@ async function main() {
   const result = parseRpcResult(payload);
   if (result.ERROR) throw new Error(`${RPC_NAME}: ${result.ERROR}`);
 
-  const outPath = path.join(__dirname, 'logs', `vet-get-${dfn}.json`);
+  const outPath = path.join(ROOT, 'logs', `vet-get-${dfn}.json`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
 

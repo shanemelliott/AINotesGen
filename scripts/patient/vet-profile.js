@@ -1,5 +1,5 @@
 // Derive a veteran service profile for a loaded patient, review it, and set it in VistA (DEV ONLY).
-// Usage: node vet-profile.js --dfn <dfn> [--derive-only] [--apply] [--from-file] [--address <id|random>]
+// Usage: node patient.js vet-profile --dfn <dfn> [--derive-only] [--apply] [--from-file] [--address <id|random>]
 //   default      derive, write output/vet-profile-<dfn>.json, dry run through CDSP UTIL VET SET
 //   --apply      write the values (only after reviewing a dry run)
 //   --from-file  use the (possibly hand-edited) output/vet-profile-<dfn>.json instead of deriving
@@ -7,15 +7,16 @@
 //   When an applied run changes the address, RPC SDEC EDIT PAT PRE-REGISTRATION records the periodic
 //   pre-registration check as C (CONNECTED); --no-prereg skips it.
 // The dry-run report with the old values is saved to logs/vet-dryrun-<dfn>.json (rollback input).
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
-const { deriveProfile, profileFields, fmDate } = require('./src/vetProfile');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
+const { deriveProfile, profileFields, fmDate } = require('../../src/vetProfile');
 
-const rules = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'veteran-rules.json'), 'utf8'));
-const eggs = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'easter-egg-addresses.json'), 'utf8')).addresses;
+const rules = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'veteran-rules.json'), 'utf8'));
+const eggs = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'easter-egg-addresses.json'), 'utf8')).addresses;
 const list = (v) => (Array.isArray(v) ? v : Object.values(v || {}));
 const ADDRESS_FIELDS = new Set(['.111', '.112', '.113', '.114', '.115', '.116', '.1112', '.1171', '.1172', '.1173']);
 
@@ -73,11 +74,11 @@ async function main() {
   const dfn = args.includes('--dfn') ? args[args.indexOf('--dfn') + 1] : undefined;
   const apply = args.includes('--apply');
   if (!/^\d+$/.test(dfn || '')) {
-    console.error('Usage: node vet-profile.js --dfn <dfn> [--derive-only] [--apply] [--from-file]');
+    console.error('Usage: node patient.js vet-profile --dfn <dfn> [--derive-only] [--apply] [--from-file]');
     process.exit(1);
   }
 
-  const outPath = path.join(__dirname, 'output', `vet-profile-${dfn}.json`);
+  const outPath = path.join(ROOT, 'output', `vet-profile-${dfn}.json`);
   let profile;
   if (args.includes('--from-file')) {
     profile = JSON.parse(fs.readFileSync(outPath, 'utf8'));
@@ -105,7 +106,7 @@ async function main() {
     console.log(`  ${String(r.item)} ${String(r.field).padEnd(9)} ${String(r.label).padEnd(34)} ${String(r.old).padEnd(9)} -> ${String(r.new).padEnd(14)} ${r.status}`);
   }
   if (!apply) {
-    const dryPath = path.join(__dirname, 'logs', `vet-dryrun-${dfn}.json`);
+    const dryPath = path.join(ROOT, 'logs', `vet-dryrun-${dfn}.json`);
     fs.writeFileSync(dryPath, JSON.stringify(result, null, 2));
     console.log(`\nDry-run report (old values): ${dryPath}`);
   } else {

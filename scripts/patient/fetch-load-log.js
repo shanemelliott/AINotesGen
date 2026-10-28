@@ -1,10 +1,11 @@
 // Fetch the Synthea load log for a patient via RPC CDSP UTIL LOAD LOG (DEV ONLY).
-// Usage: node fetch-load-log.js <dfn> [--category procedure] [--show N]
+// Usage: node patient.js fetch-load-log <dfn> [--category procedure] [--show N]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
 
 const RPC_NAME = 'CDSP UTIL LOAD LOG';
 const RPC_CONTEXT = 'CDSP RPC UTILS';
@@ -27,7 +28,7 @@ async function main() {
   const category = valueAfter(args, '--category') || '';
   const show = Number(valueAfter(args, '--show') || 3);
   if (!dfn) {
-    console.error('Usage: node fetch-load-log.js <dfn> [--category procedure] [--show N]');
+    console.error('Usage: node patient.js fetch-load-log <dfn> [--category procedure] [--show N]');
     process.exit(1);
   }
 
@@ -41,7 +42,7 @@ async function main() {
   if (result.ERROR) throw new Error(`${RPC_NAME}: ${result.ERROR}`);
 
   const entries = Array.isArray(result.entries) ? result.entries : Object.values(result.entries || {});
-  const outDir = path.join(__dirname, 'logs');
+  const outDir = path.join(ROOT, 'logs');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, `loadlog-${dfn}${category ? `-${category}` : ''}.json`);
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));

@@ -1,17 +1,18 @@
 // Align VistA problems with Lighthouse through the CPRS problem list RPCs (DEV ONLY). Dry run unless --apply.
-// Usage: node problem-edit.js [--dfn <dfn>] [--apply]
+// Usage: node patient.js problem-edit [--dfn <dfn>] [--apply]
 // Reads src/lighthouse-problem-fixes.json: per problem an onset date (YYYY-MM-DD), optional status (A or I) and an
 // ICD code copied from another problem that already has it (icdFrom, found through ORQQPL EDIT LOAD of that problem).
 // Calls ORQQPL EDIT SAVE with GMPFLD and GMPORIG strings as CPRS sends them. Results: docs/lighthouse-review/problem-changes.json.
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
 
 const CTX = 'OR CPRS GUI CHART';
 const SEP = '\u00fe';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const fixes = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'lighthouse-problem-fixes.json'), 'utf8'));
+const fixes = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'lighthouse-problem-fixes.json'), 'utf8'));
 const rpc = (name, params) => callRpc(name, params.map((p) => (typeof p === 'object' ? p : { string: String(p) })), CTX, { timeout: 60000 });
 
 const fmDate = (iso) => String((+iso.slice(0, 4) - 1700) * 10000 + +iso.slice(5, 7) * 100 + +iso.slice(8, 10));
@@ -66,7 +67,7 @@ async function main() {
     results[`${fx.dfn}/${fx.ien}`] = { note: fx.note, changes, applied };
   }
   if (apply) {
-    const file = path.join(__dirname, 'docs', 'lighthouse-review', 'problem-changes.json');
+    const file = path.join(ROOT, 'docs', 'lighthouse-review', 'problem-changes.json');
     const prev = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
     fs.writeFileSync(file, JSON.stringify({ ...prev, ...results }, null, 2));
     console.log('\nSaved docs/lighthouse-review/problem-changes.json');

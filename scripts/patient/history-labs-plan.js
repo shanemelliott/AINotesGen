@@ -1,20 +1,21 @@
 // Build the labs and vitals import plan that matches a visit plan (DEV ONLY, read only).
-// Usage: node history-labs-plan.js --dfn <dfn> [--visits plans/dfn<dfn>-visits.json] [--out plans/dfn<dfn>-labs-vitals.json]
+// Usage: node patient.js history-labs-plan --dfn <dfn> [--visits plans/dfn<dfn>-visits.json] [--out plans/dfn<dfn>-labs-vitals.json]
 // PCP visits get vitals and, for the patient's conditions, A1C, a basic metabolic panel (every PCP visit) and a lipid
 // panel (every second one). ED and specialty visits get vitals, and the "objective" values of a sentinel visit
 // (history-plan.js --sentinels). Values are controlled-range random numbers, deterministic per DFN.
-// Then: node import-labs-vitals.js --plan <out> [--apply]
+// Then: node patient.js import-labs-vitals --plan <out> [--apply]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
-const { rng, seedFor } = require('./src/vetProfile');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
+const { rng, seedFor } = require('../../src/vetProfile');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const dfn = arg('--dfn');
-if (!/^\d+$/.test(dfn || '')) { console.error('Usage: node history-labs-plan.js --dfn <dfn>'); process.exit(1); }
-const visitsPath = arg('--visits') || path.join(__dirname, 'plans', `dfn${dfn}-visits.json`);
-const out = arg('--out') || path.join(__dirname, 'plans', `dfn${dfn}-labs-vitals.json`);
+if (!/^\d+$/.test(dfn || '')) { console.error('Usage: node patient.js history-labs-plan --dfn <dfn>'); process.exit(1); }
+const visitsPath = arg('--visits') || path.join(ROOT, 'plans', `dfn${dfn}-visits.json`);
+const out = arg('--out') || path.join(ROOT, 'plans', `dfn${dfn}-labs-vitals.json`);
 const plan = JSON.parse(fs.readFileSync(visitsPath, 'utf8'));
 
 const at = (date, time) => `${date}T${time}`;
@@ -60,6 +61,6 @@ async function conditions() {
   const key = (x) => x.at;
   [vitals, labs, panels].forEach((a) => a.sort((x, y) => key(x).localeCompare(key(y))));
   fs.writeFileSync(out, JSON.stringify({ dfn, enteredBy: 'PROVIDER,ONE', note: `from ${path.basename(visitsPath)}`, vitals, labs, panels }, null, 2));
-  console.log(`DFN ${dfn}: ${vitals.length} vitals, ${labs.length} labs, ${panels.length} panels -> ${path.relative(__dirname, out)} (diabetes ${c.diabetes}, hypertension ${c.htn})`);
+  console.log(`DFN ${dfn}: ${vitals.length} vitals, ${labs.length} labs, ${panels.length} panels -> ${path.relative(ROOT, out)} (diabetes ${c.diabetes}, hypertension ${c.htn})`);
   for (const x of [...labs.map((l) => `${l.at} ${l.location.padEnd(14)} ${l.test} ${l.value}`), ...panels.map((p) => `${p.at} ${p.location.padEnd(14)} ${p.panel} ${JSON.stringify(p.values).slice(0, 70)}`)].sort()) console.log('  ' + x);
 })().catch((e) => { console.error(`FAIL ${e.message}`); process.exit(1); });

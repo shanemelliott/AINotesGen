@@ -1,22 +1,23 @@
 // Insert labs and vitals into VistA with the Data Loader import RPCs (ISI IMPORT VITALS, ISI IMPORT LAB,
 // ISI IMPORT LAB PANEL), the same calls TPMS makes. DEV ONLY. Dry run unless --apply.
-// Usage: node import-labs-vitals.js --plan plans/<file>.json [--apply] [--only vitals|labs|panels]
+// Usage: node patient.js import-labs-vitals --plan plans/<file>.json [--apply] [--only vitals|labs|panels]
 // Plan: { "dfn": "100973", "location": "PRIMARY CARE", "enteredBy": "PROVIDER,ONE",
 //   "vitals": [{ "at": "2026-10-16T07:00", "type": "BLOOD PRESSURE", "value": "128/82" }],
 //   "labs":   [{ "at": "...", "test": "HEMOGLOBIN A1C", "sample": "BLOOD", "value": "6.8" }],
 //   "panels": [{ "at": "...", "panel": "BASIC METABOLIC PANEL", "sample": "BLOOD", "values": { "SODIUM": 140 } }] }
 // "at" is VistA local time (Eastern). Weight values get the suffix L; temperature is sent as a plain number (98.8F is rejected).
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
 
 const CONTEXT = process.env.VISTA_IMPORT_CONTEXT || 'ISI DATA IMPORT';
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const apply = process.argv.includes('--apply');
 const only = arg('--only');
 const planPath = arg('--plan');
-if (!planPath) { console.error('Usage: node import-labs-vitals.js --plan <plan.json> [--apply] [--only vitals|labs|panels]'); process.exit(1); }
+if (!planPath) { console.error('Usage: node patient.js import-labs-vitals --plan <plan.json> [--apply] [--only vitals|labs|panels]'); process.exit(1); }
 const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
 const location = plan.location || process.env.VISTA_IMPORT_LOCATION || 'PRIMARY CARE';
 const enteredBy = plan.enteredBy || process.env.VISTA_IMPORT_ENTERED_BY || 'PROVIDER,ONE';
@@ -73,7 +74,7 @@ function build(kind, ssn, item) {
     }
   }
   if (apply) {
-    const file = path.join(__dirname, 'logs', `import-${plan.dfn}.json`);
+    const file = path.join(ROOT, 'logs', `import-${plan.dfn}.json`);
     const prev = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : [];
     fs.writeFileSync(file, JSON.stringify([...prev, ...results], null, 2));
   }

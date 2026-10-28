@@ -1,5 +1,5 @@
 // Check a generated veteran batch against the population profile (openspec/changes/veteran-test-population).
-// Usage: node check-batch.js [--batch synthea/batches/batch-1.json] [--dir synthea/output/batch-1/trimmed]
+// Usage: node patient.js check-batch [--batch synthea/batches/batch-1.json] [--dir synthea/output/batch-1/trimmed]
 // Prints one line per patient, then pass or fail for each profile requirement.
 const fs = require('fs');
 const path = require('path');

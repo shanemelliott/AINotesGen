@@ -1,13 +1,14 @@
 // Apply or preview loader map fixes from patches/loader-maps.json via RPC CDSP UTIL MAP SET (DEV ONLY).
-// Usage: node apply-loader-maps.js [--apply] [--show] [--file path]
+// Usage: node patient.js apply-loader-maps [--apply] [--show] [--file path]
 //   default is a dry run (reports old and new values, writes nothing)
 //   --show   print the current value of every key first (RPC CDSP UTIL MAP GET)
 //   --apply  write the changes; results are saved to logs/loader-maps-<timestamp>.json (old values for a revert)
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
 
 const CONTEXT = 'CDSP RPC UTILS';
 
@@ -23,7 +24,7 @@ async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
   const fileIdx = args.indexOf('--file');
-  const file = fileIdx >= 0 ? args[fileIdx + 1] : path.join(__dirname, 'patches', 'loader-maps.json');
+  const file = fileIdx >= 0 ? args[fileIdx + 1] : path.join(ROOT, 'patches', 'loader-maps.json');
   const patches = JSON.parse(fs.readFileSync(file, 'utf8'));
 
   if (args.includes('--show')) {
@@ -45,8 +46,8 @@ async function main() {
   }
 
   if (apply) {
-    fs.mkdirSync(path.join(__dirname, 'logs'), { recursive: true });
-    const out = path.join(__dirname, 'logs', `loader-maps-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+    fs.mkdirSync(path.join(ROOT, 'logs'), { recursive: true });
+    const out = path.join(ROOT, 'logs', `loader-maps-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
     fs.writeFileSync(out, JSON.stringify(result, null, 2));
     console.log(`\nSaved ${out}`);
   }
