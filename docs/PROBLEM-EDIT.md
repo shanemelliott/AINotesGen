@@ -77,3 +77,7 @@ copied from problems that already have them instead of being searched.
 
 - ORQQPL1 source: https://vivian.worldvista.org/dox/Routine_ORQQPL1_source.html (`EDLOAD`, `EDSAVE`, `ADDSAVE`)
 - RPC `ORQQPL ADD SAVE`: https://vivian.worldvista.org/vivian-data/8994/8994-257.html
+
+## Reactivating problems the loader filed inactive
+
+`node patient.js reactivate-problems --dfn <dfn>[,<dfn>] [--ien <ien>] [--apply]` lists the problems in `<dfn>.json` (run fetch-vpr first) that are INACTIVE with no resolved date, which is what the SYNFPRB clinical status bug produced (see `patches/LOADER-CHANGES.md`), and with `--apply` sets them ACTIVE through the same `ORQQPL EDIT LOAD` and `ORQQPL EDIT SAVE` calls. Results go to `logs/reactivate-problems.json`. Run fetch-vpr again afterwards.

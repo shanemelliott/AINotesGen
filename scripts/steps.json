@@ -138,6 +138,17 @@
     }
   },
   {
+    "name": "reactivate-problems",
+    "group": "patient",
+    "description": "Reactivate problems the loader filed INACTIVE by mistake (inactive with no resolved date), DEV ONLY. Dry run unless --apply.",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--apply"
+      ]
+    }
+  },
+  {
     "name": "generate-batch",
     "group": "patient",
     "description": "Generate the veteran test batch with Synthea, then trim every bundle to start at age 18.",

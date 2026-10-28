@@ -47,3 +47,4 @@
 - [x] 6.1 Patch the loader so an active condition stays ACTIVE through the full-ICD path (the forced inactive when an abatement date is present, near line 217 of the problem loader) (done 2026-10-28 in the fork branch `fix-problem-active-status`: the cause was a case mismatch, `"active"` from the bundle compared with `"Active"`, not the full-ICD path or the abatement rule; `SYNFPRB.m` only)
 - [x] 6.2 Log the patch in `patches/LOADER-CHANGES.md` (done: new row in the table)
 - [ ] 6.3 Verify with a loaded test patient that an active condition shows active in the VPR
+- [ ] 6.4 Reactivate the problems the loader filed INACTIVE by mistake on already loaded patients with `node patient.js reactivate-problems --dfn <dfn>[,<dfn>] [--apply]` (script written 2026-10-28; dry run lists 16 problems on the four newest patients). Not applied: it adds active diabetes entries to two charts whose answer keys say there is no diabetes diagnosis, so the owner decides first
