@@ -1,10 +1,10 @@
 // Smoke test: generate a note via Task 3's AI pipeline and write it to VistA
 // via TIU CREATE RECORD. Unsigned by default.
-// Usage: node test-write-note.js [--dfn 100965] [--date 2025-10-21] [--dry-run]
-const config = require('./src/config');
+// Usage: node patient.js test-write-note [--dfn 100965] [--date 2025-10-21] [--dry-run]
+const config = require('../../src/config');
 const { stripMarkerLine, validateNote } = require('./test-ai');
-const { filemanDateTime, buildVisitString, resolveAppointment, createNote, signNote } = require('./src/notesClient');
-const { generateNoteText } = require('./src/noteGenerator');
+const { filemanDateTime, buildVisitString, resolveAppointment, createNote, signNote } = require('../../src/notesClient');
+const { generateNoteText } = require('../../src/noteGenerator');
 
 function parseArgs(argv) {
   const args = { dfn: '100965', date: '2025-10-21', dryRun: false, sign: false };

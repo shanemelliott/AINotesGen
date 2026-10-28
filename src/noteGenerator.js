@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { loadPatient, getEncounter, buildContext, callCandidate } = require('../test-ai');
+const { loadPatient, getEncounter, buildContext, callCandidate } = require('../scripts/notes/test-ai');
 const { insertLabBlock } = require('./labBlock');
 
 const DEFAULT_MODEL = { model: 'o3-mini', apiVersion: '2025-04-28' };

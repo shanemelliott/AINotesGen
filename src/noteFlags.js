@@ -1,6 +1,6 @@
 // Deterministic (+ cheap LLM fallback) sanity checks to catch clinically
 // questionable notes before they're queued for VistA writing/signing.
-const { validateNote } = require('../test-ai');
+const { validateNote } = require('../scripts/notes/test-ai');
 
 const CONTRACEPTIVE_MEDS = ['medroxyprogesterone', 'norethindrone', 'levonorgestrel', 'etonogestrel'];
 const PREGNANCY_TERMS = ['pregnan', 'eclampsia', 'antepartum', 'prenatal', 'obstetric', 'postpartum'];

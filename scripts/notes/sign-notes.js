@@ -1,16 +1,17 @@
 // Batch create (+ optionally sign) every note in output/ready/, archive to
 // output/signed/, and log to src/notes.json.
-// Usage: node sign-notes.js --all [--sign] [--dry-run]
-//        node sign-notes.js 100965-2025-10-04 [--sign]
+// Usage: node patient.js sign-notes --all [--sign] [--dry-run]
+//        node patient.js sign-notes 100965-2025-10-04 [--sign]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('./src/config');
-const { createNote, signNote } = require('./src/notesClient');
-const { listIds, readNote, moveNote } = require('./src/noteStore');
+const config = require('../../src/config');
+const { createNote, signNote } = require('../../src/notesClient');
+const { listIds, readNote, moveNote } = require('../../src/noteStore');
 
-const READY_DIR = path.join(__dirname, 'output', 'ready');
-const SIGNED_DIR = path.join(__dirname, 'output', 'signed');
-const NOTES_LOG_PATH = path.join(__dirname, 'src', 'notes.json');
+const READY_DIR = path.join(ROOT, 'output', 'ready');
+const SIGNED_DIR = path.join(ROOT, 'output', 'signed');
+const NOTES_LOG_PATH = path.join(ROOT, 'src', 'notes.json');
 
 function parseArgs(argv) {
   const args = { all: false, sign: false, dryRun: false, ids: [] };
@@ -44,7 +45,7 @@ function resolveReadyIds(args) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.all && args.ids.length === 0) {
-    console.error('Usage: node sign-notes.js --all [--sign] [--dry-run]  |  node sign-notes.js <id> [--sign]');
+    console.error('Usage: node patient.js sign-notes --all [--sign] [--dry-run]  |  node patient.js sign-notes <id> [--sign]');
     process.exit(1);
   }
 

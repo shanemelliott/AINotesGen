@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test:ai": "node test-ai.js"
+    "test:ai": "node scripts/notes/test-ai.js"
   },
   "dependencies": {
     "@va/sts-token": "file:..\\VistaJSNode\\dub\\sts-token",

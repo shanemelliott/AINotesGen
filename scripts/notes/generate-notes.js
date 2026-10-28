@@ -1,20 +1,21 @@
 // Generate AI notes for all encounters of a patient, flag questionable ones,
 // and write to output/review/ (needs human review) or output/ready/ (clean).
-// Usage: node generate-notes.js --dfn 100965 [--dry-run]
+// Usage: node patient.js generate-notes --dfn 100965 [--dry-run]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('./src/config');
+const config = require('../../src/config');
 const { stripMarkerLine } = require('./test-ai');
-const { generateNoteText } = require('./src/noteGenerator');
-const { reflowText } = require('./src/reflow');
-const { resolveAppointment, buildVisitString, filemanDateTime } = require('./src/notesClient');
-const { flagNote } = require('./src/noteFlags');
-const { noteTitleFor } = require('./src/noteTitles');
-const { noteId, writeNote, existsInDir } = require('./src/noteStore');
+const { generateNoteText } = require('../../src/noteGenerator');
+const { reflowText } = require('../../src/reflow');
+const { resolveAppointment, buildVisitString, filemanDateTime } = require('../../src/notesClient');
+const { flagNote } = require('../../src/noteFlags');
+const { noteTitleFor } = require('../../src/noteTitles');
+const { noteId, writeNote, existsInDir } = require('../../src/noteStore');
 
-const REVIEW_DIR = path.join(__dirname, 'output', 'review');
-const READY_DIR = path.join(__dirname, 'output', 'ready');
-const SIGNED_DIR = path.join(__dirname, 'output', 'signed');
+const REVIEW_DIR = path.join(ROOT, 'output', 'review');
+const READY_DIR = path.join(ROOT, 'output', 'ready');
+const SIGNED_DIR = path.join(ROOT, 'output', 'signed');
 
 function parseArgs(argv) {
   const args = { dfn: '100965', dryRun: false };
@@ -31,7 +32,7 @@ function existsInAnyStage(id) {
 }
 
 function loadEncounters(dfn) {
-  const encountersPath = path.join(__dirname, 'output', `encounters-${dfn}.json`);
+  const encountersPath = path.join(ROOT, 'output', `encounters-${dfn}.json`);
   if (!fs.existsSync(encountersPath)) {
     throw new Error(`Encounters file not found: ${encountersPath}. Run extract-encounters.js first.`);
   }

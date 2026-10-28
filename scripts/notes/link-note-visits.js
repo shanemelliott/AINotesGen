@@ -1,11 +1,11 @@
 // Link a patient's notes that have no visit to their appointment's visit via RPC
 // CDSP UTIL TIU LINK VISIT (CDSPTIUV, DEV ONLY), then check each note with ORWPCE PCE4NOTE.
 // Dry run unless --commit.
-// Usage: node link-note-visits.js --dfn <dfn> [--tiu <note ien>] [--commit]
-//        node link-note-visits.js --dfn <dfn> --tiu <note ien> --check   (PCE4NOTE only)
-require('./src/config'); // loads .env
-const { callRpc } = require('./src/vistaApiClient');
-const { parseRpcResult } = require('./src/fhirBundleTransport');
+// Usage: node patient.js link-note-visits --dfn <dfn> [--tiu <note ien>] [--commit]
+//        node patient.js link-note-visits --dfn <dfn> --tiu <note ien> --check   (PCE4NOTE only)
+require('../../src/config'); // loads .env
+const { callRpc } = require('../../src/vistaApiClient');
+const { parseRpcResult } = require('../../src/fhirBundleTransport');
 
 const RPC_NAME = 'CDSP UTIL TIU LINK VISIT';
 const RPC_CONTEXT = 'CDSP RPC UTILS';
@@ -27,7 +27,7 @@ async function main() {
   const tiu = arg('--tiu') || '';
   const commit = process.argv.includes('--commit');
   if (!/^\d+$/.test(dfn || '') || (tiu && !/^\d+$/.test(tiu))) {
-    console.error('Usage: node link-note-visits.js --dfn <dfn> [--tiu <note ien>] [--commit] [--check]');
+    console.error('Usage: node patient.js link-note-visits --dfn <dfn> [--tiu <note ien>] [--commit] [--check]');
     process.exit(1);
   }
 

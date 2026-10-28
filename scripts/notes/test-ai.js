@@ -2,11 +2,12 @@
 // Smoke test: can the VA Azure OpenAI endpoint write a synthetic progress note
 // from one encounter in the patient VPR JSON? See openspec/changes/ai-note-smoke-test.
 
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const dotenv = require('dotenv');
-const { indexVpr, extractEncounters, filterProblemsForEncounter } = require('./src/encounters.js');
+const { indexVpr, extractEncounters, filterProblemsForEncounter } = require('../../src/encounters.js');
 
 const ENDPOINT_BASE = 'https://spd-prod-openai-va-apim.azure-api.us/api/openai/deployments';
 const DEFAULT_CANDIDATES = [
@@ -17,9 +18,9 @@ const MARKER = '*** SYNTHETIC TEST NOTE - FICTIONAL PATIENT - NOT FOR CLINICAL U
 const HEADINGS = ['VISIT DATE:', 'CHIEF COMPLAINT:', 'SUBJECTIVE:', 'OBJECTIVE:', 'ASSESSMENT:', 'PLAN:'];
 const MAX_LINE = 80;
 const HISTORY_DAYS = 90;
-const OUTPUT_DIR = path.join(__dirname, 'output');
+const OUTPUT_DIR = path.join(ROOT, 'output');
 
-const USAGE = `Usage: node test-ai.js [options]
+const USAGE = `Usage: node patient.js test-ai [options]
 
   --date YYYY-MM-DD      Encounter date (default 2025-10-21)
   --dfn <dfn>            Patient DFN; reads <dfn>.json (default 100965)
@@ -74,7 +75,7 @@ function ageOn(dob8, d8) {
 // ---------- patient data ----------
 
 function loadPatient(dfn) {
-  const file = path.join(__dirname, `${dfn}.json`);
+  const file = path.join(ROOT, `${dfn}.json`);
   if (!fs.existsSync(file)) fail(`Patient file not found: ${dfn}.json`);
   const vpr = JSON.parse(fs.readFileSync(file, 'utf8'));
   const items = vpr?.payload?.data?.items;
@@ -84,7 +85,7 @@ function loadPatient(dfn) {
 
 function getEncounter(items, dateStr) {
   const date8 = dateStr.replace(/-/g, '');
-  const problemRules = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'problem-rules.json'), 'utf8'));
+  const problemRules = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'problem-rules.json'), 'utf8'));
   const indexed = indexVpr(items);
   const encounters = extractEncounters(indexed, { rules: problemRules });
   const enc = encounters.find((e) => e.date === `${date8.slice(0, 4)}-${date8.slice(4, 6)}-${date8.slice(6, 8)}`);
@@ -385,7 +386,7 @@ async function main() {
 
   const items = loadPatient(args.dfn);
   const encounter = getEncounter(items, args.date);
-  const problemRules = JSON.parse(fs.readFileSync(path.join(__dirname, 'src', 'problem-rules.json'), 'utf8'));
+  const problemRules = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'problem-rules.json'), 'utf8'));
   const ctx = buildContext(encounter, problemRules);
   const payloadText = JSON.stringify(ctx);
   
@@ -413,7 +414,7 @@ async function main() {
 
   const envVars = {};
   dotenv.config({
-    path: process.env.DOTENV_CONFIG_PATH || path.resolve(__dirname, '..', 'VAOSAI', '.env'),
+    path: process.env.DOTENV_CONFIG_PATH || path.resolve(ROOT, '..', 'VAOSAI', '.env'),
     processEnv: envVars, // keep the other secrets in that file out of process.env
     quiet: true,
   });
@@ -443,8 +444,8 @@ async function main() {
       fs.writeFileSync(cleanFile, cleanNote + '\n');
       
       console.log(`\n${r.content}\n`);
-      console.log(`saved: ${path.relative(__dirname, file)}`);
-      console.log(`clean: ${path.relative(__dirname, cleanFile)}`);
+      console.log(`saved: ${path.relative(ROOT, file)}`);
+      console.log(`clean: ${path.relative(ROOT, cleanFile)}`);
     }
     if (fmt) {
       console.log(

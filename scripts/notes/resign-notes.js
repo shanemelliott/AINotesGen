@@ -1,16 +1,17 @@
 // Re-sign notes that were created but failed to sign (e.g. bad cipher index).
-// Usage: node resign-notes.js <tiuIen> <id> [<tiuIen> <id> ...]
+// Usage: node patient.js resign-notes <tiuIen> <id> [<tiuIen> <id> ...]
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('./src/config');
-const { signNote } = require('./src/notesClient');
+const config = require('../../src/config');
+const { signNote } = require('../../src/notesClient');
 
-const NOTES_LOG_PATH = path.join(__dirname, 'src', 'notes.json');
+const NOTES_LOG_PATH = path.join(ROOT, 'src', 'notes.json');
 
 async function main() {
   const argv = process.argv.slice(2);
   if (argv.length === 0 || argv.length % 2 !== 0) {
-    console.error('Usage: node resign-notes.js <tiuIen> <id> [<tiuIen> <id> ...]');
+    console.error('Usage: node patient.js resign-notes <tiuIen> <id> [<tiuIen> <id> ...]');
     process.exit(1);
   }
 

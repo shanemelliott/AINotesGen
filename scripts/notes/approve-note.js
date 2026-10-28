@@ -1,12 +1,13 @@
 // Move reviewed note file(s) from output/review/ to output/ready/.
-// Usage: node approve-note.js --all
-//        node approve-note.js 100965-2025-10-04
-//        node approve-note.js output/review/100965-2025-10-04.json
+// Usage: node patient.js approve-note --all
+//        node patient.js approve-note 100965-2025-10-04
+//        node patient.js approve-note output/review/100965-2025-10-04.json
+const { ROOT } = require('../../src/paths');
 const path = require('path');
-const { listIds, existsInDir, moveNote } = require('./src/noteStore');
+const { listIds, existsInDir, moveNote } = require('../../src/noteStore');
 
-const REVIEW_DIR = path.join(__dirname, 'output', 'review');
-const READY_DIR = path.join(__dirname, 'output', 'ready');
+const REVIEW_DIR = path.join(ROOT, 'output', 'review');
+const READY_DIR = path.join(ROOT, 'output', 'ready');
 
 function idFromArg(arg) {
   // Accept a bare id, or a path to either the .json or .txt file.
@@ -17,7 +18,7 @@ function idFromArg(arg) {
 function main() {
   const argv = process.argv.slice(2);
   if (argv.length === 0) {
-    console.error('Usage: node approve-note.js --all | <id-or-path> [<id-or-path> ...]');
+    console.error('Usage: node patient.js approve-note --all | <id-or-path> [<id-or-path> ...]');
     process.exit(1);
   }
 

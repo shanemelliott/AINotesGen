@@ -1,12 +1,13 @@
 // Read-only: extract the existing notes at PCP visits for the roster patients so they can be read and checked.
-// Usage: node review-pcp-notes.js   (writes logs/pcp-notes/<dfn>.txt and prints a one-line summary per note)
+// Usage: node patient.js review-pcp-notes   (writes logs/pcp-notes/<dfn>.txt and prints a one-line summary per note)
+const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-require('./src/config');
-const { callRpc } = require('./src/vistaApiClient');
-const roster = require('./src/lighthouse-patients.json');
+require('../../src/config');
+const { callRpc } = require('../../src/vistaApiClient');
+const roster = require('../../src/lighthouse-patients.json');
 
-const OUT = path.join(__dirname, 'logs', 'pcp-notes');
+const OUT = path.join(ROOT, 'logs', 'pcp-notes');
 const PCP = /PRIMARY CARE|DEV PACT|GENERAL MEDICINE|20 MINUTE/i;
 const dom = (i) => i.uid.split(':')[2];
 const day = (v) => { const s = String(v || '').replace(/\D/g, ''); return s.length >= 8 ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : ''; };
