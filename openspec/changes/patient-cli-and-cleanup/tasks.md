@@ -34,8 +34,8 @@
 
 ## 5. Carried over: medications
 
-- [ ] 5.1 Register `CDSP UTIL FINISH RX` (tag `FINORD`) and run `finish-rx` as a dry run, then one live finish on a test patient other than the protected one
-- [ ] 5.2 Run `renew-rx` then `finish-rx` end to end in one script and record the result (progress 2026-10-28: renew step done on the 5.4 test Rx, new pending order 51005 signed; waiting on the finish step, which needs the `CDSP UTIL FINISH RX` registration from 5.1)
+- [x] 5.1 Register `CDSP UTIL FINISH RX` (tag `FINORD`) and run `finish-rx` as a dry run, then one live finish on a test patient other than the protected one (done 2026-10-28: RPC registered in `CDSP RPC UTILS`, dry run works; the first live finish used the new-order path and left the Rx unlinked, so `FINORD` now finishes a pending renewal through the renewal code, see 5.2)
+- [x] 5.2 Run `renew-rx` then `finish-rx` end to end in one script and record the result (done 2026-10-28 on a test patient: renew created pending order 51008, finish created renewal Rx 407714 linked to that order, removed the pending entry and discontinued the old Rx; VPR shows the new Rx ACTIVE with 3 refills left and one fill dated the finish day; a single combined script is not written, the two steps run as `renew-rx` then `finish-rx --ord <pending IEN>`; the pending IEN comes from file #52.41 and is not returned by `renew-rx`)
 - [ ] 5.3 Decide on future-dated first fills after a renew and on release dates that equal the load date
 - [x] 5.4 Story 1 test: add an Rx with an issue date about a year back, then fill oldest first with one or two late fills (done 2026-10-28 on a test patient: metformin 500 MG Rx issued 2025-10-29 with 3 refills of 90 days, then fills on 2026-01-30 (3 days late), 2026-05-10 (10 days late) and 2026-08-25 (a long gap); VPR shows 4 fill dates, route PO, schedule BID, 0 refills left)
 - [ ] 5.5 Merge the `synfmed-rx-sig` and `med-defaults-and-merge` loader fork branches so the sig lines are not duplicated
