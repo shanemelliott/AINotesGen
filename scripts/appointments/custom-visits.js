@@ -7,7 +7,6 @@
 const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('../../src/config');
 const { loadPatient, callCandidate, stripMarkerLine } = require('../notes/test-ai');
 const { loadApiKey, DEFAULT_MODEL } = require('../../src/noteGenerator');
 const { insertLabBlock } = require('../../src/labBlock');
@@ -17,6 +16,7 @@ const { noteId, writeNote, existsInDir } = require('../../src/noteStore');
 const { filemanDateTime, buildVisitString } = require('../../src/notesClient');
 const { createAppointment } = require('../../src/appointmentCreator');
 const { noteTitleFor } = require('../../src/noteTitles');
+const { authorFor } = require('../../src/noteAuthors');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
 const dfn = arg('--dfn');
@@ -103,7 +103,7 @@ async function main() {
       const { flagged, reasons } = flagNote(text, ctx);
       writeNote(path.join(ROOT, 'output', 'review'), id, {
         noteText: text, dfn, date: v.date, visitString, noteTitleIen: noteTitleFor(v.clinic), locationIen: v.clinicIen,
-        duz: config.duz(), fmDateTime: fm, flagged, flagReasons: reasons, generatedAt: new Date().toISOString(),
+        duz: authorFor(v.clinic, v.clinicIen), fmDateTime: fm, flagged, flagReasons: reasons, generatedAt: new Date().toISOString(),
       });
       console.log(`  NOTE written to output/review/${id}.txt${flagged ? ` (flagged: ${reasons.join('; ')})` : ''}`);
     }

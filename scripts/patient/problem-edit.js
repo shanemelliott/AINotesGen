@@ -1,5 +1,5 @@
 // Align VistA problems with Lighthouse through the CPRS problem list RPCs (DEV ONLY). Dry run unless --apply.
-// Usage: node patient.js problem-edit [--dfn <dfn>] [--apply]
+// Usage: node patient.js problem-edit [--dfn <dfn>] [--file <fixes.json>] [--apply]
 // Reads src/lighthouse-problem-fixes.json: per problem an onset date (YYYY-MM-DD), optional status (A or I) and an
 // ICD code copied from another problem that already has it (icdFrom, found through ORQQPL EDIT LOAD of that problem).
 // Calls ORQQPL EDIT SAVE with GMPFLD and GMPORIG strings as CPRS sends them. Results: docs/lighthouse-review/problem-changes.json.
@@ -12,7 +12,8 @@ const { callRpc } = require('../../src/vistaApiClient');
 const CTX = 'OR CPRS GUI CHART';
 const SEP = '\u00fe';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const fixes = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'lighthouse-problem-fixes.json'), 'utf8'));
+const fixesArg = process.argv.indexOf('--file');
+const fixes = JSON.parse(fs.readFileSync(fixesArg === -1 ? path.join(ROOT, 'src', 'lighthouse-problem-fixes.json') : path.resolve(process.argv[fixesArg + 1]), 'utf8'));
 const rpc = (name, params) => callRpc(name, params.map((p) => (typeof p === 'object' ? p : { string: String(p) })), CTX, { timeout: 60000 });
 
 const fmDate = (iso) => String((+iso.slice(0, 4) - 1700) * 10000 + +iso.slice(5, 7) * 100 + +iso.slice(8, 10));
@@ -44,6 +45,7 @@ async function main() {
     const set = (fld, value) => { if (!same(next[fld], value)) { changes.push({ field: fld, old: cur.NEW[fld], new: value }); next[fld] = value; } };
     if (fx.onset) set('.13', `${fmDate(fx.onset)}^${display(fx.onset)}`);
     if (fx.status) set('.12', fx.status === 'A' ? 'A^ACTIVE' : 'I^INACTIVE');
+    if (fx.verified) set('1.02', ''); // empty CONDITION (1.02) is how a verified problem looks; T marks one as transcribed
     if (fx.icdFrom) {
       const src = (await load(fx.icdFrom.ien)).NEW['.01'];
       if (!src || src.split('^')[1] !== fx.icdFrom.code) throw new Error(`problem ${fx.icdFrom.ien} does not hold ${fx.icdFrom.code}: ${src}`);

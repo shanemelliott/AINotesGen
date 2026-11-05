@@ -1,0 +1,8 @@
+{
+  "_note": "Note author DUZ by clinic for the disability-rating-example patient. All share VISTA_ESIG_CODE and hold ORES. Clinics not listed use VISTA_AUTHOR_DUZ; set it to 991 (PROVIDER,EIGHT, primary care) for this patient.",
+  "clinics": {
+    "AUDIOLOGY": { "ien": 64, "duz": "9005", "name": "PROVIDER,EIGHTY", "role": "audiologist" },
+    "DEV/SURG/ENT": { "ien": 538, "duz": "994", "name": "PROVIDER,ELEVEN", "role": "ENT" },
+    "DEV/MH/12": { "ien": 518, "duz": "9010", "name": "PROVIDER,EIGHTYFIVE", "role": "mental health" }
+  }
+}

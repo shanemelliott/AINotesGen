@@ -13,6 +13,9 @@
     "EMERGENCY DEPARTMENT": { "clinicIen": 426, "resourceIen": 76 },
     "DEV/ORTHO": { "clinicIen": 435, "resourceIen": 88 },
     "DERMATOLOGY": { "clinicIen": 62, "resourceIen": 30 },
-    "DEV/NEUROLOGY": { "clinicIen": 537, "resourceIen": 190 }
+    "DEV/NEUROLOGY": { "clinicIen": 537, "resourceIen": 190 },
+    "AUDIOLOGY": { "clinicIen": 64, "resourceIen": 31 },
+    "DEV/SURG/ENT": { "clinicIen": 538, "resourceIen": 191 },
+    "DEV/MH/12": { "clinicIen": 518, "resourceIen": 170 }
   }
 }

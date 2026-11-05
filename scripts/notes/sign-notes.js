@@ -77,6 +77,8 @@ async function main() {
     console.log(`START ${id}...`);
     try {
       const textLines = record.noteText.replace(/\r\n/g, '\n').split('\n');
+      // A note authored by someone other than the PIV user is created and signed as the author.
+      const sessionDuz = String(record.duz) !== String(config.duz()) ? record.duz : undefined;
       const { tiuIen } = await createNote({
         dfn: record.dfn,
         noteTitleIen: record.noteTitleIen,
@@ -84,14 +86,15 @@ async function main() {
         textLines,
         visitString: record.visitString,
         duz: record.duz,
-        fmDateTime: record.fmDateTime
+        fmDateTime: record.fmDateTime,
+        sessionDuz
       });
       created++;
 
       let isSigned = false;
       if (args.sign) {
         const esigCode = config.esigCode();
-        const signResult = await signNote({ tiuIen, esigCode });
+        const signResult = await signNote({ tiuIen, esigCode, sessionDuz });
         isSigned = signResult.success;
         if (isSigned) signed++;
         else console.error(`  Sign failed for ${id}: ${signResult.payload}`);

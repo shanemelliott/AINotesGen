@@ -53,7 +53,7 @@ async function entry(dfn) {
       visitsBooked: visitsPlan.visits.filter((v) => have.has(`${v.date}|${v.clinic}`)).length + ` of ${visitsPlan.visits.length}`,
       notesFiled: visitsPlan.visits.filter((v) => notes.has(v.date)).length + ` of ${visitsPlan.visits.length}`,
     },
-    visits: visitsPlan.visits.map((v) => ({ date: v.date, time: v.time, clinic: v.clinic, reason: v.presenting[0], icd: v.visitDiagnoses[0].icd, sentinel: !!v.sentinel, booked: have.has(`${v.date}|${v.clinic}`), noteFiled: notes.has(v.date) })),
+    visits: visitsPlan.visits.map((v) => ({ date: v.date, time: v.time, clinic: v.clinic, reason: Array.isArray(v.presenting) ? v.presenting[0] : v.presenting, icd: v.visitDiagnoses?.[0]?.icd || '', sentinel: !!v.sentinel, booked: have.has(`${v.date}|${v.clinic}`), noteFiled: notes.has(v.date) })),
     vitals: lv.vitals.map((v) => ({ at: v.at, location: v.location, type: v.type, value: v.value })),
     labs: lv.labs.map((l) => ({ at: l.at, location: l.location, test: l.test, value: l.value })),
     panels: lv.panels.map((l) => ({ at: l.at, location: l.location, panel: l.panel, values: l.values })),

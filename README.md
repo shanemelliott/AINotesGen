@@ -88,7 +88,14 @@ re-run; already-processed items are skipped or logged).
    node -e "require('./src/notes.json').filter(r => !r.signed).forEach(r => console.log(r.date, r.tiuIen))"
    ```
    then re-sign with `node patient.js resign-notes <tiuIen> <id> [<tiuIen> <id> ...]`.
+   For a note written by another author add `--duz <authorDuz>` before the pairs.
 
+   **Note authors.** By default notes are authored and signed as the PIV user.
+   `VISTA_AUTHOR_DUZ` in `.env` changes the default author, and `src/clinic-authors.json`
+   maps specific clinics to other authors (`src/noteAuthors.js`). When a note's `duz`
+   differs from the PIV user, `sign-notes` creates and signs it through the service
+   account running as that DUZ. Every author needs the `ORES` key, TIU authorization for
+   the note title, and an e-signature code equal to `VISTA_ESIG_CODE`.
 10. **Veteran service data** (any test patient, not only ones loaded here):
     ```
     node patient.js vet-get --dfn <dfn> --summary                 # what is set now

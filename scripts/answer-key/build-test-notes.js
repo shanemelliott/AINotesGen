@@ -10,8 +10,8 @@
 const { ROOT, VPR_DIR } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
-const config = require('../../src/config');
 const { writeNote } = require('../../src/noteStore');
+const { authorFor } = require('../../src/noteAuthors');
 const { filemanDateTime, buildVisitString } = require('../../src/notesClient');
 
 const arg = (n) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : undefined);
@@ -687,7 +687,7 @@ async function main() {
     const visitString = buildVisitString({ clinicIen: n.clinicIen, filemanDateTime: fm, type: 'A' });
     writeNote(dir, id, {
       noteText: text, dfn: DFN, date: DATE, visitString, noteTitleIen: n.title, locationIen: n.clinicIen,
-      duz: config.duz(), fmDateTime: fm, flagged: false, flagReasons: [], generatedAt: new Date().toISOString(),
+      duz: authorFor(n.clinic, n.clinicIen), fmDateTime: fm, flagged: false, flagReasons: [], generatedAt: new Date().toISOString(),
     });
     console.log(`${id.padEnd(36)} title ${String(n.title).padEnd(5)} ${n.clinic.padEnd(22)} ${n.time}  ${text.split('\n').length} lines, ${text.length} chars`);
     if (book) {

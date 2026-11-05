@@ -19,6 +19,8 @@ const config = {
   vistaSiteId: () => required('VISTA_SITE_ID'),
   vistaApiKey: () => required('VISTA_API_KEY'),
   duz: () => required('VISTA_DUZ'),
+  // Author of new notes; when it differs from VISTA_DUZ the notes are created and signed as that user (service account).
+  authorDuz: () => process.env.VISTA_AUTHOR_DUZ || required('VISTA_DUZ'),
   esigCode: () => required('VISTA_ESIG_CODE'),
   clinicIen: () => process.env.VISTA_CLINIC_IEN || '23',
   resourceIen: () => process.env.VISTA_RESOURCE_IEN || '2',

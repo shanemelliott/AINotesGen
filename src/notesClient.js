@@ -141,9 +141,10 @@ function parseTiuIen(payload) {
   return match ? match[1] : null;
 }
 
-async function createNote({ dfn, noteTitleIen, locationIen, textLines, visitString, duz, fmDateTime }) {
+// sessionDuz runs the RPC as that VistA user (URL DUZ); default is the PIV user.
+async function createNote({ dfn, noteTitleIen, locationIen, textLines, visitString, duz, fmDateTime, sessionDuz }) {
   const params = buildNoteParams({ dfn, noteTitleIen, locationIen, textLines, visitString, duz, fmDateTime });
-  const payload = await callRpc('TIU CREATE RECORD', params, 'OR CPRS GUI CHART');
+  const payload = await callRpc('TIU CREATE RECORD', params, 'OR CPRS GUI CHART', { duz: sessionDuz });
   const tiuIen = parseTiuIen(payload);
   if (!tiuIen || tiuIen === '0') {
     const err = new Error(`TIU CREATE RECORD did not return a valid document IEN: ${payload}`);
@@ -153,10 +154,10 @@ async function createNote({ dfn, noteTitleIen, locationIen, textLines, visitStri
   return { tiuIen, payload };
 }
 
-async function signNote({ tiuIen, esigCode, retries = 2 }) {
+async function signNote({ tiuIen, esigCode, retries = 2, sessionDuz }) {
   for (let attempt = 0; attempt <= retries; attempt++) {
     const encryptedSig = buildEncryptedSigString(esigCode);
-    const payload = await callRpc('TIU SIGN RECORD', [{ string: tiuIen }, { string: encryptedSig }], 'OR CPRS GUI CHART');
+    const payload = await callRpc('TIU SIGN RECORD', [{ string: tiuIen }, { string: encryptedSig }], 'OR CPRS GUI CHART', { duz: sessionDuz });
     // TIU SIGN RECORD returns "0" (or empty) on success; any other text is an error message.
     const trimmed = String(payload).trim();
     const success = trimmed === '0' || trimmed === '';

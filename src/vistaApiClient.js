@@ -9,6 +9,23 @@ function safeTrimmedString(value, maxLen = 1000) {
   return raw.length > maxLen ? `${raw.slice(0, maxLen)}...` : raw;
 }
 
+let serviceToken = null;
+
+async function getServiceToken(baseUrl, key) {
+  if (serviceToken && serviceToken.exp > Date.now() + 60000) return serviceToken.value;
+  const res = await axios.post(`${baseUrl.replace(/\/+$/, '')}/auth/token`, { key });
+  const value = res.data && res.data.data && res.data.data.token;
+  if (!value) throw new Error('No token in /auth/token response');
+  let exp = Date.now() + 5 * 60000;
+  try {
+    exp = JSON.parse(Buffer.from(value.split('.')[1], 'base64').toString('utf8')).exp * 1000;
+  } catch (err) {
+    // keep the short default expiry
+  }
+  serviceToken = { value, exp };
+  return value;
+}
+
 async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
   const jsonResult = options.jsonResult === true;
   const timeout = options.timeout || 30000;
@@ -27,8 +44,10 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
     throw new Error('VISTA_API_KEY is not configured');
   }
 
-  const token = await getToken();
-  const userDuz = await getDuzForSite(siteId);
+  // A DUZ override runs as that user via the service-account JWT (POST /auth/token with the API key); otherwise PIV.
+  const asOther = Boolean(options.duz);
+  const token = asOther ? await getServiceToken(baseUrl, apiKey) : await getToken();
+  const userDuz = asOther ? String(options.duz) : await getDuzForSite(siteId);
 
   const normalizedParameters = (params || []).map((value) => {
     // Pass through already-wrapped RPC parameter objects (string, namedArray, array, list) untouched.
@@ -58,7 +77,7 @@ async function callRpc(rpcName, params, context = 'SDECRPC', options = {}) {
         headers: {
           'Content-Type': 'application/json',
           authorization: `Bearer ${token}`,
-          'X-OCTO-VistA-API': apiKey
+          ...(asOther ? {} : { 'X-OCTO-VistA-API': apiKey })
         },
         timeout: options.timeout ? timeout + 15000 : timeout
       }

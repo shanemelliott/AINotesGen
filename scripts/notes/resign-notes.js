@@ -1,5 +1,6 @@
 // Re-sign notes that were created but failed to sign (e.g. bad cipher index).
-// Usage: node patient.js resign-notes <tiuIen> <id> [<tiuIen> <id> ...]
+// Usage: node patient.js resign-notes [--duz <authorDuz>] <tiuIen> <id> [<tiuIen> <id> ...]
+// --duz signs as that author through the service account instead of the PIV user.
 const { ROOT } = require('../../src/paths');
 const fs = require('fs');
 const path = require('path');
@@ -10,8 +11,14 @@ const NOTES_LOG_PATH = path.join(ROOT, 'src', 'notes.json');
 
 async function main() {
   const argv = process.argv.slice(2);
-  if (argv.length === 0 || argv.length % 2 !== 0) {
-    console.error('Usage: node patient.js resign-notes <tiuIen> <id> [<tiuIen> <id> ...]');
+  let sessionDuz;
+  const duzAt = argv.indexOf('--duz');
+  if (duzAt !== -1) {
+    sessionDuz = argv[duzAt + 1];
+    argv.splice(duzAt, 2);
+  }
+  if (argv.length === 0 || argv.length % 2 !== 0 || sessionDuz === undefined && duzAt !== -1) {
+    console.error('Usage: node patient.js resign-notes [--duz <authorDuz>] <tiuIen> <id> [<tiuIen> <id> ...]');
     process.exit(1);
   }
 
@@ -23,7 +30,7 @@ async function main() {
 
   for (const { tiuIen, id } of pairs) {
     console.log(`START ${id} (tiuIen=${tiuIen})...`);
-    const result = await signNote({ tiuIen, esigCode });
+    const result = await signNote({ tiuIen, esigCode, sessionDuz });
     if (result.success) {
       const rec = log.find((r) => String(r.tiuIen) === String(tiuIen));
       if (rec) rec.signed = true;

@@ -294,6 +294,42 @@
     "preview": null
   },
   {
+    "name": "read-note",
+    "group": "notes",
+    "description": "Read a note's text and header as a given DUZ through the service account (--tiu <ien> [--duz <duz>]).",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "sign-note-as",
+    "group": "notes",
+    "description": "Sign an unsigned test note as its author via RPC CDSP UTIL TIU SIGN AS (DEV ONLY); dry run unless --commit.",
+    "pipeline": null,
+    "preview": {
+      "unless": [
+        "--commit"
+      ]
+    }
+  },
+  {
+    "name": "check-no-claim",
+    "group": "notes",
+    "description": "Fail if note files (default output/ready), text or stdin contain claim, rating-request, compensation, C&P, DBQ, VBA or regional office wording.",
+    "pipeline": null,
+    "preview": null
+  },
+  {
+    "name": "import-planned-notes",
+    "group": "notes",
+    "description": "Turn hand-written note bodies (plans/dfn<dfn>-notes/<date>.txt) into note files in output/ready/ for the visits in a plan, with the author and title taken from the clinic.",
+    "pipeline": null,
+    "preview": {
+      "if": [
+        "--dry-run"
+      ]
+    }
+  },
+  {
     "name": "link-note-visits",
     "group": "notes",
     "description": "Link a patient's notes that have no visit to their appointment's visit via RPC CDSP UTIL TIU LINK VISIT (CDSPTIUV, DEV ONLY), then check each note with ORWPCE PCE4NOTE.",

@@ -11,6 +11,7 @@ const { reflowText } = require('../../src/reflow');
 const { resolveAppointment, buildVisitString, filemanDateTime } = require('../../src/notesClient');
 const { flagNote } = require('../../src/noteFlags');
 const { noteTitleFor } = require('../../src/noteTitles');
+const { authorFor } = require('../../src/noteAuthors');
 const { noteId, writeNote, existsInDir } = require('../../src/noteStore');
 
 const REVIEW_DIR = path.join(ROOT, 'output', 'review');
@@ -41,7 +42,6 @@ function loadEncounters(dfn) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const duz = config.duz();
 
   const encounters = loadEncounters(args.dfn);
   fs.mkdirSync(REVIEW_DIR, { recursive: true });
@@ -87,7 +87,7 @@ async function main() {
         visitString,
         noteTitleIen: noteTitleFor(encounter.clinic),
         locationIen: clinicIen,
-        duz,
+        duz: authorFor(encounter.clinic, clinicIen),
         fmDateTime,
         flagged: isFlagged,
         flagReasons: reasons,

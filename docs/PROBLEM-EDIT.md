@@ -9,6 +9,7 @@ audit history and the lexicon links stay intact. Dry run unless `--apply`. Writt
 ```powershell
 node patient.js problem-edit                    # dry run for every entry in src/lighthouse-problem-fixes.json
 node patient.js problem-edit --dfn 99935794     # one patient
+node patient.js problem-edit --file plans/dfn<dfn>-problem-fixes.json   # another fix list, same format
 node patient.js problem-edit --apply            # write
 ```
 
